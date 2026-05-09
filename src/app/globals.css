@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palet warna soft untuk antarmuka kasir */
+  --color-soft-bg: #f8fafc;
+  --color-soft-coffee: #d4a373;
+  --color-soft-accent: #e9edc9;
+
+  /* Shadow super halus untuk efek transparan/glass */
+  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+body {
+  background-color: var(--color-soft-bg);
+  color: #1e293b; /* Warna teks standar agar kontras dengan background soft */
+}
