@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -16,11 +19,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className={`${inter.className} min-h-screen flex flex-col items-center justify-center bg-soft-bg text-slate-800 antialiased`}>
-        {/* Kontainer utama dibatasi lebarnya dan diposisikan pas di tengah */}
-        <main className="w-full max-w-6xl p-6 flex flex-col items-center justify-center">
-          {children}
-        </main>
+      <body
+        className={`${inter.className} min-h-screen bg-soft-bg text-slate-800 antialiased`}
+      >
+        <SidebarProvider>
+          <AppSidebar />
+
+          <main className="flex-1">
+            {children}
+          </main>
+        </SidebarProvider>
       </body>
     </html>
   );
