@@ -1,16 +1,122 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palet warna soft untuk antarmuka kasir */
-  --color-soft-bg: #f8fafc;
-  --color-soft-coffee: #d4a373;
-  --color-soft-accent: #e9edc9;
+  /* Font */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
 
-  /* Shadow super halus untuk efek transparan/glass */
+  /* Coffee palette */
+  --color-background: oklch(0.97 0.012 80);
+  --color-foreground: oklch(0.22 0.03 50);
+
+  --color-card: oklch(0.99 0.008 80);
+  --color-card-foreground: oklch(0.22 0.03 50);
+
+  --color-primary: oklch(0.32 0.06 45);
+  --color-primary-foreground: oklch(0.97 0.012 80);
+
+  --color-secondary: oklch(0.93 0.02 75);
+  --color-secondary-foreground: oklch(0.28 0.04 45);
+
+  --color-muted: oklch(0.94 0.015 75);
+  --color-muted-foreground: oklch(0.48 0.03 55);
+
+  --color-accent: oklch(0.68 0.13 50);
+  --color-accent-foreground: oklch(0.99 0.008 80);
+
+  --color-border: oklch(0.88 0.02 75);
+
+  /* Coffee custom colors */
+  --color-cream: oklch(0.95 0.025 85);
+  --color-bean: oklch(0.28 0.05 40);
+  --color-roast: oklch(0.4 0.08 45);
+  --color-crema: oklch(0.75 0.1 70);
+
+  /* Sidebar */
+  --color-sidebar: oklch(0.28 0.05 42);
+  --color-sidebar-foreground: oklch(0.93 0.02 75);
+  --color-sidebar-accent: oklch(0.34 0.06 42);
+  --color-sidebar-accent-foreground: oklch(0.95 0.025 85);
+  --color-sidebar-border: oklch(0.36 0.05 42);
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Shadow */
   --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.05);
 }
 
+:root {
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
+
+  --sidebar: var(--color-sidebar);
+  --sidebar-foreground: var(--color-sidebar-foreground);
+  --sidebar-accent: var(--color-sidebar-accent);
+  --sidebar-accent-foreground: var(--color-sidebar-accent-foreground);
+  --sidebar-border: var(--color-sidebar-border);
+
+  --bean: var(--color-bean);
+  --roast: var(--color-roast);
+  --crema: var(--color-crema);
+}
+
 body {
-  background-color: var(--color-soft-bg);
-  color: #1e293b; /* Warna teks standar agar kontras dengan background soft */
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+
+  background-image:
+    radial-gradient(
+      circle at 10% 0%,
+      color-mix(in oklab, var(--color-accent) 8%, transparent),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 90% 100%,
+      color-mix(in oklab, var(--color-primary) 6%, transparent),
+      transparent 45%
+    );
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Loveable Utilities */
+.gradient-bean {
+  background-image: linear-gradient(
+    135deg,
+    var(--bean),
+    var(--roast)
+  );
+}
+
+.gradient-crema {
+  background-image: linear-gradient(
+    135deg,
+    var(--crema),
+    var(--color-accent)
+  );
+}
+
+.shadow-warm {
+  box-shadow:
+    0 10px 30px -12px
+    color-mix(in oklab, var(--bean) 35%, transparent);
+}
+
+.shadow-soft {
+  box-shadow:
+    0 4px 16px -6px
+    color-mix(in oklab, var(--bean) 18%, transparent);
+}
+
+.text-balance {
+  text-wrap: balance;
 }
