@@ -5,6 +5,7 @@ import { Topbar } from "@/components/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Greeting from "@/components/ui/greetings";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowUpRight, ArrowDownRight, Coffee, Package, Receipt, TrendingUp,
@@ -47,7 +48,7 @@ const formattedDate = new Intl.DateTimeFormat("id-ID", {
 export default function DashboardPage() {
   return (
     <>
-      <Topbar title="Dashboard" subtitle="Ringkasan operasional toko biji kopi hari ini" />
+      <Topbar title="Dashboard" subtitle="Ringkasan operasional Arunika hari ini" />
       <main className="flex-1 p-6 space-y-6">
         {/* Hero */}
         <Card className="overflow-hidden border-0 shadow-warm">
@@ -57,12 +58,9 @@ export default function DashboardPage() {
                 <Badge className="bg-primary-foreground/15 text-primary-foreground border-0 backdrop-blur">
                   {formattedDate}
                 </Badge>
-                <h2 className="font-display text-3xl md:text-4xl font-semibold text-balance">
-                  Selamat pagi, Arif. 
-
-                </h2>
+                <Greeting />
                 <p className="text-primary-foreground/75 text-sm">
-                  24 transaksi hari ini · 1 stok perlu restock.
+                  184 transaksi hari ini · 1 stok perlu restock.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
