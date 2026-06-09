@@ -8,8 +8,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "POS Kopi Warehouse",
-  description: "Sistem Manajemen Kasir dan Gudang Biji Kopi",
+  title: "Arunika",
+  description: "Sistem Manajemen Kasir dan Gudang Arunika",
 };
 
 export default function RootLayout({

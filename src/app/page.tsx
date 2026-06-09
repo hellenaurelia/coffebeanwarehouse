@@ -8,14 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowUpRight, ArrowDownRight, Coffee, Package, Receipt, TrendingUp,
-  AlertTriangle, ScanBarcode
+  AlertTriangle, ScanBarcode,
+  ShoppingBasket
 } from "lucide-react";
 
 const stats = [
   { label: "Penjualan Hari Ini", value: "Rp 12.480.000", delta: "+18.2%", up: true, icon: Receipt },
-  { label: "Transaksi", value: "184", delta: "+12", up: true, icon: ScanBarcode },
-  { label: "Stok Biji (kg)", value: "1.247", delta: "-32 kg", up: false, icon: Package },
-  { label: "Avg. Basket", value: "Rp 67.800", delta: "+4.1%", up: true, icon: TrendingUp },
+  { label: "Transaksi", value: "184", delta: "-12", up: false, icon: ScanBarcode },
+  { label: "Profit Hari Ini", value: "Rp 2.480.000", delta: "+18.2%", up: true, icon: TrendingUp },
+  { label: "Avg. Basket", value: "Rp 67.800", delta: "+4.1%", up: true, icon: ShoppingBasket },
 ];
 
 const beans = [
@@ -31,7 +32,17 @@ const recent = [
   { id: "TRX-2048", item: "Kintamani 1kg", total: "Rp 240.000", time: "8 menit lalu", method: "Cash" },
   { id: "TRX-2047", item: "Toraja 500g · V60 x1", total: "Rp 198.000", time: "14 menit lalu", method: "Debit" },
   { id: "TRX-2046", item: "Ethiopia 200g", total: "Rp 92.000", time: "21 menit lalu", method: "QRIS" },
+  { id: "TRX-2045", item: "Java Preanger 1kg", total: "Rp 220.000", time: "28 menit lalu", method: "Credit" },
 ];
+
+const formattedDate = new Intl.DateTimeFormat("id-ID", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+})
+  .format(new Date())
+  .replace(",", " ·");
 
 export default function DashboardPage() {
   return (
@@ -44,21 +55,22 @@ export default function DashboardPage() {
             <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div className="max-w-xl space-y-3">
                 <Badge className="bg-primary-foreground/15 text-primary-foreground border-0 backdrop-blur">
-                  Sabtu · 9 Mei 2026
+                  {formattedDate}
                 </Badge>
                 <h2 className="font-display text-3xl md:text-4xl font-semibold text-balance">
-                  Selamat pagi, Arif. Stok <span className="text-crema">Gayo</span> sedang ramai dicari.
+                  Selamat pagi, Arif. 
+
                 </h2>
                 <p className="text-primary-foreground/75 text-sm">
-                  2 supplier dijadwalkan kirim hari ini · 1 jenis biji perlu re-order.
+                  24 transaksi hari ini · 1 stok perlu restock.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button asChild size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                  <Link href="/pos"><ScanBarcode className="mr-2 h-4 w-4" /> Buka Kasir</Link>
+                  <Link href="/inventory"><Package className="mr-2 h-4 w-4" />Lihat Inventory</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10">
-                  <Link href="/beans"><Coffee className="mr-2 h-4 w-4" /> Lihat Katalog</Link>
+                  <Link href="/transactions"><Receipt className="mr-2 h-4 w-4" />Lihat Transaksi</Link>
                 </Button>
               </div>
             </div>
@@ -79,7 +91,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="mt-3 font-display text-2xl font-semibold">{s.value}</div>
-                <div className={`mt-1 flex items-center gap-1 text-xs ${s.up ? "text-emerald-600" : "text-destructive"}`}>
+                <div className={`mt-1 flex items-center gap-1 text-xs ${s.up ? "text-emerald-600" : "text-red-600"}`}>
                   {s.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                   {s.delta} <span className="text-muted-foreground">vs kemarin</span>
                 </div>
@@ -93,16 +105,20 @@ export default function DashboardPage() {
           <Card className="lg:col-span-2 shadow-soft border-border/60">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
-                <CardTitle className="font-display">Stok Biji Kopi</CardTitle>
+                <CardTitle className="font-display">Top 5 Biji Kopi</CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">Posisi gudang utama · diperbarui 5 menit lalu</p>
               </div>
-              <Button variant="ghost" size="sm" className="text-accent hover:text-accent">Kelola →</Button>
+              <Link href="/inventory">
+                <Button variant="ghost" size="sm" className="text-accent hover:text-primary-foreground">
+                  Kelola →
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent className="space-y-4">
               {beans.map((b) => {
                 const pct = Math.round((b.stock / b.max) * 100);
                 const tone =
-                  b.status === "Kritis" ? "bg-destructive/10 text-destructive border-destructive/30"
+                  b.status === "Kritis" ? "bg-red-500/10 text-red-700 border-red-500/20"
                   : b.status === "Menipis" ? "bg-crema/30 text-roast border-crema/40"
                   : "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
                 return (
@@ -134,6 +150,21 @@ export default function DashboardPage() {
 
           {/* Side column */}
           <div className="space-y-6">
+            <Card className="shadow-soft border-border/60 bg-primary">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 text-primary-foreground">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="text-xs uppercase tracking-wider font-semibold text-primary-foreground">Perlu Tindakan</span>
+                </div>
+                <p className="mt-3 text-sm text-primary-foreground">
+                  <strong>Ethiopia Yirgacheffe</strong> tersisa 12 kg. Estimasi habis dalam 2 hari.
+                </p>
+                <Button size="sm" className="mt-4 w-full bg-crema/40 text-primary-foreground hover:bg-crema/30">
+                  Place Purchase Order
+                </Button>
+              </CardContent>
+            </Card>
+            
             <Card className="shadow-soft border-border/60">
               <CardHeader className="pb-3">
                 <CardTitle className="font-display">Transaksi Terakhir</CardTitle>
@@ -152,20 +183,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-soft border-border/60 bg-crema/20">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 text-roast">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span className="text-xs uppercase tracking-wider font-semibold">Perlu Tindakan</span>
-                </div>
-                <p className="mt-3 text-sm text-foreground">
-                  <strong>Ethiopia Yirgacheffe</strong> tersisa 12 kg. Estimasi habis dalam 2 hari.
-                </p>
-                <Button size="sm" className="mt-4 w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                  Buat Purchase Order
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </main>
