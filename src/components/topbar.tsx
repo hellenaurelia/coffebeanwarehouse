@@ -1,7 +1,6 @@
-import { Search, Bell, Sun } from "lucide-react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Input } from "@/components/ui/input";
+import { Bell, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
@@ -12,10 +11,12 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
       </div>
       <div className="ml-auto flex items-center gap-2">
         <Button variant="ghost" size="icon" className="rounded-full"><Sun className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="icon" className="rounded-full relative">
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-accent" />
-        </Button>
+        <Link href="/notifications">
+          <Button variant="ghost" size="icon" className="rounded-full relative">
+            <Bell className="h-4 w-4" />
+            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-accent" />
+          </Button>
+        </Link>
       </div>
     </header>
   );
