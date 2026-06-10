@@ -5,27 +5,25 @@ import { Topbar } from "@/components/topbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, Download, Receipt, Banknote, CreditCard, QrCode, ArrowUpRight, Calendar, Eye, X, Printer, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Download, Receipt, Banknote, CreditCard, QrCode, ArrowUpRight, Calendar, Eye, X, Printer, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Method = "Cash" | "Kartu" | "QRIS";
-type Status = "Lunas" | "Refund" | "Pending";
 type TrxItem = { name: string; qty: number; price: number };
-type Trx = { id: string; date: string; time: string; cashier: string; items: number; total: number; method: Method; status: Status; detail: TrxItem[] };
+type Trx = { id: string; date: string; time: string; cashier: string; items: number; total: number; method: Method; detail: TrxItem[] };
 type DR = { from: Date | null; to: Date | null };
 
 const data: Trx[] = [
-  { id:"TRX-2050", date:"9 Mei 2026",  time:"10:42", cashier:"Arif R.", items:3, total:414000, method:"QRIS",  status:"Lunas",  detail:[{name:"Cappuccino",qty:2,price:43243},{name:"Croissant Butter",qty:1,price:34234},{name:"Cold Brew 500ml",qty:2,price:130631}] },
-  { id:"TRX-2049", date:"9 Mei 2026",  time:"10:31", cashier:"Sari N.", items:2, total:184000, method:"QRIS",  status:"Lunas",  detail:[{name:"Latte",qty:2,price:82883},{name:"Banana Bread",qty:1,price:32432}] },
-  { id:"TRX-2048", date:"9 Mei 2026",  time:"10:18", cashier:"Arif R.", items:1, total:240000, method:"Cash",  status:"Lunas",  detail:[{name:"Pour Over (Single Origin)",qty:2,price:108108}] },
-  { id:"TRX-2047", date:"9 Mei 2026",  time:"09:54", cashier:"Bayu P.", items:2, total:198000, method:"Kartu", status:"Lunas",  detail:[{name:"Flat White",qty:1,price:46847},{name:"Avocado Toast",qty:1,price:68468},{name:"Sparkling Water",qty:1,price:25225}] },
-  { id:"TRX-2046", date:"9 Mei 2026",  time:"09:33", cashier:"Sari N.", items:1, total:92000,  method:"QRIS",  status:"Refund", detail:[{name:"Latte",qty:2,price:41441}] },
-  { id:"TRX-2045", date:"9 Mei 2026",  time:"09:11", cashier:"Arif R.", items:4, total:528000, method:"Cash",  status:"Lunas",  detail:[{name:"Americano",qty:2,price:35135},{name:"Espresso Tonic",qty:2,price:49550},{name:"Overnight Oats",qty:2,price:76577},{name:"Mineral Water",qty:2,price:16216}] },
-  { id:"TRX-2044", date:"8 Mei 2026",  time:"20:48", cashier:"Bayu P.", items:2, total:312000, method:"Kartu", status:"Lunas",  detail:[{name:"Cold Brew 500ml",qty:2,price:130631},{name:"Almond Croissant",qty:1,price:37838}] },
-  { id:"TRX-2043", date:"8 Mei 2026",  time:"20:22", cashier:"Sari N.", items:1, total:124000, method:"QRIS",  status:"Lunas",  detail:[{name:"Cappuccino",qty:1,price:43243},{name:"Kouign-Amann",qty:1,price:41441}] },
-  { id:"TRX-2042", date:"8 Mei 2026",  time:"19:57", cashier:"Arif R.", items:3, total:376000, method:"Cash",  status:"Lunas",  detail:[{name:"Pour Over (Single Origin)",qty:1,price:108108},{name:"Latte",qty:1,price:41441},{name:"Smashed Avocado",qty:1,price:79280}] },
+  { id:"TRX-2050", date:"9 Mei 2026",  time:"10:42", cashier:"Arif R.", items:3, total:414000, method:"QRIS",  detail:[{name:"Cappuccino",qty:2,price:43243},{name:"Croissant Butter",qty:1,price:34234},{name:"Cold Brew 500ml",qty:2,price:130631}] },
+  { id:"TRX-2049", date:"9 Mei 2026",  time:"10:31", cashier:"Sari N.", items:2, total:184000, method:"QRIS",  detail:[{name:"Latte",qty:2,price:82883},{name:"Banana Bread",qty:1,price:32432}] },
+  { id:"TRX-2048", date:"9 Mei 2026",  time:"10:18", cashier:"Arif R.", items:1, total:240000, method:"Cash",  detail:[{name:"Pour Over (Single Origin)",qty:2,price:108108}] },
+  { id:"TRX-2047", date:"9 Mei 2026",  time:"09:54", cashier:"Bayu P.", items:2, total:198000, method:"Kartu", detail:[{name:"Flat White",qty:1,price:46847},{name:"Avocado Toast",qty:1,price:68468},{name:"Sparkling Water",qty:1,price:25225}] },
+  { id:"TRX-2046", date:"9 Mei 2026",  time:"09:33", cashier:"Sari N.", items:1, total:92000,  method:"QRIS",  detail:[{name:"Latte",qty:2,price:41441}] },
+  { id:"TRX-2045", date:"9 Mei 2026",  time:"09:11", cashier:"Arif R.", items:4, total:528000, method:"Cash",  detail:[{name:"Americano",qty:2,price:35135},{name:"Espresso Tonic",qty:2,price:49550},{name:"Overnight Oats",qty:2,price:76577},{name:"Mineral Water",qty:2,price:16216}] },
+  { id:"TRX-2044", date:"8 Mei 2026",  time:"20:48", cashier:"Bayu P.", items:2, total:312000, method:"Kartu", detail:[{name:"Cold Brew 500ml",qty:2,price:130631},{name:"Almond Croissant",qty:1,price:37838}] },
+  { id:"TRX-2043", date:"8 Mei 2026",  time:"20:22", cashier:"Sari N.", items:1, total:124000, method:"QRIS",  detail:[{name:"Cappuccino",qty:1,price:43243},{name:"Kouign-Amann",qty:1,price:41441}] },
+  { id:"TRX-2042", date:"8 Mei 2026",  time:"19:57", cashier:"Arif R.", items:3, total:376000, method:"Cash",  detail:[{name:"Pour Over (Single Origin)",qty:1,price:108108},{name:"Latte",qty:1,price:41441},{name:"Smashed Avocado",qty:1,price:79280}] },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -33,10 +31,6 @@ const data: Trx[] = [
 const TAX = 0.11;
 const methodIcon: Record<Method, React.ElementType> = { Cash: Banknote, Kartu: CreditCard, QRIS: QrCode };
 const fmt = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
-const statusCls = (s: Status) =>
-  s === "Lunas"  ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" :
-  s === "Refund" ? "bg-red-500/10 text-red-600 border-red-400/30" :
-                   "bg-amber-500/10 text-amber-700 border-amber-500/20";
 
 const ID_MONTHS: Record<string, number> = { Jan:0,Feb:1,Mar:2,Apr:3,Mei:4,Jun:5,Jul:6,Agu:7,Sep:8,Okt:9,Nov:10,Des:11 };
 const MONTH_NAMES = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -47,7 +41,7 @@ const sod = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
 
 function exportCSV(rows: Trx[]) {
-  const lines = ["ID,Tanggal,Waktu,Kasir,Item,Total,Metode,Status", ...rows.map(t => [t.id,t.date,t.time,t.cashier,t.items,t.total,t.method,t.status].join(","))];
+  const lines = ["ID,Tanggal,Waktu,Kasir,Item,Total,Metode", ...rows.map(t => [t.id,t.date,t.time,t.cashier,t.items,t.total,t.method].join(","))];
   const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([lines.join("\n")], { type:"text/csv" })), download:"transaksi.csv" });
   a.click();
 }
@@ -83,7 +77,6 @@ function CalendarPicker({ range, onChange, onClose }: { range: DR; onChange: (r:
 
   return (
     <div className="p-1 w-72 select-none">
-      {/* nav */}
       <div className="flex items-center justify-between mb-3 px-1">
         <button onClick={prevMo} className="h-7 w-7 rounded-lg hover:bg-secondary flex items-center justify-center transition-colors">
           <ChevronLeft className="h-4 w-4" />
@@ -93,11 +86,9 @@ function CalendarPicker({ range, onChange, onClose }: { range: DR; onChange: (r:
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
-      {/* day headers */}
       <div className="grid grid-cols-7 mb-1">
         {DAY_NAMES.map(d => <div key={d} className="text-center text-xs text-muted-foreground py-1">{d}</div>)}
       </div>
-      {/* cells */}
       <div className="grid grid-cols-7 gap-y-0.5">
         {cells.map((d, i) => {
           if (!d) return <div key={i} />;
@@ -130,7 +121,6 @@ function CalendarPicker({ range, onChange, onClose }: { range: DR; onChange: (r:
           );
         })}
       </div>
-      {/* footer */}
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
         <button className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => onChange({from:null,to:null})}>Reset</button>
         <button className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-lg" onClick={onClose}>Terapkan</button>
@@ -194,9 +184,6 @@ function DetailModal({ trx, onClose }: { trx: Trx; onClose: () => void }) {
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="px-6 mb-4">
-          <Badge variant="outline" className={`${statusCls(trx.status)} text-xs px-3 py-1`}>{trx.status}</Badge>
-        </div>
         <div className="mx-6 mb-4 rounded-xl overflow-hidden border border-border/50">
           <table className="w-full text-sm">
             <thead>
@@ -225,15 +212,10 @@ function DetailModal({ trx, onClose }: { trx: Trx; onClose: () => void }) {
         <div className="px-6 mb-5 flex items-center gap-2 text-sm text-muted-foreground">
           <Icon className="h-4 w-4" /><span>Dibayar via {trx.method}</span>
         </div>
-        <div className="border-t border-border/60 px-6 py-4 flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={() => window.print()}>
+        <div className="border-t border-border/60 px-6 py-4">
+          <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={() => window.print()}>
             <Printer className="h-4 w-4 mr-2" />Cetak Struk
           </Button>
-          {trx.status !== "Refund" && (
-            <Button size="sm" className="flex-1 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:text-red-700 shadow-none">
-              <RotateCcw className="h-4 w-4 mr-2" />Void / Refund
-            </Button>
-          )}
         </div>
       </div>
     </div>
@@ -242,7 +224,7 @@ function DetailModal({ trx, onClose }: { trx: Trx; onClose: () => void }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const COLS = ["ID Transaksi","Tanggal","Kasir","Item","Total","Metode","Status",""];
+const COLS = ["ID Transaksi","Tanggal","Kasir","Item","Total","Metode",""];
 
 export default function TransactionsPage() {
   const [method, setMethod] = useState<"Semua" | Method>("Semua");
@@ -261,19 +243,18 @@ export default function TransactionsPage() {
     return true;
   }), [method, range, search]);
 
-  const todayLunas = data.filter(t => t.date === "9 Mei 2026" && t.status === "Lunas");
+  const todayData = data.filter(t => t.date === "9 Mei 2026");
   const stats = [
-    { label:"Penjualan Hari Ini", value: fmt(todayLunas.reduce((a,b) => a+b.total,0)), sub:`${todayLunas.length} transaksi lunas`, icon: Receipt },
-    { label:"Rata-rata Basket",   value:"Rp 226.000", sub:"+8% vs minggu lalu",         icon: ArrowUpRight },
-    { label:"Refund",             value:"1",           sub:"Rp 92.000 dikembalikan",     icon: RotateCcw },
-    { label:"Metode Terpopuler",  value:"QRIS",        sub:"44% transaksi",              icon: QrCode },
+    { label:"Penjualan Hari Ini", value: fmt(todayData.reduce((a,b) => a+b.total,0)), sub:`${todayData.length} transaksi`, icon: Receipt },
+    { label:"Rata-rata Basket",   value:"Rp 226.000", sub:"+8% vs minggu lalu", icon: ArrowUpRight },
+    { label:"Metode Terpopuler",  value:"QRIS",        sub:"44% transaksi",     icon: QrCode },
   ];
 
   return (
     <>
       <Topbar title="Transaksi" subtitle="Riwayat penjualan & rekonsiliasi kasir" />
       <main className="flex-1 p-6 space-y-6">
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           {stats.map(s => (
             <Card key={s.label} className="shadow-soft border-border/60">
               <CardContent className="p-5">
@@ -311,11 +292,11 @@ export default function TransactionsPage() {
             </div>
 
             <div className="mt-5 -mx-2" style={{ height:420, overflowY:"auto" }}>
-              <table className="w-full text-sm" style={{ tableLayout:"fixed", minWidth:680 }}>
+              <table className="w-full text-sm" style={{ tableLayout:"fixed", minWidth:600 }}>
                 <colgroup>
                   <col style={{width:110}}/><col style={{width:120}}/><col style={{width:90}}/>
                   <col style={{width:52}}/><col style={{width:120}}/><col style={{width:88}}/>
-                  <col style={{width:80}}/><col style={{width:80}}/>
+                  <col style={{width:80}}/>
                 </colgroup>
                 <thead className="sticky top-0 z-10 bg-card">
                   <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border/60">
@@ -324,7 +305,7 @@ export default function TransactionsPage() {
                 </thead>
                 <tbody>
                   {rows.length === 0
-                    ? <tr><td colSpan={8} className="text-center py-16 text-muted-foreground">Tidak ada transaksi yang cocok.</td></tr>
+                    ? <tr><td colSpan={7} className="text-center py-16 text-muted-foreground">Tidak ada transaksi yang cocok.</td></tr>
                     : rows.map(t => {
                         const Icon = methodIcon[t.method];
                         return (
@@ -335,7 +316,6 @@ export default function TransactionsPage() {
                             <td className="px-3 py-4 text-right tabular-nums">{t.items}</td>
                             <td className="px-3 py-4 text-right tabular-nums font-medium">{fmt(t.total)}</td>
                             <td className="px-3 py-4"><span className="inline-flex items-center gap-1.5"><Icon className="h-3.5 w-3.5 text-muted-foreground" />{t.method}</span></td>
-                            <td className="px-3 py-4 text-center"><Badge variant="outline" className={statusCls(t.status)}>{t.status}</Badge></td>
                             <td className="px-3 py-4 text-right">
                               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-secondary" onClick={() => setSelected(t)}>
                                 <Eye className="h-4 w-4 mr-1" />Detail
