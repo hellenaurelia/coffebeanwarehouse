@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { Topbar } from "@/components/topbar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Coffee, Search, Filter, Download, Plus, MapPin, Calendar, Package } from "lucide-react";
 import { FilterModal, FilterValues } from "./_components/filter-modal";
+import InventoryDetailDialog from "./_components/modal-detail-edit";
 import { TambahBijiModal } from "./_components/tambah-biji-modal";
 import { RekonsiliasiModal } from "./_components/rekonsiliasi-modal";
 import { exportToCSV } from "./_components/export-utils";
@@ -242,45 +244,14 @@ export default function Inventory() {
         onSave={(updated) => setItems(updated)}
       />
 
-      {/* Detail Drawer */}
-      {detailItem && (
-        <div
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40"
-          onClick={() => setDetailItem(null)}
-        >
-          <div
-            className="w-full max-w-md bg-card rounded-t-2xl md:rounded-2xl shadow-xl p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg font-semibold">{detailItem.name}</h2>
-              <button onClick={() => setDetailItem(null)} className="text-muted-foreground hover:text-foreground text-lg leading-none">✕</button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {[
-                ["SKU", detailItem.sku],
-                ["Supplier", detailItem.supplier],
-                ["Origin", detailItem.origin],
-                ["Harvest", detailItem.harvest],
-                ["Tipe", detailItem.type],
-                ["Proses", detailItem.process],
-                ["Stok", `${detailItem.stock} ${detailItem.unit}`],
-                ["HPP", `Rp ${detailItem.cost.toLocaleString("id-ID")}`],
-                ["Harga Jual", `Rp ${detailItem.price.toLocaleString("id-ID")}`],
-                ["Margin", `${(((detailItem.price - detailItem.cost) / detailItem.price) * 100).toFixed(1)}%`],
-              ].map(([label, val]) => (
-                <div key={label}>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
-                  <div className="font-medium mt-0.5">{val}</div>
-                </div>
-              ))}
-            </div>
-            <Badge variant="outline" className={`${stockTone(detailItem.stock)} w-full justify-center py-1.5`}>
-              Status: {stockLabel(detailItem.stock)}
-            </Badge>
-          </div>
-        </div>
-      )}
+      <InventoryDetailDialog
+        open={!!detailItem}
+        item={detailItem}
+        onOpenChange={(open) => !open && setDetailItem(null)}
+        onSave={(updated) => {
+          setItems((prev) => prev.map((i) => (i.sku === updated.sku ? updated : i)));
+        }}
+      />
     </>
   );
 }
