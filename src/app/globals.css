@@ -32,6 +32,14 @@
   --color-roast: oklch(0.4 0.08 45);
   --color-crema: oklch(0.75 0.1 70);
 
+  /* Popover / dropdown */
+  --color-popover: oklch(0.99 0.008 80);
+  --color-popover-foreground: oklch(0.22 0.03 50);
+
+  /* Input / ring */
+  --color-input: oklch(0.88 0.02 75);
+  --color-ring: oklch(0.68 0.13 50);
+
   /* Sidebar */
   --color-sidebar: oklch(0.28 0.05 42);
   --color-sidebar-foreground: oklch(0.93 0.02 75);
@@ -49,6 +57,12 @@
 :root {
   --background: var(--color-background);
   --foreground: var(--color-foreground);
+
+  --popover: var(--color-popover);
+  --popover-foreground: var(--color-popover-foreground);
+
+  --input: var(--color-input);
+  --ring: var(--color-ring);
 
   --sidebar: var(--color-sidebar);
   --sidebar-foreground: var(--color-sidebar-foreground);

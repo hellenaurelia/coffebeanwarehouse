@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { InventoryItem } from "@/app/inventory/page";
+import { InventoryItem } from "@/app/(dashboard)/inventory/page";
 
 export interface FilterValues {
   type: string[];
