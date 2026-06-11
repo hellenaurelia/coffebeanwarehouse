@@ -297,7 +297,7 @@ const statusTone = (s: "Aman" | "Menipis" | "Kritis") =>
     ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20"
     : s === "Menipis"
       ? "bg-crema/50 text-roast border-crema/60"
-      : "bg-destructive/10 text-destructive border-destructive/30";
+      : "bg-red-100 text-red-700 border-red-300";
 
 const chartConfig = {
   penjualan: { label: "Penjualan", color: "hsl(var(--primary))" },
@@ -613,16 +613,6 @@ export default function ReportsPage() {
 
   return (
     <>
-      {/* Print-only styles */}
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { background: white !important; }
-          .print-break { page-break-before: always; }
-          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
-      `}</style>
-
       <Topbar title="Laporan" subtitle="Ringkasan performa bisnis & gudang" />
       <main className="flex-1 p-6 space-y-6">
 
