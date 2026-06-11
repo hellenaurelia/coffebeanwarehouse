@@ -121,6 +121,7 @@ export default function DashboardPage() {
                   : "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
                 return (
                   <div key={b.name} className="rounded-xl border border-border/60 p-4 hover:bg-secondary/40 transition-colors">
+                   <Link href={`/inventory`} className="flex items-start justify-between gap-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-10 w-10 rounded-lg gradient-bean flex items-center justify-center shrink-0">
@@ -140,6 +141,7 @@ export default function DashboardPage() {
                       <Progress value={pct} className="h-1.5 flex-1" />
                       <span className="text-xs text-muted-foreground tabular-nums w-20 text-right">{b.stock}/{b.max} kg</span>
                     </div>
+                   </Link>
                   </div>
                 );
               })}
@@ -157,9 +159,11 @@ export default function DashboardPage() {
                 <p className="mt-3 text-sm text-primary-foreground">
                   <strong>Ethiopia Yirgacheffe</strong> tersisa 12 kg. Estimasi habis dalam 2 hari.
                 </p>
-                <Button size="sm" className="mt-4 w-full bg-crema/40 text-primary-foreground hover:bg-crema/30">
-                  Place Purchase Order
-                </Button>
+                <Link href="/suppliers" className="text-xs text-primary-foreground/90 hover:text-primary-foreground mt-2 inline-block">
+                  <Button size="sm" className="mt-4 w-full bg-crema/40 text-primary-foreground hover:bg-crema/30">
+                    Place Purchase Order
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
             
