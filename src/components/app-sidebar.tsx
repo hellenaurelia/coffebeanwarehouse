@@ -117,21 +117,23 @@ export function AppSidebar() {
         {renderGroup("Lainnya", insights)}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
-        <div className="flex items-center gap-3 px-0 py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full gradient-bean text-xs font-semibold text-primary-foreground">
-            AR
-          </div>
+      <SidebarFooter className="border-t border-sidebar-border hover:bg-sidebar-accent/60">
+        <div className="flex items-center gap-3 px-0 py-2 ">
+          <Link href="/profile" className="flex items-center gap-2.5 overflow-hidden ">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full gradient-bean text-xs font-semibold text-primary-foreground">
+              AR
+            </div>
 
-          <div className="flex flex-col text-xs group-data-[collapsible=icon]:hidden">
-            <span className="font-medium text-sidebar-foreground">
-              Arif Rahman
-            </span>
+            <div className="flex flex-col text-xs group-data-[collapsible=icon]:hidden">
+              <span className="font-medium text-sidebar-foreground">
+                Arif Rahman
+              </span>
 
-            <span className="text-sidebar-foreground/60">
-              Manager · Senopati
-            </span>
-          </div>
+              <span className="text-sidebar-foreground/60">
+                Manager · Senopati
+              </span>
+            </div>
+          </Link>
         </div>
       </SidebarFooter>
     </Sidebar>

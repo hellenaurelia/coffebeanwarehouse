@@ -10,7 +10,6 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="rounded-full"><Sun className="h-4 w-4" /></Button>
         <Link href="/notifications">
           <Button variant="ghost" size="icon" className="rounded-full relative">
             <Bell className="h-4 w-4" />
