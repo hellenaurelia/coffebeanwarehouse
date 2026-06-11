@@ -36,6 +36,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // ─── Dataset per rentang waktu ───────────────────────────────────────────────
 
@@ -345,10 +347,269 @@ export default function ReportsPage() {
     if (customRange.from && customRange.to) setActiveCustom(true);
   };
 
-  // Export PDF via browser print
   const handleExportPDF = () => {
-    window.print();
-  };
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+    });
+
+    const now = new Date();
+
+    const dateStr = now.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    });
+
+    const fileDate =
+        `${now.getFullYear()}` +
+        `${String(now.getMonth() + 1).padStart(2, "0")}` +
+        `${String(now.getDate()).padStart(2, "0")}`;
+
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Laporan Performa Bisnis", 14, 18);
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(120);
+
+    doc.text(
+        `Dicetak pada ${dateStr} · Periode: ${
+        calendarLabel ?? data.label
+        }`,
+        14,
+        25
+    );
+
+    doc.setTextColor(0);
+
+    // KPI
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Ringkasan KPI", 14, 35);
+
+    autoTable(doc, {
+        startY: 39,
+        head: [["Metrik", "Nilai", "Keterangan"]],
+        body: [
+        [
+            "Total Pendapatan",
+            fmt(totalPenjualan),
+            `${data.pendapatanTrend} vs periode lalu`,
+        ],
+        [
+            "Total Pengeluaran",
+            fmt(totalPengeluaran),
+            `${data.pengeluaranTrend} vs periode lalu`,
+        ],
+        [
+            "Laba Bersih",
+            fmt(labaBersih),
+            `Margin ${margin}%`,
+        ],
+        [
+            "Total Stok Gudang",
+            data.stokKg,
+            `${data.kritisCount} item perlu re-order`,
+        ],
+        ],
+        styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        },
+        headStyles: {
+        fillColor: [101, 67, 33],
+        textColor: 255,
+        },
+        alternateRowStyles: {
+        fillColor: [250, 245, 240],
+        },
+    });
+
+    // Penjualan
+    let currentY = (doc as any).lastAutoTable.finalY + 8;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Penjualan & Pengeluaran", 14, currentY);
+
+    autoTable(doc, {
+        startY: currentY + 4,
+        head: [
+        [
+            "Periode",
+            "Penjualan",
+            "Pengeluaran",
+            "Laba",
+        ],
+        ],
+        body: data.sales.map((s) => [
+        s.day,
+        fmt(s.penjualan),
+        fmt(s.pengeluaran),
+        fmt(s.penjualan - s.pengeluaran),
+        ]),
+        styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        },
+        headStyles: {
+        fillColor: [101, 67, 33],
+        textColor: 255,
+        },
+        alternateRowStyles: {
+        fillColor: [250, 245, 240],
+        },
+    });
+
+    // Top Products
+    currentY = (doc as any).lastAutoTable.finalY + 8;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Top 5 Barang Terlaris", 14, currentY);
+
+    autoTable(doc, {
+        startY: currentY + 4,
+        head: [
+        [
+            "#",
+            "Nama Produk",
+            "SKU",
+            "Terjual",
+            "Volume (kg)",
+            "Omzet",
+        ],
+        ],
+        body: data.topProducts.map((p) => [
+        p.rank,
+        p.name,
+        p.sku,
+        p.terjual,
+        p.kg,
+        fmt(p.omzet),
+        ]),
+        styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        },
+        headStyles: {
+        fillColor: [101, 67, 33],
+        textColor: 255,
+        },
+        alternateRowStyles: {
+        fillColor: [250, 245, 240],
+        },
+    });
+
+    // Pengeluaran
+    currentY = (doc as any).lastAutoTable.finalY + 8;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Rincian Pengeluaran", 14, currentY);
+
+    autoTable(doc, {
+        startY: currentY + 4,
+        head: [["Kategori", "Nominal"]],
+        body: data.expense.map((e) => [
+        e.kategori,
+        fmt(e.nominal),
+        ]),
+        styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        },
+        headStyles: {
+        fillColor: [101, 67, 33],
+        textColor: 255,
+        },
+        alternateRowStyles: {
+        fillColor: [250, 245, 240],
+        },
+    });
+
+    // Stok Gudang
+    currentY = (doc as any).lastAutoTable.finalY + 8;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Monitoring Stok Gudang", 14, currentY);
+
+    autoTable(doc, {
+        startY: currentY + 4,
+        head: [
+        [
+            "Produk",
+            "Stok",
+            "Kapasitas",
+            "Terisi (%)",
+            "Status",
+        ],
+        ],
+        body: data.stok.map((s) => [
+        s.name,
+        s.stok,
+        s.kapasitas,
+        `${Math.round(
+            (s.stok / s.kapasitas) * 100
+        )}%`,
+        s.status,
+        ]),
+        styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        },
+        headStyles: {
+        fillColor: [101, 67, 33],
+        textColor: 255,
+        },
+        alternateRowStyles: {
+        fillColor: [250, 245, 240],
+        },
+        didParseCell(tableData) {
+        if (
+            tableData.column.index === 4 &&
+            tableData.section === "body"
+        ) {
+            const status = tableData.cell.raw as string;
+
+            tableData.cell.styles.textColor =
+            status === "Kritis"
+                ? [220, 38, 38]
+                : status === "Menipis"
+                ? [161, 98, 7]
+                : [5, 150, 105];
+
+            tableData.cell.styles.fontStyle = "bold";
+        }
+        },
+    });
+
+    // Footer
+    const pages = doc.getNumberOfPages();
+
+    for (let i = 1; i <= pages; i++) {
+        doc.setPage(i);
+
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+
+        doc.text(`Halaman ${i} dari ${pages}`, 14, 290);
+
+        doc.text(
+        "Dokumen ini digenerate otomatis oleh sistem.",
+        105,
+        290,
+        { align: "center" }
+        );
+    }
+
+    doc.save(`laporan-kopi-${fileDate}.pdf`);
+    };
 
   return (
     <>
