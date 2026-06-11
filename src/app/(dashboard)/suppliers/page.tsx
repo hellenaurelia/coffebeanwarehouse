@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, MapPin, Phone, Mail, Truck, PackageCheck, Users, X, ClipboardList, Pencil, Trash2 } from "lucide-react";
 
-// Import komponen modal yang sudah dipisah
 import { BTN_OUTLINE, BTN_PRIMARY, PORows } from "./_components/shared-components";
 import { SupplierModal } from "./_components/supplier-modal";
 import { DeleteModal } from "./_components/delete-modal";
@@ -16,13 +15,15 @@ import { DetailModal } from "./_components/detail-supplier-modal";
 import { BuatPOModal } from "./_components/make-po-modal";
 import { PODetailModal } from "./_components/detail-historypo-modal";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 export type SupplierStatus = "Aktif" | "Pending" | "Non-aktif";
 export type POStatus       = "Dikirim" | "Diterima" | "Pending";
 
+// Tipe Baru untuk item Biji Kopi di level Supplier beserta harganya
+export type SupplierBean = { name: string; price: number };
+
 export type Supplier = {
   id: string; name: string; pic: string; region: string;
-  phone: string; email: string; beans: string[];
+  phone: string; email: string; beans: SupplierBean[]; // Diubah dari string[]
   lastDelivery: string; totalKg: number; status: SupplierStatus;
   address?: string; notes?: string;
 };
@@ -41,15 +42,15 @@ type ModalState =
   | { type: "po";       supplier?: Supplier }
   | { type: "po-detail"; po: PO };
 
-// ─── Seed Data ────────────────────────────────────────────────────────────────
+// Seed data supplier sekarang langsung membawa master data harga kopi
 const initSuppliers: Supplier[] = [
-  { id:"S-001", name:"Koperasi Tani Gayo",    pic:"Pak Munir",  region:"Aceh Tengah",    phone:"+62 812-3344-5566", email:"munir@gayotani.id",  beans:["Arabica","Gayo Wine"],       lastDelivery:"2 hari lalu",  totalKg:1840, status:"Aktif",    address:"Jl. Raya Bebesen No.12, Aceh Tengah",         notes:"Supplier utama arabica premium. Min order 100kg." },
-  { id:"S-002", name:"Kintamani Highland",    pic:"Bu Wayan",    region:"Bangli, Bali",   phone:"+62 821-7788-9900", email:"wayan@kintamani.co", beans:["Arabica Honey"],             lastDelivery:"5 hari lalu",  totalKg:1240, status:"Aktif",    address:"Desa Batur, Kintamani, Bangli",               notes:"Musim panen April–Juni. Kualitas konsisten." },
-  { id:"S-003", name:"Toraja Coffee Hub",     pic:"Pak Reynaldi",region:"Tana Toraja",    phone:"+62 813-2211-0099", email:"rey@torajacoffee.id",beans:["Arabica Sapan"],             lastDelivery:"1 minggu lalu", totalKg:980,  status:"Aktif",    address:"Jl. Pongtiku 45, Rantepao, Tana Toraja" },
-  { id:"S-004", name:"Lampung Robusta Mills", pic:"Pak Hendra",  region:"Lampung Barat",  phone:"+62 822-5544-3322", email:"hendra@lrm.id",      beans:["Robusta AAA","Robusta Honey"],lastDelivery:"3 hari lalu",  totalKg:3120, status:"Aktif",    address:"Kawasan Industri Way Laga, Lampung Barat",    notes:"Lead time 3 hari kerja. Harga negotiable untuk >500kg." },
-  { id:"S-005", name:"Civet Farm Lampung",    pic:"Pak Jaka",    region:"Liwa, Lampung",  phone:"+62 815-9988-7766", email:"jaka@civetfarm.id",  beans:["Luwak Premium"],             lastDelivery:"2 minggu lalu", totalKg:64,   status:"Aktif",    address:"Desa Sukaraja, Liwa, Lampung Barat",          notes:"Produksi terbatas 5–10kg/minggu." },
-  { id:"S-006", name:"Preanger Estate",       pic:"Bu Salma",    region:"Garut, Jawa Barat",phone:"+62 819-1122-3344",email:"salma@preanger.id", beans:["Arabica Java"],              lastDelivery:"10 hari lalu",  totalKg:1520, status:"Pending",  address:"Perkebunan Cikajang, Garut",                  notes:"Menunggu verifikasi dokumen BPOM." },
-  { id:"S-007", name:"Riau Liberica Co",      pic:"Pak Daud",    region:"Meranti, Riau",  phone:"+62 811-2233-4455", email:"daud@liberica.id",   beans:["Liberica"],                  lastDelivery:"3 minggu lalu", totalKg:280,  status:"Non-aktif",address:"Jl. Merbau No.7, Selat Panjang, Riau" },
+  { id:"S-001", name:"Koperasi Tani Gayo",    pic:"Pak Munir",  region:"Aceh Tengah",    phone:"+62 812-3344-5566", email:"munir@gayotani.id",  beans:[{name:"Arabica", price:95000},{name:"Gayo Wine", price:180000}],       lastDelivery:"2 hari lalu",  totalKg:1840, status:"Aktif",    address:"Jl. Raya Bebesen No.12, Aceh Tengah",         notes:"Supplier utama arabica premium. Min order 100kg." },
+  { id:"S-002", name:"Kintamani Highland",    pic:"Bu Wayan",    region:"Bangli, Bali",   phone:"+62 821-7788-9900", email:"wayan@kintamani.co", beans:[{name:"Arabica Honey", price:120000}],             lastDelivery:"5 hari lalu",  totalKg:1240, status:"Aktif",    address:"Desa Batur, Kintamani, Bangli",               notes:"Musim panen April–Juni. Kualitas konsisten." },
+  { id:"S-003", name:"Toraja Coffee Hub",     pic:"Pak Reynaldi",region:"Tana Toraja",    phone:"+62 813-2211-0099", email:"rey@torajacoffee.id",beans:[{name:"Arabica Sapan", price:110000}],             lastDelivery:"1 minggu lalu", totalKg:980,  status:"Aktif",    address:"Jl. Pongtiku 45, Rantepao, Tana Toraja" },
+  { id:"S-004", name:"Lampung Robusta Mills", pic:"Pak Hendra",  region:"Lampung Barat",  phone:"+62 822-5544-3322", email:"hendra@lrm.id",      beans:[{name:"Robusta AAA", price:48000},{name:"Robusta Honey", price:52000}],lastDelivery:"3 hari lalu",  totalKg:3120, status:"Aktif",    address:"Kawasan Industri Way Laga, Lampung Barat",    notes:"Lead time 3 hari kerja. Harga negotiable untuk >500kg." },
+  { id:"S-005", name:"Civet Farm Lampung",    pic:"Pak Jaka",    region:"Liwa, Lampung",  phone:"+62 815-9988-7766", email:"jaka@civetfarm.id",  beans:[{name:"Luwak Premium", price:850000}],             lastDelivery:"2 minggu lalu", totalKg:64,   status:"Aktif",    address:"Desa Sukaraja, Liwa, Lampung Barat",          notes:"Produksi terbatas 5–10kg/minggu." },
+  { id:"S-006", name:"Preanger Estate",       pic:"Bu Salma",    region:"Garut, Jawa Barat",phone:"+62 819-1122-3344",email:"salma@preanger.id", beans:[{name:"Arabica Java", price:105000}],              lastDelivery:"10 hari lalu",  totalKg:1520, status:"Pending",  address:"Perkebunan Cikajang, Garut",                  notes:"Menunggu verifikasi dokumen BPOM." },
+  { id:"S-007", name:"Riau Liberica Co",      pic:"Pak Daud",    region:"Meranti, Riau",  phone:"+62 811-2233-4455", email:"daud@liberica.id",   beans:[{name:"Liberica", price:65000}],                  lastDelivery:"3 minggu lalu", totalKg:280,  status:"Non-aktif",address:"Jl. Merbau No.7, Selat Panjang, Riau" },
 ];
 
 const initPOs: PO[] = [
@@ -61,7 +62,6 @@ const initPOs: PO[] = [
   { id:"PO-0036", supplierId:"S-006", supplierName:"Preanger Estate",       date:"20 Apr 2026", items:[{bean:"Arabica Java",qty:200,pricePerKg:105000}],                                        status:"Pending",  estimatedArrival:"TBD",         notes:"Menunggu konfirmasi jadwal pengiriman." },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtKg = (n: number) => n.toLocaleString("id-ID") + " kg";
 const initials = (name: string) => name.split(" ").map(w => w[0]).slice(0, 2).join("");
 const nextId = (list: { id: string }[], prefix: string, pad: number) => {
@@ -74,10 +74,10 @@ const statusTone = (s: SupplierStatus) =>
   s === "Pending" ? "bg-amber-500/10 text-amber-700 border-amber-500/20" :
                     "bg-muted text-muted-foreground border-border";
 
+const BTN_HOVER_COKLAT = "border border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-colors";
 const BTN_ICON_DEL = "h-8 w-8 p-0 rounded-lg border border-border text-muted-foreground hover:border-red-300 hover:bg-red-50 hover:text-red-600 transition-colors";
-const BTN_ICON_EDT = "h-8 w-8 p-0 rounded-lg border border-border text-muted-foreground hover:bg-secondary/80 hover:text-foreground transition-colors";
+const BTN_ICON_EDT = `h-8 w-8 p-0 rounded-lg ${BTN_HOVER_COKLAT}`;
 
-// ─── POTable ──────────────────────────────────────────────────────────────────
 function POTable({ pos, onDetail }: { pos: PO[], onDetail: (po: PO) => void }) {
   return (
     <Card className="shadow-soft border-border/60">
@@ -100,7 +100,6 @@ function POTable({ pos, onDetail }: { pos: PO[], onDetail: (po: PO) => void }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>(initSuppliers);
   const [pos, setPOs]             = useState<PO[]>(initPOs);
@@ -108,9 +107,10 @@ export default function SuppliersPage() {
   const [search, setSearch]       = useState("");
   const close = () => setModal({ type: "none" });
 
+  // Menyesuaikan pencarian array objek beans
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return q ? suppliers.filter(s => [s.name, s.region, s.pic, ...s.beans].some(v => v.toLowerCase().includes(q))) : suppliers;
+    return q ? suppliers.filter(s => [s.name, s.region, s.pic, ...s.beans.map(b => b.name)].some(v => v.toLowerCase().includes(q))) : suppliers;
   }, [suppliers, search]);
 
   const handleSaveSupplier = (data: Omit<Supplier, "id"> & { id?: string }) => {
@@ -177,7 +177,8 @@ export default function SuppliersPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1">{s.beans.map(b => <Badge key={b} variant="outline" className="text-[10px] bg-secondary/60">{b}</Badge>)}</div>
+                  {/* UPDATE: Akses b.name karena b sudah berbentuk objek */}
+                  <div className="flex flex-wrap gap-1">{s.beans.map(b => <Badge key={b.name} variant="outline" className="text-[10px] bg-secondary/60">{b.name}</Badge>)}</div>
 
                   <div className="space-y-1.5 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2"><MapPin className="h-3 w-3" />{s.region}</div>
@@ -193,7 +194,7 @@ export default function SuppliersPage() {
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" className={BTN_ICON_DEL} onClick={() => setModal({ type:"hapus", supplier:s })} title="Hapus"><Trash2 className="h-3.5 w-3.5" /></Button>
                     <Button variant="outline" size="sm" className={BTN_ICON_EDT} onClick={() => setModal({ type:"supplier", supplier:s })} title="Edit"><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button variant="outline" size="sm" className={`flex-1 ${BTN_OUTLINE} h-8 text-xs`} onClick={() => setModal({ type:"detail", supplier:s })}>Detail</Button>
+                    <Button variant="outline" size="sm" className={`flex-1 h-8 text-xs rounded-lg ${BTN_HOVER_COKLAT}`} onClick={() => setModal({ type:"detail", supplier:s })}>Detail</Button>
                     <Button size="sm" className={`flex-1 ${BTN_PRIMARY} h-8 text-xs`} onClick={() => setModal({ type:"po", supplier:s })}>Buat PO</Button>
                   </div>
                 </CardContent>

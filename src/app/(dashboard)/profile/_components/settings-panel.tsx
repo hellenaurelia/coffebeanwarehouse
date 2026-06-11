@@ -39,10 +39,35 @@ const TABS: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
 
 function ProfilPanel() {
   const [saved, setSaved] = useState(false);
+  const [phone, setPhone] = useState("+62 812-3456-7890");
 
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+
+    let cleaned = val.replace(/(?!^\+)[^\d]/g, "");
+
+    if (cleaned.startsWith("0")) {
+      cleaned = "+62" + cleaned.slice(1);
+    } else if (cleaned.startsWith("62")) {
+      cleaned = "+" + cleaned;
+    }
+
+    let digits = cleaned.replace(/\D/g, "");
+    if (digits.length > 2) {
+      let formatted = "+" + digits.substring(0, 2);
+      if (digits.length > 2) formatted += " " + digits.substring(2, 5); 
+      if (digits.length > 5) formatted += "-" + digits.substring(5, 9);
+      if (digits.length > 9) formatted += "-" + digits.substring(9, 14); 
+      
+      setPhone(formatted);
+    } else {
+      setPhone(cleaned);
+    }
   };
 
   return (
@@ -62,7 +87,13 @@ function ProfilPanel() {
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">No. Telepon</Label>
-          <Input defaultValue="+62 812-3456-7890" className="bg-secondary/50 border-border/60" />
+          <Input 
+            value={phone} 
+            onChange={handlePhoneChange} 
+            placeholder="+62 8XX-XXXX-XXXX"
+            maxLength={18}
+            className="bg-secondary/50 border-border/60" 
+          />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Outlet Utama</Label>
@@ -104,7 +135,7 @@ function KeamananPanel() {
   const toggle = (k: keyof typeof show) => setShow((p) => ({ ...p, [k]: !p[k] }));
 
   const sessions = [
-    { device: "MacBook Pro 14\"", location: "Jakarta, ID", time: "Aktif sekarang", current: true },
+    { device: 'MacBook Pro 14"', location: "Jakarta, ID", time: "Aktif sekarang", current: true },
     { device: "iPhone 14 Pro", location: "Jakarta, ID", time: "2 jam lalu", current: false },
     { device: "Chrome · Windows", location: "Tangerang, ID", time: "Kemarin, 19.45", current: false },
   ];
@@ -233,13 +264,16 @@ function NotifikasiPanel() {
           </div>
           {/* Custom toggle switch */}
           <button
+            type="button"
+            role="switch"
+            aria-checked={prefs[item.key]}
             onClick={() => toggle(item.key)}
-            className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${
-              prefs[item.key] ? "bg-primary" : "bg-border"
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              prefs[item.key] ? "bg-primary" : "bg-muted"
             }`}
           >
             <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
                 prefs[item.key] ? "translate-x-5" : "translate-x-0.5"
               }`}
             />

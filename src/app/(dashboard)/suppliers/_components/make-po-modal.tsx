@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, ClipboardList } from "lucide-react";
@@ -21,6 +21,23 @@ export function BuatPOModal({ suppliers, defaultSupplier, onClose, onSave }: {
   const selected = suppliers.find(s => s.id === supplierId);
   const total = items.reduce((acc, i) => acc + (parseInt(i.qty,10)||0) * (parseInt(i.pricePerKg,10)||0), 0);
   const setItem = (i: number, k: string, v: string) => setItems(p => p.map((item, idx) => idx === i ? { ...item, [k]: v } : item));
+
+  useEffect(() => {
+    if (!defaultSupplier || supplierId !== defaultSupplier.id) {
+       setItems([{ bean:"", qty:"", pricePerKg:"" }]);
+    }
+  }, [supplierId, defaultSupplier]);
+
+  const handleBeanSelect = (i: number, selectedBeanName: string) => {
+    const targetBean = selected?.beans.find(b => b.name === selectedBeanName);
+    const configuredPrice = targetBean ? targetBean.price.toString() : "";
+
+    setItems(p => p.map((item, idx) => idx === i ? { 
+      ...item, 
+      bean: selectedBeanName, 
+      pricePerKg: configuredPrice
+    } : item));
+  };
 
   function handleSave() {
     const e: Record<string, string> = {};
@@ -55,7 +72,7 @@ export function BuatPOModal({ suppliers, defaultSupplier, onClose, onSave }: {
 
         {selected && (
           <div className="flex flex-wrap gap-1">
-            {selected.beans.map(b => <Badge key={b} variant="outline" className="text-xs bg-secondary/60">{b}</Badge>)}
+            {selected.beans.map(b => <Badge key={b.name} variant="outline" className="text-xs bg-secondary/60">{b.name}</Badge>)}
           </div>
         )}
 
@@ -74,11 +91,21 @@ export function BuatPOModal({ suppliers, defaultSupplier, onClose, onSave }: {
           <div className="space-y-2">
             {items.map((item, i) => (
               <div key={i} className="flex gap-2 items-start">
-                <Input className={`${INP} flex-1`} placeholder="Jenis biji kopi" value={item.bean} onChange={e => setItem(i, "bean", e.target.value)} />
+                
+                <select 
+                  className={`${INP} flex-1 border border-input px-3 disabled:opacity-50`} 
+                  value={item.bean} 
+                  onChange={e => handleBeanSelect(i, e.target.value)}
+                  disabled={!selected}
+                >
+                  <option value="">{selected ? "Pilih Biji Kopi..." : "Pilih Supplier Dulu"}</option>
+                  {selected?.beans.map(b => <option key={b.name} value={b.name}>{b.name}</option>)}
+                </select>
+
                 <NumericInput className={`${INP} w-24`} placeholder="Qty (kg)" value={item.qty} onChange={v => setItem(i, "qty", v)} />
                 <NumericInput className={`${INP} w-32`} placeholder="Harga/kg" value={item.pricePerKg} onChange={v => setItem(i, "pricePerKg", v)} />
                 {items.length > 1 && (
-                  <button onClick={() => setItems(p => p.filter((_,idx) => idx !== i))} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground transition-colors shrink-0"><X className="h-4 w-4" /></button>
+                  <button onClick={() => setItems(p => p.filter((_,idx) => idx !== i))} className="h-10 w-10 flex items-center justify-center rounded-xl border border-border hover:bg-secondary text-muted-foreground transition-colors shrink-0"><X className="h-4 w-4" /></button>
                 )}
               </div>
             ))}

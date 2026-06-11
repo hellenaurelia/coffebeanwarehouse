@@ -2,12 +2,21 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Mail, Trash2, Pencil, ClipboardList } from "lucide-react";
+import { MapPin, Phone, Mail, Trash2, Pencil, ClipboardList, Tag } from "lucide-react";
 import type { Supplier, PO } from "../page";
 import { Modal, ModalHeader, BTN_PRIMARY, BTN_OUTLINE, PORows, fmt, poTotal } from "./shared-components";
 
 const fmtKg = (n: number) => n.toLocaleString("id-ID") + " kg";
 const statusTone = (s: string) => s === "Aktif" ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : s === "Pending" ? "bg-amber-500/10 text-amber-700 border-amber-500/20" : "bg-muted text-muted-foreground border-border";
+
+const formatPhone = (phone: string) => {
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  const match = cleaned.match(/^(\+62|0)(\d{3,4})(\d{4})(\d{3,4})?$/);
+  if (match) {
+    return `${match[1]} ${match[2]}-${match[3]}${match[4] ? '-' + match[4] : ''}`;
+  }
+  return phone;
+};
 
 export function DetailModal({ supplier, pos, onClose, onBuatPO, onEdit, onHapus, onOpenPODetail }: {
   supplier: Supplier; pos: PO[]; onClose: () => void;
@@ -24,30 +33,47 @@ export function DetailModal({ supplier, pos, onClose, onBuatPO, onEdit, onHapus,
       <div className="p-6 space-y-6">
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline" className={statusTone(supplier.status)}>{supplier.status}</Badge>
-          {supplier.beans.map(b => <Badge key={b} variant="outline" className="text-xs bg-secondary/60">{b}</Badge>)}
         </div>
 
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="space-y-3 text-muted-foreground">
-            {([[MapPin, supplier.region],[Phone, supplier.phone],[Mail, supplier.email]] as [React.ElementType, string][]).map(([Icon, val]) => (
-              <div key={val} className="flex items-center gap-2"><Icon className="h-3.5 w-3.5 shrink-0" />{val}</div>
-            ))}
+            <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 shrink-0" />{supplier.region}</div>
+            <div className="flex items-center gap-2 font-mono text-foreground">
+              <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />{formatPhone(supplier.phone)}
+            </div>
+            <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 shrink-0" />{supplier.email}</div>
           </div>
           <div className="space-y-3">
             {([["Total Pasokan", fmtKg(supplier.totalKg)],["Terakhir Kirim", supplier.lastDelivery]] as [string,string][]).map(([label, val]) => (
-              <div key={label} className="bg-secondary/50 rounded-xl p-3 text-center">
-                <div className="text-xs text-muted-foreground">{label}</div>
-                <div className="font-semibold">{val}</div>
+              <div key={label} className="bg-secondary/50 rounded-xl p-3 text-center border border-border/50">
+                <div className="text-xs text-muted-foreground mb-1">{label}</div>
+                <div className="font-semibold text-foreground">{val}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mengambil nama & harga master langsung dari supplier */}
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Tag className="h-3.5 w-3.5" /> Daftar Biji Kopi & Harga Kontrak
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {supplier.beans.map(b => (
+              <div key={b.name} className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
+                <span className="font-medium text-sm">{b.name}</span>
+                <span className="text-sm font-semibold text-primary">{fmt(b.price)}/kg</span>
               </div>
             ))}
           </div>
         </div>
 
         {supplier.address && (
-          <div className="text-sm text-muted-foreground bg-secondary/30 rounded-xl px-4 py-3 flex gap-2">
+          <div className="text-sm text-muted-foreground bg-secondary/30 rounded-xl px-4 py-3 flex gap-2 border border-border/40">
             <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />{supplier.address}
           </div>
         )}
+        
         {supplier.notes && (
           <div className="text-sm bg-secondary/30 border border-border/60 rounded-xl px-4 py-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-1">Catatan</p>
@@ -61,7 +87,7 @@ export function DetailModal({ supplier, pos, onClose, onBuatPO, onEdit, onHapus,
             <span className="text-xs text-muted-foreground">{sPOs.length} PO · {fmt(totalValue)}</span>
           </div>
           {sPOs.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground bg-secondary/30 rounded-xl">Belum ada PO untuk supplier ini.</div>
+            <div className="text-center py-8 text-sm text-muted-foreground bg-secondary/30 rounded-xl border border-border/40">Belum ada PO untuk supplier ini.</div>
           ) : (
             <div className="rounded-xl overflow-hidden border border-border/50">
               <table className="w-full text-sm">
