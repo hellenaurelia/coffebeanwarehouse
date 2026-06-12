@@ -25,6 +25,7 @@ import {
   Moon,
   Laptop,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 
 type SettingsTab = "profil" | "keamanan" | "notifikasi" | "tampilan";
 
@@ -285,7 +286,7 @@ function NotifikasiPanel() {
 }
 
 function TampilanPanel() {
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
+  const { theme, setTheme } = useTheme();
   const [lang, setLang] = useState("id");
 
   const themes = [
