@@ -357,16 +357,15 @@ export default function UsersPage() {
                   <tr className="border-y border-border/60 bg-secondary/40">
                     <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Pengguna</th>
                     <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Role</th>
-                    <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Outlet</th>
                     <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Status</th>
-                    <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Login Terakhir</th>
-                    <th className="px-6 py-3 text-right text-xs uppercase tracking-wider text-muted-foreground font-medium">Aksi</th>
+                    <th className="px-4 py-3 text-center text-xs uppercase tracking-wider text-muted-foreground font-medium">Login Terakhir</th>
+                    <th className="px-6 py-3 text-center text-xs uppercase tracking-wider text-muted-foreground font-medium">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-16 text-center text-muted-foreground text-sm">
+                      <td colSpan={5} className="py-16 text-center text-muted-foreground text-sm">
                         Tidak ada pengguna yang sesuai pencarian.
                       </td>
                     </tr>
@@ -396,9 +395,6 @@ export default function UsersPage() {
                           </Badge>
                         </td>
 
-                        {/* Outlet */}
-                        <td className="px-4 py-4 text-muted-foreground text-sm">{u.outlet}</td>
-
                         {/* Status */}
                         <td className="px-4 py-4">
                           <Badge variant="outline" className={`text-xs ${status.color}`}>
@@ -407,11 +403,11 @@ export default function UsersPage() {
                         </td>
 
                         {/* Last login */}
-                        <td className="px-4 py-4 text-muted-foreground text-xs">{u.lastLogin}</td>
+                        <td className="px-4 py-4 text-muted-foreground text-xs text-center">{u.lastLogin}</td>
 
                         {/* Actions */}
                         <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-center gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
