@@ -8,13 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useUser } from "../page";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   User,
   Lock,
   Bell,
@@ -48,7 +41,6 @@ function ProfilPanel() {
     username: user.name.toLowerCase().replace(" ", "."),
     email: user.email,
     phone: "+62 812-3456-7890",
-    outlet: user.outlet,
   });
 
   const set = (k: keyof typeof form) =>
@@ -72,18 +64,12 @@ function ProfilPanel() {
     }
   };
 
-  const outletLabel: Record<string, string> = {
-    senopati: "Senopati",
-    kemang: "Kemang",
-    sudirman: "Sudirman",
-  };
-
   const handleSave = () => {
     setUser({
       ...user,
       name: form.name,
       email: form.email,
-      outlet: outletLabel[form.outlet] ?? form.outlet,
+      outlet: "Senopati",
       avatar: form.name
         .split(" ")
         .map((w) => w[0])
@@ -101,7 +87,6 @@ function ProfilPanel() {
       username: user.name.toLowerCase().replace(" ", "."),
       email: user.email,
       phone: form.phone,
-      outlet: user.outlet.toLowerCase(),
     });
   };
 
@@ -131,17 +116,8 @@ function ProfilPanel() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Outlet Utama</Label>
-          <Select value={form.outlet} onValueChange={(v) => setForm((p) => ({ ...p, outlet: v }))}>
-            <SelectTrigger className="bg-secondary/50 border-border/60">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="senopati">Senopati</SelectItem>
-              <SelectItem value="kemang">Kemang</SelectItem>
-              <SelectItem value="sudirman">Sudirman</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Outlet</Label>
+          <Input value="Senopati" disabled className="bg-secondary/30 border-border/40 text-muted-foreground" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Role</Label>
