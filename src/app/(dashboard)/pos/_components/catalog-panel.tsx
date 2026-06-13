@@ -25,7 +25,7 @@ export function CatalogPanel({ cart, onAdd }: Props) {
     <section className="p-4 md:p-6 space-y-4 overflow-y-auto">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Scan barcode atau cari produk…" className="h-11 pl-10 rounded-xl bg-card border-border"
+        <Input placeholder="Cari produk…" className="h-11 pl-10 rounded-xl bg-card border-border"
           value={search} onChange={e => setSearch(e.target.value)} />
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
