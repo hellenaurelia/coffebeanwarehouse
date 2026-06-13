@@ -15,6 +15,8 @@ import {
 
 import { DetailModal } from "./transactions/_components/detailModal";
 import type { Trx } from "./transactions/types";
+import { BuatPOModal } from "./suppliers/_components/make-po-modal"; 
+import type { Supplier } from "./suppliers/page"; 
 
 const stats = [
   { label: "Penjualan Hari Ini", value: "Rp 12.480.000", delta: "+18.2%", up: true, icon: Receipt },
@@ -67,6 +69,8 @@ const formattedDate = new Intl.DateTimeFormat("id-ID", {
 }).format(new Date()).replace(",", " ·");
 
 export default function DashboardPage() {
+
+  const [showPO, setShowPO] = useState(false);
  
   const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
 
@@ -183,11 +187,13 @@ export default function DashboardPage() {
                 <p className="mt-3 text-sm text-primary-foreground">
                   <strong>Ethiopia Yirgacheffe</strong> tersisa 12 kg. Estimasi habis dalam 2 hari.
                 </p>
-                <Link href="/suppliers" className="text-xs text-primary-foreground/90 hover:text-primary-foreground mt-2 inline-block">
-                  <Button size="sm" className="mt-4 w-full bg-crema/40 text-primary-foreground hover:bg-crema/30">
-                    Place Purchase Order
-                  </Button>
-                </Link>
+               <Button
+                  size="sm"
+                  className="mt-4 w-full bg-crema/40 text-primary-foreground hover:bg-crema/30"
+                  onClick={() => setShowPO(true)}
+                >
+                  Place Purchase Order
+                </Button>
               </CardContent>
             </Card>
             
@@ -221,6 +227,17 @@ export default function DashboardPage() {
         <DetailModal 
           trx={selectedTrx} 
           onClose={() => setSelectedTrx(null)} 
+        />
+      )}
+
+      {showPO && (
+        <BuatPOModal
+          suppliers={[]} // ganti dengan data suppliers jika sudah ada
+          onClose={() => setShowPO(false)}
+          onSave={(po) => {
+            console.log("PO dibuat:", po);
+            setShowPO(false);
+          }}
         />
       )}
     </>
