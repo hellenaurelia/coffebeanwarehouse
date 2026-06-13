@@ -121,9 +121,9 @@ export default function SuppliersPage() {
   const handleSavePO = (partial: Omit<PO, "id">) => { setPOs(p => [{ ...partial, id: nextId(pos, "PO-", 4) }, ...p]); close(); };
 
   const stats = [
-    { label:"Total Supplier",   value:`${suppliers.length}`,                               sub:`${suppliers.filter(s=>s.status==="Aktif").length} aktif`,   icon:Users },
-    { label:"Total Pasokan",    value:fmtKg(suppliers.reduce((a,s)=>a+s.totalKg,0)),       sub:"Semua supplier",                                              icon:PackageCheck },
-    { label:"Pengiriman Aktif", value:`${pos.filter(p=>p.status==="Dikirim").length}`,      sub:"Sedang dalam perjalanan",                                     icon:Truck },
+    { label:"Supplier Aktif",     value:`${suppliers.filter(s=>s.status==="Aktif").length}`,  sub:"Partner aktif",      icon:Users },
+    { label:"Pasokan Bulan Ini",  value:fmtKg(suppliers.reduce((a,s)=>a+s.totalKg,0)),        sub:"+8% vs bulan lalu",  icon:PackageCheck },
+    { label:"Nilai PO Aktif",     value:`Rp28.000.000`,      sub:"+15% vs bulan lalu", icon:Truck },
   ];
 
   return (
