@@ -1,40 +1,71 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Receipt, TrendingUp, Package, Clock } from "lucide-react";
+import { Receipt, TrendingUp, Package, Clock, ArrowDownUp, BoxesIcon, AlertTriangle, RefreshCw } from "lucide-react";
+import { useUser } from "../page"; 
 
-const stats = [
+const kasirStats = [
   {
     label: "Transaksi Bulan Ini",
     value: "1.284",
     sub: "+12% dari bulan lalu",
-    up: true,
     icon: Receipt,
   },
   {
     label: "Total Penjualan",
     value: "Rp 48.2jt",
     sub: "Akumulasi 30 hari",
-    up: true,
     icon: TrendingUp,
   },
   {
     label: "Item Diproses",
     value: "3.712",
     sub: "Unit terjual",
-    up: true,
     icon: Package,
   },
   {
     label: "Rata-rata Shift",
     value: "7.4 jam",
     sub: "Per hari kerja",
-    up: null,
     icon: Clock,
   },
 ];
 
+const gudangStats = [
+  {
+    label: "Item Masuk Bulan Ini",
+    value: "2.140",
+    sub: "+8% dari bulan lalu",
+    icon: ArrowDownUp,
+  },
+  {
+    label: "Total Stok Aktif",
+    value: "18.430",
+    sub: "Unit tersedia",
+    icon: BoxesIcon,
+  },
+  {
+    label: "Stok Menipis",
+    value: "7",
+    sub: "Item perlu restock",
+    icon: AlertTriangle,
+  },
+  {
+    label: "Rekonsiliasi",
+    value: "3x",
+    sub: "Bulan ini",
+    icon: RefreshCw,
+  },
+];
+
 export function ActivityStats() {
+  const { user } = useUser();
+
+  // Owner dan manajer tidak menampilkan stats
+  if (user.role === "owner" || user.role === "manajer") return null;
+
+  const stats = user.role === "gudang" ? gudangStats : kasirStats;
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((s) => (
