@@ -1,10 +1,14 @@
-import { Bell, Sun } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import Link from "next/link";
 
 export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-6 backdrop-blur-md">
+      
+      <SidebarTrigger className="md:hidden" />
+
       <div className="flex flex-col leading-tight">
         <h1 className="font-display text-lg font-semibold text-foreground">{title}</h1>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
