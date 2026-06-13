@@ -358,23 +358,6 @@ function TampilanPanel() {
       </div>
 
       <div className="border-t border-border/60" />
-
-      {/* Language */}
-      <div className="space-y-3">
-        <div>
-          <h3 className="text-sm font-semibold">Bahasa</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Bahasa antarmuka aplikasi</p>
-        </div>
-        <Select value={lang} onValueChange={setLang}>
-          <SelectTrigger className="bg-secondary/50 border-border/60 w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="id">🇮🇩 Bahasa Indonesia</SelectItem>
-            <SelectItem value="en">🇬🇧 English</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   );
 }
