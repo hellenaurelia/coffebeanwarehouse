@@ -18,16 +18,20 @@ export default function SuppliersPage() {
   const { suppliers, setModal } = useSupplierContext();
   const [search, setSearch] = useState("");
 
-  // Menyesuaikan pencarian array objek beans
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return q ? suppliers.filter(s => [s.name, s.region, s.pic, ...s.beans.map(b => b.name)].some(v => v.toLowerCase().includes(q))) : suppliers;
+    return q
+      ? suppliers.filter(s =>
+          [s.name, s.region, s.pic, ...s.beans.map(b => b.name), ...s.beans.map(b => b.type)]
+            .some(v => v.toLowerCase().includes(q))
+        )
+      : suppliers;
   }, [suppliers, search]);
 
   const stats = [
-    { label:"Supplier Aktif",     value:`${suppliers.filter(s=>s.status==="Aktif").length}`,  sub:"Partner aktif",      icon:Users },
-    { label:"Pasokan Bulan Ini",  value:fmtKg(suppliers.reduce((a,s)=>a+s.totalKg,0)),        sub:"+8% vs bulan lalu",  icon:PackageCheck },
-    { label:"Nilai PO Aktif",     value:`Rp28.000.000`,      sub:"+15% vs bulan lalu", icon:Truck },
+    { label:"Supplier Aktif",    value:`${suppliers.filter(s=>s.status==="Aktif").length}`, sub:"Partner aktif",      icon:Users },
+    { label:"Pasokan Bulan Ini", value:fmtKg(suppliers.reduce((a,s)=>a+s.totalKg,0)),      sub:"+8% vs bulan lalu",  icon:PackageCheck },
+    { label:"Nilai PO Aktif",    value:`Rp28.000.000`,                                      sub:"+15% vs bulan lalu", icon:Truck },
   ];
 
   return (
@@ -55,7 +59,7 @@ export default function SuppliersPage() {
         <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
           <div className="relative flex-1 max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Cari supplier, region, atau jenis biji…" className="h-10 pl-10 rounded-xl bg-secondary/50" value={search} onChange={e => setSearch(e.target.value)} />
+            <Input placeholder="Cari supplier, region, jenis biji, atau tipe…" className="h-10 pl-10 rounded-xl bg-secondary/50" value={search} onChange={e => setSearch(e.target.value)} />
             {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>}
           </div>
           <div className="flex gap-2">
@@ -72,17 +76,27 @@ export default function SuppliersPage() {
               <Card key={s.id} className="border-border/60 hover:shadow-warm transition-all">
                 <CardContent className="p-5 space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="h-12 w-12 rounded-xl gradient-crema flex items-center justify-center shrink-0 shadow-warm"><span className="font-display text-base font-semibold text-primary-foreground">{initials(s.name)}</span></div>
+                    <div className="h-12 w-12 rounded-xl gradient-crema flex items-center justify-center shrink-0 shadow-warm">
+                      <span className="font-display text-base font-semibold text-primary-foreground">{initials(s.name)}</span>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0"><h3 className="font-display text-base font-semibold truncate">{s.name}</h3><div className="text-xs text-muted-foreground">{s.id} · {s.pic}</div></div>
+                        <div className="min-w-0">
+                          <h3 className="font-display text-base font-semibold truncate">{s.name}</h3>
+                          <div className="text-xs text-muted-foreground">{s.id} · {s.pic}</div>
+                        </div>
                         <Badge variant="outline" className={statusTone(s.status)}>{s.status}</Badge>
                       </div>
                     </div>
                   </div>
 
-                  {/* UPDATE: Akses b.name karena b sudah berbentuk objek */}
-                  <div className="flex flex-wrap gap-1">{s.beans.map(b => <Badge key={b.name} variant="outline" className="text-[10px] bg-secondary/60">{b.name}</Badge>)}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {s.beans.map(b => (
+                      <Badge key={b.name} variant="outline" className="text-[10px] bg-secondary/60">
+                        {b.name}{b.type ? ` · ${b.type}` : ""}
+                      </Badge>
+                    ))}
+                  </div>
 
                   <div className="space-y-1.5 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2"><MapPin className="h-3 w-3" />{s.region}</div>

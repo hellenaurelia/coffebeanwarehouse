@@ -9,12 +9,17 @@ import { Modal, ModalHeader, BTN_PRIMARY, BTN_OUTLINE, PORows, fmt, poTotal } fr
 const fmtKg = (n: number) => n.toLocaleString("id-ID") + " kg";
 const statusTone = (s: string) => s === "Aktif" ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : s === "Pending" ? "bg-amber-500/10 text-amber-700 border-amber-500/20" : "bg-muted text-muted-foreground border-border";
 
+const typeTone: Record<string, string> = {
+  Arabica:  "bg-sky-500/10 text-sky-700 border-sky-500/20",
+  Robusta:  "bg-amber-500/10 text-amber-700 border-amber-500/20",
+  Liberica: "bg-violet-500/10 text-violet-700 border-violet-500/20",
+  Luwak:    "bg-rose-500/10 text-rose-700 border-rose-500/20",
+};
+
 const formatPhone = (phone: string) => {
   const cleaned = phone.replace(/[^\d+]/g, '');
   const match = cleaned.match(/^(\+62|0)(\d{3,4})(\d{4})(\d{3,4})?$/);
-  if (match) {
-    return `${match[1]} ${match[2]}-${match[3]}${match[4] ? '-' + match[4] : ''}`;
-  }
+  if (match) return `${match[1]} ${match[2]}-${match[3]}${match[4] ? '-' + match[4] : ''}`;
   return phone;
 };
 
@@ -53,7 +58,6 @@ export function DetailModal({ supplier, pos, onClose, onBuatPO, onEdit, onHapus,
           </div>
         </div>
 
-        {/* Mengambil nama & harga master langsung dari supplier */}
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
             <Tag className="h-3.5 w-3.5" /> Daftar Biji Kopi & Harga Kontrak
@@ -61,8 +65,15 @@ export function DetailModal({ supplier, pos, onClose, onBuatPO, onEdit, onHapus,
           <div className="grid grid-cols-2 gap-3">
             {supplier.beans.map(b => (
               <div key={b.name} className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-secondary/20">
-                <span className="font-medium text-sm">{b.name}</span>
-                <span className="text-sm font-semibold text-primary">{fmt(b.price)}/kg</span>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="font-medium text-sm leading-tight">{b.name}</span>
+                  {b.type && (
+                    <Badge variant="outline" className={`text-[10px] w-fit px-1.5 py-0 ${typeTone[b.type] ?? "bg-secondary text-muted-foreground border-border"}`}>
+                      {b.type}
+                    </Badge>
+                  )}
+                </div>
+                <span className="text-sm font-semibold text-primary ml-2 shrink-0">{fmt(b.price)}/kg</span>
               </div>
             ))}
           </div>
@@ -73,7 +84,7 @@ export function DetailModal({ supplier, pos, onClose, onBuatPO, onEdit, onHapus,
             <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />{supplier.address}
           </div>
         )}
-        
+
         {supplier.notes && (
           <div className="text-sm bg-secondary/30 border border-border/60 rounded-xl px-4 py-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-1">Catatan</p>
