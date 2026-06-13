@@ -55,7 +55,7 @@ export function CatalogPanel({ cart, onAdd }: Props) {
               )}
             </div>
             <div className="font-medium">{p.name}</div>
-            <div className="text-xs text-muted-foreground">{p.variant}</div>
+            <div className="text-xs text-muted-foreground">{p.supplier}</div>
             <div className="mt-2 flex items-center justify-between">
               <span className="font-display text-base font-semibold">{fmt(p.price)}/kg</span>
               <span className="h-7 w-7 rounded-full gradient-crema flex items-center justify-center text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity">
