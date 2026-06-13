@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Topbar } from "@/components/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +10,11 @@ import Greeting from "@/components/ui/greetings";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowUpRight, ArrowDownRight, Coffee, Package, Receipt, TrendingUp,
-  AlertTriangle, ScanBarcode,
-  ShoppingBasket
+  AlertTriangle, ScanBarcode, ShoppingBasket
 } from "lucide-react";
+
+import { DetailModal } from "./transactions/_components/detailModal";
+import type { Trx } from "./transactions/types";
 
 const stats = [
   { label: "Penjualan Hari Ini", value: "Rp 12.480.000", delta: "+18.2%", up: true, icon: Receipt },
@@ -29,11 +32,31 @@ const beans = [
 ];
 
 const recent = [
-  { id: "TRX-2049", item: "Gayo Wine 250g · Espresso x2", total: "Rp 184.000", time: "2 menit lalu", method: "QRIS" },
-  { id: "TRX-2048", item: "Kintamani 1kg", total: "Rp 240.000", time: "8 menit lalu", method: "Cash" },
-  { id: "TRX-2047", item: "Toraja 500g · V60 x1", total: "Rp 198.000", time: "14 menit lalu", method: "Debit" },
-  { id: "TRX-2046", item: "Ethiopia 200g", total: "Rp 92.000", time: "21 menit lalu", method: "QRIS" },
-  { id: "TRX-2045", item: "Java Preanger 1kg", total: "Rp 220.000", time: "28 menit lalu", method: "Credit" },
+  { 
+    id: "TRX-2049", item: "Gayo Wine 250g · Espresso x2", displayTotal: "Rp 184.000", timeAgo: "2 menit lalu", method: "QRIS",
+    date: "13 Jun 2026", time: "15:46", cashier: "Arif Rahman", total: 184000, cashPaid: null,
+    detail: [{ name: "Gayo Wine 250g", qty: 1, price: 92000 }, { name: "Espresso", qty: 2, price: 46000 }]
+  },
+  { 
+    id: "TRX-2048", item: "Kintamani 1kg", displayTotal: "Rp 240.000", timeAgo: "8 menit lalu", method: "Cash",
+    date: "13 Jun 2026", time: "15:40", cashier: "Arif Rahman", total: 240000, cashPaid: 250000,
+    detail: [{ name: "Kintamani 1kg", qty: 1, price: 240000 }]
+  },
+  { 
+    id: "TRX-2047", item: "Toraja 500g · V60 x1", displayTotal: "Rp 198.000", timeAgo: "14 menit lalu", method: "Debit",
+    date: "13 Jun 2026", time: "15:34", cashier: "Arif Rahman", total: 198000, cashPaid: null,
+    detail: [{ name: "Toraja 500g", qty: 1, price: 155000 }, { name: "V60", qty: 1, price: 43000 }]
+  },
+  { 
+    id: "TRX-2046", item: "Ethiopia 200g", displayTotal: "Rp 92.000", timeAgo: "21 menit lalu", method: "QRIS",
+    date: "13 Jun 2026", time: "15:27", cashier: "Arif Rahman", total: 92000, cashPaid: null,
+    detail: [{ name: "Ethiopia 200g", qty: 1, price: 92000 }]
+  },
+  { 
+    id: "TRX-2045", item: "Java Preanger 1kg", displayTotal: "Rp 220.000", timeAgo: "28 menit lalu", method: "Credit",
+    date: "13 Jun 2026", time: "15:20", cashier: "Arif Rahman", total: 220000, cashPaid: null,
+    detail: [{ name: "Java Preanger 1kg", qty: 1, price: 220000 }]
+  },
 ];
 
 const formattedDate = new Intl.DateTimeFormat("id-ID", {
@@ -41,15 +64,16 @@ const formattedDate = new Intl.DateTimeFormat("id-ID", {
   day: "numeric",
   month: "long",
   year: "numeric",
-})
-  .format(new Date())
-  .replace(",", " ·");
+}).format(new Date()).replace(",", " ·");
 
 export default function DashboardPage() {
+ 
+  const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
+
   return (
     <>
       <Topbar title="Dashboard" subtitle="Ringkasan operasional Arunika hari ini" />
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 p-6 space-y-6 relative">
         {/* Hero */}
         <Card className="overflow-hidden border-0 shadow-warm">
           <div className="relative gradient-bean p-8 text-primary-foreground">
@@ -171,15 +195,19 @@ export default function DashboardPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="font-display">Transaksi Terakhir</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-1">
                 {recent.map((t) => (
-                  <div key={t.id} className="flex items-start justify-between gap-3 pb-3 border-b border-border/50 last:border-0 last:pb-0">
-                    <div className="min-w-0">
+                  <div 
+                    key={t.id} 
+                    onClick={() => setSelectedTrx(t)}
+                    className="flex items-start justify-between gap-3 p-3 -mx-3 rounded-lg border-b border-border/50 last:border-0 cursor-pointer hover:bg-secondary/60 transition-colors"
+                  >
+                    <div className="min-w-0 pointer-events-none">
                       <div className="text-xs font-mono text-muted-foreground">{t.id}</div>
                       <div className="text-sm font-medium truncate">{t.item}</div>
-                      <div className="text-xs text-muted-foreground">{t.time} · {t.method}</div>
+                      <div className="text-xs text-muted-foreground">{t.timeAgo} · {t.method}</div>
                     </div>
-                    <span className="font-medium tabular-nums text-sm">{t.total}</span>
+                    <span className="font-medium tabular-nums text-sm pointer-events-none">{t.displayTotal}</span>
                   </div>
                 ))}
               </CardContent>
@@ -188,6 +216,13 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {selectedTrx && (
+        <DetailModal 
+          trx={selectedTrx} 
+          onClose={() => setSelectedTrx(null)} 
+        />
+      )}
     </>
   );
 }

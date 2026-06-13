@@ -3,10 +3,12 @@ import type { Method, Trx } from "./types";
 
 export const TAX = 0.11;
 
-export const methodIcon: Record<Method, React.ElementType> = {
+export const methodIcon: Record<string, React.ElementType> = {
   Cash: Banknote,
   Kartu: CreditCard,
   QRIS: QrCode,
+  Debit: CreditCard,  
+  Credit: CreditCard, 
 };
 
 export const fmt = (n: number) =>

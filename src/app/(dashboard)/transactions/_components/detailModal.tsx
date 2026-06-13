@@ -1,5 +1,6 @@
 "use client";
 
+import { Receipt } from "lucide-react";
 import { useState } from "react";
 import { X, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -145,7 +146,7 @@ function PrintPreviewModal({
 export function DetailModal({ trx, onClose }: DetailModalProps) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
-  const Icon = methodIcon[trx.method];
+  const Icon = methodIcon[trx.method] || Receipt;
   const subtotal = trx.detail.reduce((a, i) => a + i.qty * i.price, 0);
   const tax = subtotal * TAX;
 
