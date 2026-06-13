@@ -52,8 +52,8 @@ export function PODetailModal({ po, onClose }: { po: PO; onClose: () => void }) 
               <div className="text-base mt-1">{po.date}</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Estimasi Tiba</div>
-              <div className="text-base mt-1">{po.estimatedArrival}</div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Tanggal Tiba</div>
+              <div className="text-base mt-1">{po.arrivalDate}</div>
             </div>
           </div>
 
@@ -65,7 +65,7 @@ export function PODetailModal({ po, onClose }: { po: PO; onClose: () => void }) 
           )}
 
           <div>
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Rincian Item</h3>
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Rincian Item</div>
             <div className="rounded-xl overflow-hidden border border-border/50">
               <table className="w-full text-sm">
                 <thead>

@@ -82,7 +82,7 @@ export function PORows({ pos, showSupplier = false, onDetail }: { pos: PO[]; sho
             <td className="px-4 py-3 font-mono text-xs">{po.id}</td>
             {showSupplier && <td className="px-4 py-3 font-medium">{po.supplierName}</td>}
             <td className="px-4 py-3 text-muted-foreground">{po.date}</td>
-            {showSupplier && <td className="px-4 py-3 text-muted-foreground">{po.estimatedArrival}</td>}
+            {showSupplier && <td className="px-4 py-3 text-muted-foreground">{po.arrivalDate}</td>}
             <td className="px-4 py-3 text-right tabular-nums font-medium">{fmt(poTotal(po))}</td>
             <td className="px-4 py-3 text-center">
               <Badge variant="outline" className={`${poStatusTone(po.status)} inline-flex items-center gap-1`}><Icon className="h-3 w-3" />{po.status}</Badge>

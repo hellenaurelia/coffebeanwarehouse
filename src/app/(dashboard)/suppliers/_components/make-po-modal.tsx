@@ -90,7 +90,7 @@ export function BuatPOModal({
       supplierId,
       supplierName: selected?.name ?? "",
       date,
-      estimatedArrival: eta,
+      arrivalDate: eta,
       notes: notes.trim(),
       status: "Pending",
       items: items.map((i) => ({
