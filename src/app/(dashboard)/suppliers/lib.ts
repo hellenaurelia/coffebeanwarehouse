@@ -15,6 +15,7 @@ export type PO = {
   id: string; supplierId: string; supplierName: string; date: string;
   items: { bean: string; qty: number; pricePerKg: number }[];
   status: POStatus; arrivalDate: string; notes?: string;
+  createdBy?: string; 
 };
 
 // Seed data supplier sekarang langsung membawa master data harga kopi
@@ -29,12 +30,12 @@ export const initSuppliers: Supplier[] = [
 ];
 
 export const initPOs: PO[] = [
-  { id:"PO-0041", supplierId:"S-001", supplierName:"Koperasi Tani Gayo",    date:"7 Mei 2026",  items:[{bean:"Arabica",qty:200,pricePerKg:95000},{bean:"Gayo Wine",qty:50,pricePerKg:180000}], status:"Dikirim",  arrivalDate:"-" },
-  { id:"PO-0040", supplierId:"S-004", supplierName:"Lampung Robusta Mills", date:"6 Mei 2026",  items:[{bean:"Robusta AAA",qty:300,pricePerKg:48000}],                                        status:"Diterima", arrivalDate:"9 Mei 2026",  notes:"Kualitas sesuai spesifikasi." },
-  { id:"PO-0039", supplierId:"S-002", supplierName:"Kintamani Highland",    date:"1 Mei 2026",  items:[{bean:"Arabica Honey",qty:150,pricePerKg:120000}],                                       status:"Diterima", arrivalDate:"6 Mei 2026" },
-  { id:"PO-0038", supplierId:"S-003", supplierName:"Toraja Coffee Hub",     date:"28 Apr 2026", items:[{bean:"Arabica Sapan",qty:100,pricePerKg:110000}],                                       status:"Diterima", arrivalDate:"3 Mei 2026" },
-  { id:"PO-0037", supplierId:"S-005", supplierName:"Civet Farm Lampung",    date:"25 Apr 2026", items:[{bean:"Luwak Premium",qty:10,pricePerKg:850000}],                                        status:"Diterima", arrivalDate:"30 Apr 2026" },
-  { id:"PO-0036", supplierId:"S-006", supplierName:"Preanger Estate",       date:"20 Apr 2026", items:[{bean:"Arabica Java",qty:200,pricePerKg:105000}],                                        status:"Pending",  arrivalDate:"-",         notes:"Menunggu konfirmasi jadwal pengiriman." },
+  { id:"PO-0041", supplierId:"S-001", supplierName:"Koperasi Tani Gayo",    date:"7 Mei 2026",  items:[{bean:"Arabica",qty:200,pricePerKg:95000},{bean:"Gayo Wine",qty:50,pricePerKg:180000}], status:"Dikirim",  arrivalDate:"-", createdBy:"Arif Rahman" },
+  { id:"PO-0040", supplierId:"S-004", supplierName:"Lampung Robusta Mills", date:"6 Mei 2026",  items:[{bean:"Robusta AAA",qty:300,pricePerKg:48000}],                                        status:"Diterima", arrivalDate:"9 Mei 2026",  notes:"Kualitas sesuai spesifikasi.", createdBy:"Arif Rahman" },
+  { id:"PO-0039", supplierId:"S-002", supplierName:"Kintamani Highland",    date:"1 Mei 2026",  items:[{bean:"Arabica Honey",qty:150,pricePerKg:120000}],                                       status:"Diterima", arrivalDate:"6 Mei 2026", createdBy:"Arif Rahman" },
+  { id:"PO-0038", supplierId:"S-003", supplierName:"Toraja Coffee Hub",     date:"28 Apr 2026", items:[{bean:"Arabica Sapan",qty:100,pricePerKg:110000}],                                       status:"Diterima", arrivalDate:"3 Mei 2026", createdBy:"Budi Santoso" },
+  { id:"PO-0037", supplierId:"S-005", supplierName:"Civet Farm Lampung",    date:"25 Apr 2026", items:[{bean:"Luwak Premium",qty:10,pricePerKg:850000}],                                        status:"Diterima", arrivalDate:"30 Apr 2026", createdBy:"Budi Santoso" },
+  { id:"PO-0036", supplierId:"S-006", supplierName:"Preanger Estate",       date:"20 Apr 2026", items:[{bean:"Arabica Java",qty:200,pricePerKg:105000}],                                        status:"Pending",  arrivalDate:"-",         notes:"Menunggu konfirmasi jadwal pengiriman.", createdBy:"Budi Santoso" },
 ];
 
 export const fmtKg = (n: number) => n.toLocaleString("id-ID") + " kg";

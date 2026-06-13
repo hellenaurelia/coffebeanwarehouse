@@ -59,7 +59,7 @@ export default function SuppliersPage() {
             {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className={`h-10 ${BTN_OUTLINE}`} onClick={() => setModal({ type:"po" })}><ClipboardList className="h-4 w-4 mr-2" />Buat PO</Button>
+            <Button variant="outline" className={`h-10 ${BTN_HOVER_COKLAT}`} onClick={() => setModal({ type:"po" })}><ClipboardList className="h-4 w-4 mr-2" />Buat PO</Button>
             <Button className={`h-10 ${BTN_PRIMARY}`} onClick={() => setModal({ type:"supplier" })}><Plus className="h-4 w-4 mr-2" />Tambah Supplier</Button>
           </div>
         </div>

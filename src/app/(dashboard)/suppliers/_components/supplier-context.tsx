@@ -22,6 +22,7 @@ type SupplierContextValue = {
   handleSaveSupplier: (data: Omit<Supplier, "id"> & { id?: string }) => void;
   handleDeleteSupplier: (id: string) => void;
   handleSavePO: (partial: Omit<PO, "id">) => void;
+  handleUpdatePOStatus: (poId: string, newStatus: PO["status"]) => void;
 };
 
 const SupplierContext = createContext<SupplierContextValue | null>(null);
@@ -39,9 +40,11 @@ export function SupplierProvider({ children }: { children: ReactNode }) {
   };
   const handleDeleteSupplier = (id: string) => { setSuppliers(p => p.filter(s => s.id !== id)); close(); };
   const handleSavePO = (partial: Omit<PO, "id">) => { setPOs(p => [{ ...partial, id: nextId(pos, "PO-", 4) }, ...p]); close(); };
-
+  const handleUpdatePOStatus = (poId: string, newStatus: PO["status"]) => {
+    setPOs(p => p.map(po => po.id === poId ? { ...po, status: newStatus } : po));
+  };
   return (
-    <SupplierContext.Provider value={{ suppliers, setSuppliers, pos, setPOs, modal, setModal, close, handleSaveSupplier, handleDeleteSupplier, handleSavePO }}>
+    <SupplierContext.Provider value={{ suppliers, setSuppliers, pos, setPOs, modal, setModal, close, handleSaveSupplier, handleDeleteSupplier, handleSavePO, handleUpdatePOStatus }}>
       {children}
     </SupplierContext.Provider>
   );
