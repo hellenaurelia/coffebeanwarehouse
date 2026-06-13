@@ -1,5 +1,6 @@
-import { X } from "lucide-react";
+import { X, Download } from "lucide-react";
 import { type PO } from "../page";
+import { generatePOPdf } from "./po-pdf";
 
 const fmt = (n: number) => "Rp " + n.toLocaleString("id-ID");
 const poTotal = (po: PO) =>
@@ -63,6 +64,13 @@ export function PODetailModal({
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">{po.id}</p>
           </div>
+          <button
+            onClick={() => generatePOPdf(po)}
+            className="absolute top-6 right-16 h-8 px-3 rounded-full bg-secondary flex items-center gap-1.5 text-xs font-medium hover:bg-border transition-colors shrink-0"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Unduh PDF
+          </button>
           <button
             onClick={onClose}
             className="absolute top-6 right-6 h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-border transition-colors shrink-0"
