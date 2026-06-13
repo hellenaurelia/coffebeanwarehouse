@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { useUser } from "../page";
 import {
   Select,
   SelectContent,
@@ -39,36 +40,69 @@ const TABS: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
 // ─── Sub-panels ─────────────────────────────────────────────────────────────
 
 function ProfilPanel() {
+  const { user, setUser } = useUser(); 
   const [saved, setSaved] = useState(false);
-  const [phone, setPhone] = useState("+62 812-3456-7890");
+
+  const [form, setForm] = useState({
+    name: user.name,
+    username: user.name.toLowerCase().replace(" ", "."),
+    email: user.email,
+    phone: "+62 812-3456-7890",
+    outlet: user.outlet,
+  });
+
+  const set = (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm((p) => ({ ...p, [k]: e.target.value }));
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    let cleaned = val.replace(/(?!^\+)[^\d]/g, "");
+    if (cleaned.startsWith("0")) cleaned = "+62" + cleaned.slice(1);
+    else if (cleaned.startsWith("62")) cleaned = "+" + cleaned;
+    let digits = cleaned.replace(/\D/g, "");
+    if (digits.length > 2) {
+      let f = "+" + digits.substring(0, 2);
+      if (digits.length > 2) f += " " + digits.substring(2, 5);
+      if (digits.length > 5) f += "-" + digits.substring(5, 9);
+      if (digits.length > 9) f += "-" + digits.substring(9, 14);
+      setForm((p) => ({ ...p, phone: f }));
+    } else {
+      setForm((p) => ({ ...p, phone: cleaned }));
+    }
+  };
+
+  const outletLabel: Record<string, string> = {
+    senopati: "Senopati",
+    kemang: "Kemang",
+    sudirman: "Sudirman",
+  };
 
   const handleSave = () => {
+    setUser({
+      ...user,
+      name: form.name,
+      email: form.email,
+      outlet: outletLabel[form.outlet] ?? form.outlet,
+      avatar: form.name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase(),
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
-
-    let cleaned = val.replace(/(?!^\+)[^\d]/g, "");
-
-    if (cleaned.startsWith("0")) {
-      cleaned = "+62" + cleaned.slice(1);
-    } else if (cleaned.startsWith("62")) {
-      cleaned = "+" + cleaned;
-    }
-
-    let digits = cleaned.replace(/\D/g, "");
-    if (digits.length > 2) {
-      let formatted = "+" + digits.substring(0, 2);
-      if (digits.length > 2) formatted += " " + digits.substring(2, 5); 
-      if (digits.length > 5) formatted += "-" + digits.substring(5, 9);
-      if (digits.length > 9) formatted += "-" + digits.substring(9, 14); 
-      
-      setPhone(formatted);
-    } else {
-      setPhone(cleaned);
-    }
+  const handleCancel = () => {
+    setForm({
+      name: user.name,
+      username: user.name.toLowerCase().replace(" ", "."),
+      email: user.email,
+      phone: form.phone,
+      outlet: user.outlet.toLowerCase(),
+    });
   };
 
   return (
@@ -76,29 +110,29 @@ function ProfilPanel() {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nama Lengkap</Label>
-          <Input defaultValue="Arif Rahman" className="bg-secondary/50 border-border/60" />
+          <Input value={form.name} onChange={set("name")} className="bg-secondary/50 border-border/60" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Username</Label>
-          <Input defaultValue="arif.rahman" className="bg-secondary/50 border-border/60" />
+          <Input value={form.username} onChange={set("username")} className="bg-secondary/50 border-border/60" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
-          <Input defaultValue="arif@arunika.id" type="email" className="bg-secondary/50 border-border/60" />
+          <Input value={form.email} onChange={set("email")} type="email" className="bg-secondary/50 border-border/60" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">No. Telepon</Label>
-          <Input 
-            value={phone} 
-            onChange={handlePhoneChange} 
+          <Input
+            value={form.phone}
+            onChange={handlePhoneChange}
             placeholder="+62 8XX-XXXX-XXXX"
             maxLength={18}
-            className="bg-secondary/50 border-border/60" 
+            className="bg-secondary/50 border-border/60"
           />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Outlet Utama</Label>
-          <Select defaultValue="senopati">
+          <Select value={form.outlet} onValueChange={(v) => setForm((p) => ({ ...p, outlet: v }))}>
             <SelectTrigger className="bg-secondary/50 border-border/60">
               <SelectValue />
             </SelectTrigger>
@@ -116,7 +150,7 @@ function ProfilPanel() {
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/60">
-        <Button variant="outline" size="sm">Batalkan</Button>
+        <Button variant="outline" size="sm" onClick={handleCancel}>Batalkan</Button>
         <Button size="sm" onClick={handleSave} className="gradient-bean text-primary-foreground border-0">
           {saved ? (
             <span className="flex items-center gap-1.5">
