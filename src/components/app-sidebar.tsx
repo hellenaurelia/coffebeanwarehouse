@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -25,6 +26,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const main = [
@@ -45,7 +47,12 @@ const insights = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
 
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false);
+  }, [pathname]);
+  
   const isActive = (path: string) => {
     if (path === "/") {
       return pathname === "/";
