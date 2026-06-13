@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Coffee, Search, Filter, Download, Plus, MapPin, Calendar, Package } from "lucide-react";
+import { Coffee, Search, Filter, Download, Plus, Package } from "lucide-react";
 import { FilterModal, FilterValues } from "./_components/filter-modal";
 import InventoryDetailDialog from "./_components/modal-detail-edit";
 import { TambahBijiModal } from "./_components/tambah-biji-modal";
@@ -17,24 +17,23 @@ import { useInventorySearch } from "./_components/search-hooks";
 export interface InventoryItem {
   sku: string;
   name: string;
-  origin: string;
   type: string;
-  process: string;
   stock: number;
   unit: string;
   cost: number;
   price: number;
-  harvest: string;
+  exp: string;
   supplier: string;
+  photo?: string;
 }
 
 const initialItems: InventoryItem[] = [
-  { sku: "GYO-WN-001", name: "Gayo Wine Natural", origin: "Aceh", type: "Arabica", process: "Natural", stock: 142, unit: "kg", cost: 165000, price: 280000, harvest: "Mar 2026", supplier: "CV Gayo Mandiri" },
-  { sku: "KIN-HN-002", name: "Kintamani Honey", origin: "Bali", type: "Arabica", process: "Honey", stock: 38, unit: "kg", cost: 140000, price: 240000, harvest: "Feb 2026", supplier: "UD Subak Bali" },
-  { sku: "TRJ-SP-003", name: "Toraja Sapan", origin: "Sulawesi", type: "Arabica", process: "Washed", stock: 96, unit: "kg", cost: 180000, price: 310000, harvest: "Jan 2026", supplier: "PT Toraja Coffee" },
-  { sku: "LWK-PR-004", name: "Luwak Premium", origin: "Lampung", type: "Luwak", process: "Wild Civet", stock: 8, unit: "kg", cost: 780000, price: 1250000, harvest: "Dec 2025", supplier: "CV Luwak Nusantara" },
-  { sku: "LMP-RB-005", name: "Lampung Robusta AAA", origin: "Lampung", type: "Robusta", process: "Dry", stock: 220, unit: "kg", cost: 78000, price: 145000, harvest: "Mar 2026", supplier: "PT Sinar Robusta" },
-  { sku: "LBR-MR-006", name: "Liberica Meranti", origin: "Riau", type: "Liberica", process: "Natural", stock: 24, unit: "kg", cost: 105000, price: 185000, harvest: "Feb 2026", supplier: "UD Riau Kopi" },
+  { sku: "GYO-WN-001", name: "Gayo Wine Natural",    type: "Arabica",  stock: 142, unit: "kg", cost: 165000, price: 280000, exp: "Mar 2027", supplier: "CV Gayo Mandiri" },
+  { sku: "KIN-HN-002", name: "Kintamani Honey",       type: "Arabica",  stock: 38,  unit: "kg", cost: 140000, price: 240000, exp: "Feb 2027", supplier: "UD Subak Bali" },
+  { sku: "TRJ-SP-003", name: "Toraja Sapan",           type: "Arabica",  stock: 96,  unit: "kg", cost: 180000, price: 310000, exp: "Jan 2027", supplier: "PT Toraja Coffee" },
+  { sku: "LWK-PR-004", name: "Luwak Premium",          type: "Luwak",    stock: 8,   unit: "kg", cost: 780000, price: 1250000, exp: "—",       supplier: "CV Luwak Nusantara" },
+  { sku: "LMP-RB-005", name: "Lampung Robusta AAA",    type: "Robusta",  stock: 220, unit: "kg", cost: 78000,  price: 145000, exp: "Mar 2027", supplier: "PT Sinar Robusta" },
+  { sku: "LBR-MR-006", name: "Liberica Meranti",       type: "Liberica", stock: 24,  unit: "kg", cost: 105000, price: 185000, exp: "—",       supplier: "UD Riau Kopi" },
 ];
 
 const stockTone = (s: number) =>
@@ -52,12 +51,7 @@ export default function Inventory() {
   const [tambahOpen, setTambahOpen] = useState(false);
   const [rekonOpen, setRekonOpen] = useState(false);
   const [detailItem, setDetailItem] = useState<InventoryItem | null>(null);
-  const [activeFilters, setActiveFilters] = useState<FilterValues>({
-    type: [],
-    process: [],
-    origin: [],
-    stockStatus: [],
-  });
+  const [activeFilters, setActiveFilters] = useState<FilterValues>({ type: [], stockStatus: [] });
 
   const { query, setQuery, filtered } = useInventorySearch(items, activeFilters);
 
@@ -72,10 +66,10 @@ export default function Inventory() {
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           {[
-            { label: "Total SKU", value: `${items.length}`, sub: "Arabica · Robusta · Liberica · Luwak" },
-            { label: "Total Stok", value: `${totalStock.toLocaleString("id-ID")} kg`, sub: "Green bean nusantara" },
-            { label: "Nilai Inventori", value: `Rp ${(totalValue / 1_000_000).toFixed(0)} jt`, sub: "Estimasi cost" },
-            { label: "Perlu Re-order", value: `${reorderCount} SKU`, sub: "Stok < 25 kg" },
+            { label: "Total SKU",       value: `${items.length}`,                             sub: "Arabica · Robusta · Liberica · Luwak" },
+            { label: "Total Stok",      value: `${totalStock.toLocaleString("id-ID")} kg`,    sub: "Green bean nusantara" },
+            { label: "Nilai Inventori", value: `Rp ${(totalValue/1_000_000).toFixed(0)} jt`, sub: "Estimasi cost" },
+            { label: "Perlu Re-order",  value: `${reorderCount} SKU`,                         sub: "Stok < 25 kg" },
           ].map((s) => (
             <Card key={s.label} className="shadow-soft border-border/60">
               <CardContent className="p-5">
@@ -97,10 +91,7 @@ export default function Inventory() {
               <h3 className="font-display text-lg font-semibold">Rekonsiliasi Stok</h3>
               <p className="text-sm text-muted-foreground">Hitung ulang fisik gudang dan sinkronkan dengan sistem.</p>
             </div>
-            <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              onClick={() => setRekonOpen(true)}
-            >
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setRekonOpen(true)}>
               Mulai Rekonsiliasi
             </Button>
           </CardContent>
@@ -109,48 +100,30 @@ export default function Inventory() {
         {/* Table Card */}
         <Card className="shadow-soft border-border/60">
           <CardContent className="p-5">
-            {/* Toolbar */}
             <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
               <div className="relative flex-1 max-w-md">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Cari SKU, nama, atau origin…"
-                  className="h-10 pl-10 rounded-xl bg-secondary/50"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
+                <Input placeholder="Cari SKU, nama, atau supplier…" className="h-10 pl-10 rounded-xl bg-secondary/50"
+                  value={query} onChange={(e) => setQuery(e.target.value)} />
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="rounded-xl"
-                  onClick={() => setFilterOpen(true)}
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                  {(activeFilters.type.length + activeFilters.process.length + activeFilters.origin.length + activeFilters.stockStatus.length) > 0 && (
+                <Button variant="outline" className="rounded-xl" onClick={() => setFilterOpen(true)}>
+                  <Filter className="h-4 w-4 mr-2" />Filter
+                  {(activeFilters.type.length + activeFilters.stockStatus.length) > 0 && (
                     <Badge className="ml-2 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
-                      {activeFilters.type.length + activeFilters.process.length + activeFilters.origin.length + activeFilters.stockStatus.length}
+                      {activeFilters.type.length + activeFilters.stockStatus.length}
                     </Badge>
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-xl"
-                  onClick={() => exportToCSV(filtered)}
-                >
+                <Button variant="outline" className="rounded-xl" onClick={() => exportToCSV(filtered)}>
                   <Download className="h-4 w-4 mr-2" />Ekspor
                 </Button>
-                <Button
-                  className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={() => setTambahOpen(true)}
-                >
+                <Button className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setTambahOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />Tambah Biji
                 </Button>
               </div>
             </div>
 
-            {/* Table */}
             <div className="mt-5 overflow-x-auto -mx-2">
               <table className="w-full text-sm">
                 <thead>
@@ -158,7 +131,8 @@ export default function Inventory() {
                     <th className="text-left font-medium px-3 py-3">Produk</th>
                     <th className="text-left font-medium px-3 py-3">SKU</th>
                     <th className="text-left font-medium px-3 py-3">Supplier</th>
-                    <th className="text-left font-medium px-3 py-3">Profil</th>
+                    <th className="text-left font-medium px-3 py-3">Tipe</th>
+                    <th className="text-left font-medium px-3 py-3">Exp.</th>
                     <th className="text-right font-medium px-3 py-3">Stok</th>
                     <th className="text-right font-medium px-3 py-3">HPP</th>
                     <th className="text-right font-medium px-3 py-3">Harga Jual</th>
@@ -169,7 +143,7 @@ export default function Inventory() {
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-3 py-10 text-center text-muted-foreground text-sm">
+                      <td colSpan={10} className="px-3 py-10 text-center text-muted-foreground text-sm">
                         Tidak ada item yang cocok dengan pencarian.
                       </td>
                     </tr>
@@ -177,26 +151,22 @@ export default function Inventory() {
                     <tr key={it.sku} className="border-t border-border/60 hover:bg-secondary/40">
                       <td className="px-3 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg gradient-bean flex items-center justify-center shrink-0">
-                            <Coffee className="h-4 w-4 text-primary-foreground" />
+                          <div className="h-10 w-10 rounded-lg overflow-hidden shrink-0 border border-border/40">
+                            {it.photo ? (
+                              <img src={it.photo} alt={it.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="h-full w-full gradient-bean flex items-center justify-center">
+                                <Coffee className="h-4 w-4 text-primary-foreground" />
+                              </div>
+                            )}
                           </div>
-                          <div>
-                            <div className="font-medium">{it.name}</div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-3">
-                              <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{it.origin}</span>
-                              <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{it.harvest}</span>
-                            </div>
-                          </div>
+                          <div className="font-medium">{it.name}</div>
                         </div>
                       </td>
                       <td className="px-3 py-4 font-mono text-xs text-muted-foreground">{it.sku}</td>
                       <td className="px-3 py-4 text-sm text-muted-foreground">{it.supplier}</td>
-                      <td className="px-3 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          <Badge variant="outline" className="text-xs">{it.type}</Badge>
-                          <Badge variant="outline" className="text-xs">{it.process}</Badge>
-                        </div>
-                      </td>
+                      <td className="px-3 py-4"><Badge variant="outline" className="text-xs">{it.type}</Badge></td>
+                      <td className="px-3 py-4 text-sm text-muted-foreground">{it.exp}</td>
                       <td className="px-3 py-4 text-right tabular-nums font-medium">{it.stock} <span className="text-muted-foreground font-normal">{it.unit}</span></td>
                       <td className="px-3 py-4 text-right tabular-nums text-muted-foreground">{fmt(it.cost)}</td>
                       <td className="px-3 py-4 text-right tabular-nums font-medium">{fmt(it.price)}</td>
@@ -204,12 +174,7 @@ export default function Inventory() {
                         <Badge variant="outline" className={stockTone(it.stock)}>{stockLabel(it.stock)}</Badge>
                       </td>
                       <td className="px-3 py-4 text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-lg text-xs h-7 px-3"
-                          onClick={() => setDetailItem(it)}
-                        >
+                        <Button variant="outline" size="sm" className="rounded-lg text-xs h-7 px-3" onClick={() => setDetailItem(it)}>
                           Detail
                         </Button>
                       </td>
@@ -222,34 +187,16 @@ export default function Inventory() {
         </Card>
       </main>
 
-      {/* Modals */}
-      <FilterModal
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        items={items}
-        values={activeFilters}
-        onChange={setActiveFilters}
-      />
-
-      <TambahBijiModal
-        open={tambahOpen}
-        onClose={() => setTambahOpen(false)}
-        onSave={(newItem) => setItems((prev) => [...prev, newItem])}
-      />
-
-      <RekonsiliasiModal
-        open={rekonOpen}
-        onClose={() => setRekonOpen(false)}
-        items={items}
-        onSave={(updated) => setItems(updated)}
-      />
-
+      <FilterModal open={filterOpen} onClose={() => setFilterOpen(false)} items={items} values={activeFilters} onChange={setActiveFilters} />
+      <TambahBijiModal open={tambahOpen} onClose={() => setTambahOpen(false)} onSave={(newItem) => setItems((prev) => [...prev, newItem])} />
+      <RekonsiliasiModal open={rekonOpen} onClose={() => setRekonOpen(false)} items={items} onSave={(updated) => setItems(updated)} />
       <InventoryDetailDialog
         open={!!detailItem}
         item={detailItem}
         onOpenChange={(open) => !open && setDetailItem(null)}
         onSave={(updated) => {
           setItems((prev) => prev.map((i) => (i.sku === updated.sku ? updated : i)));
+          setDetailItem(updated);
         }}
       />
     </>
