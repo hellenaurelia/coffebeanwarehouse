@@ -220,9 +220,9 @@ export default function NotificationsPage() {
               warn: true,
             },
             {
-              label: "Pengiriman Hari Ini",
+              label: "Pengiriman Aktif",
               value: "1",
-              sub: "jadwal tiba",
+              sub: "dalam proses pengiriman",
               icon: Truck,
               warn: false,
             },
@@ -292,10 +292,6 @@ export default function NotificationsPage() {
             >
               <CheckCheck className="h-4 w-4 mr-2" />
               Tandai Semua Dibaca
-            </Button>
-            <Button variant="outline" size="sm" className="rounded-xl">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
             </Button>
           </div>
         </div>

@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, ClipboardList } from "lucide-react";
-import type { Supplier, PO } from "../page";
+import { Supplier, initSuppliers } from "../lib";
+import { SupplierProvider } from "./supplier-context";
+import type { PO } from "../page";
 import {
   Modal,
   ModalHeader,

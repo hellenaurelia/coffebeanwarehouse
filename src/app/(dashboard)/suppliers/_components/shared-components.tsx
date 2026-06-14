@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { PO, POStatus } from "../page";
+import { BTN_HOVER_COKLAT } from "../lib";
 
 export const INP = "h-10 rounded-xl bg-secondary/50 text-sm";
 export const TA = "w-full rounded-xl bg-secondary/50 border border-input px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring";
@@ -42,7 +43,7 @@ export function ModalHeader({ title, subtitle, onClose }: { title: string; subti
 export function ModalFooter({ onClose, onConfirm, confirmLabel, icon: Icon }: { onClose: () => void; onConfirm: () => void; confirmLabel: string; icon?: React.ElementType; }) {
   return (
     <div className="border-t border-border/60 px-6 py-4 flex gap-2 justify-end">
-      <Button variant="outline" className={BTN_OUTLINE} onClick={onClose}>Batal</Button>
+      <Button variant="outline" className={BTN_HOVER_COKLAT} onClick={onClose}>Batal</Button>
       <Button className={BTN_PRIMARY} onClick={onConfirm}>{Icon && <Icon className="h-4 w-4 mr-2" />}{confirmLabel}</Button>
     </div>
   );

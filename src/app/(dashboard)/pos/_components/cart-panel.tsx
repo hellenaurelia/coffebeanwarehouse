@@ -149,14 +149,6 @@ export function CartPanel({
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotal</span><span className="tabular-nums">{fmt(subtotal)}</span>
           </div>
-          {lines.some(l => l.grindOpt === "ground") && (
-            <div className="flex justify-between text-muted-foreground">
-              <span>Biaya grinding</span>
-              <span className="tabular-nums">
-                {fmt(lines.reduce((s, l) => s + (l.grindOpt === "ground" ? GRIND_FEE * l.qty : 0), 0))}
-              </span>
-            </div>
-          )}
           {discAmt > 0 && (
             <div className="flex justify-between text-green-600">
               <span>Diskon {discPct}%</span><span className="tabular-nums">−{fmt(discAmt)}</span>

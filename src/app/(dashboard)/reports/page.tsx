@@ -326,8 +326,8 @@ export default function ReportsPage() {
     () => data.expense.reduce((a, b) => a + b.nominal, 0),
     [data]
   );
-  const labaBersih = totalPenjualan - totalPengeluaran;
-  const margin = ((labaBersih / totalPenjualan) * 100).toFixed(1);
+  const labaTotal = totalPenjualan - totalPengeluaran;
+  const margin = ((labaTotal / totalPenjualan) * 100).toFixed(1);
 
   const calendarLabel = useMemo(() => {
     if (!activeCustom || !customRange.from || !customRange.to) return null;
@@ -406,8 +406,8 @@ export default function ReportsPage() {
             `${data.pengeluaranTrend} vs periode lalu`,
         ],
         [
-            "Laba Bersih",
-            fmt(labaBersih),
+            "Laba Total",
+            fmt(labaTotal),
             `Margin ${margin}%`,
         ],
         [
@@ -717,7 +717,7 @@ export default function ReportsPage() {
                 <span className="text-xs uppercase tracking-widest text-muted-foreground">Laba Bersih</span>
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
               </div>
-              <p className="mt-3 font-display text-2xl font-semibold text-foreground">{fmt(labaBersih)}</p>
+              <p className="mt-3 font-display text-2xl font-semibold text-foreground">{fmt(labaTotal)}</p>
               <p className="mt-1 text-xs text-muted-foreground">Margin {margin}%</p>
             </CardContent>
           </Card>

@@ -1,4 +1,5 @@
-import { X, Download } from "lucide-react";
+import { X, Download, ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { type PO } from "../page";
 import { generatePOPdf } from "./po-pdf";
 
@@ -11,27 +12,25 @@ const poStatusTone = (s: string) =>
     ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20"
     : s === "Dikirim"
       ? "bg-blue-500/10 text-blue-700 border-blue-500/20"
-      : "bg-amber-500/10 text-amber-700 border-amber-500/20";
+      : s === "Cancelled"
+        ? "bg-red-500/10 text-red-700 border-red-500/20"
+        : "bg-amber-500/10 text-amber-700 border-amber-500/20";
 
-// Urutan status PO
-const STATUS_FLOW: PO["status"][] = ["Pending", "Dikirim", "Diterima"];
-
-const getAdjacentStatus = (
-  current: PO["status"],
-  dir: 1 | -1,
-): PO["status"] | null => {
-  const idx = STATUS_FLOW.indexOf(current);
-  const next = idx + dir;
-  if (next < 0 || next >= STATUS_FLOW.length) return null;
-  return STATUS_FLOW[next];
+// Status yang bisa dipilih dari status saat ini
+// Diterima & Cancelled adalah status final — tidak bisa diubah lagi
+const ALLOWED_TRANSITIONS: Record<PO["status"], PO["status"][]> = {
+  Pending:    ["Dikirim", "Cancelled"],
+  Dikirim:    ["Diterima", "Cancelled"],
+  Diterima:   [],
+  Cancelled:  [],
 };
 
-const forwardLabel = (next: PO["status"]) =>
-  next === "Dikirim"
-    ? "Tandai Dikirim"
-    : next === "Diterima"
-      ? "Tandai Diterima"
-      : `Ubah ke ${next}`;
+const STATUS_LABEL: Record<PO["status"], string> = {
+  Pending:   "Pending",
+  Dikirim:   "Dikirim",
+  Diterima:  "Diterima",
+  Cancelled: "Cancelled",
+};
 
 export function PODetailModal({
   po,
@@ -43,8 +42,28 @@ export function PODetailModal({
   onUpdateStatus?: (poId: string, newStatus: PO["status"]) => void;
 }) {
   const total = poTotal(po);
-  const prevStatus = getAdjacentStatus(po.status, -1);
-  const nextStatus = getAdjacentStatus(po.status, 1);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<PO["status"] | null>(null);
+
+  const availableTransitions = ALLOWED_TRANSITIONS[po.status] ?? [];
+  const isFinal = availableTransitions.length === 0;
+
+  const handleSelect = (status: PO["status"]) => {
+    setPendingStatus(status);
+    setDropdownOpen(false);
+  };
+
+  const handleConfirm = () => {
+    if (pendingStatus && onUpdateStatus) {
+      onUpdateStatus(po.id, pendingStatus);
+      setPendingStatus(null);
+    }
+  };
+
+  const handleCancel = () => {
+    setPendingStatus(null);
+    setDropdownOpen(false);
+  };
 
   return (
     <div
@@ -178,30 +197,103 @@ export function PODetailModal({
           </div>
 
           <div className="space-y-2">
+            {/* Badge status saat ini */}
             <div
               className={`rounded-lg border px-4 py-3 text-center text-sm font-medium ${poStatusTone(po.status)}`}
             >
               Status Pengiriman: {po.status}
             </div>
-            {onUpdateStatus && (prevStatus || nextStatus) && (
-              <div className="flex items-center gap-2">
-                {prevStatus && (
-                  <button
-                    onClick={() => onUpdateStatus(po.id, prevStatus)}
-                    className="flex-1 rounded-lg border border-border/60 bg-secondary text-foreground px-4 py-2.5 text-sm font-medium hover:bg-border transition-colors"
-                  >
-                    Kembalikan ke {prevStatus}
-                  </button>
-                )}
-                {nextStatus && (
-                  <button
-                    onClick={() => onUpdateStatus(po.id, nextStatus)}
-                    className="flex-1 rounded-lg bg-primary text-primary-foreground px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-colors"
-                  >
-                    {forwardLabel(nextStatus)}
-                  </button>
+
+            {/* Dropdown ubah status — hanya tampil jika ada transisi yang diizinkan */}
+            {onUpdateStatus && !isFinal && !pendingStatus && (
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen((v) => !v)}
+                  className="w-full flex items-center justify-between rounded-lg border border-border/60 bg-secondary px-4 py-2.5 text-sm font-medium hover:bg-border transition-colors"
+                >
+                  <span className="text-muted-foreground">Ubah Status…</span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted-foreground transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute bottom-full mb-1 left-0 w-full z-10 rounded-xl border border-border/60 bg-card shadow-lg overflow-hidden">
+                    {availableTransitions.map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => handleSelect(status)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors hover:bg-secondary/60
+                          ${status === "Cancelled" ? "text-red-600 hover:bg-red-500/5" : "text-foreground"}`}
+                      >
+                        <span
+                          className={`inline-block h-2 w-2 rounded-full shrink-0 ${
+                            status === "Diterima"
+                              ? "bg-emerald-500"
+                              : status === "Dikirim"
+                                ? "bg-blue-500"
+                                : status === "Cancelled"
+                                  ? "bg-red-500"
+                                  : "bg-amber-500"
+                          }`}
+                        />
+                        {STATUS_LABEL[status]}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
+            )}
+
+            {/* Panel konfirmasi — muncul setelah status dipilih dari dropdown */}
+            {pendingStatus && (
+              <div
+                className={`rounded-xl border px-4 py-3 space-y-3 ${
+                  pendingStatus === "Cancelled"
+                    ? "bg-red-500/5 border-red-500/20"
+                    : "bg-secondary/40 border-border/60"
+                }`}
+              >
+                <p className="text-sm text-center">
+                  Ubah status menjadi{" "}
+                  <span
+                    className={`font-semibold ${pendingStatus === "Cancelled" ? "text-red-600" : "text-foreground"}`}
+                  >
+                    {STATUS_LABEL[pendingStatus]}
+                  </span>
+                  ?{" "}
+                  {pendingStatus === "Cancelled" && (
+                    <span className="text-red-600/80 text-xs block mt-0.5">
+                      Tindakan ini tidak bisa dibatalkan.
+                    </span>
+                  )}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCancel}
+                    className="flex-1 rounded-lg border border-border/60 bg-card text-foreground px-4 py-2 text-sm font-medium hover:bg-border transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleConfirm}
+                    className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                      pendingStatus === "Cancelled"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-primary text-primary-foreground hover:opacity-90"
+                    }`}
+                  >
+                    Ya, Ubah
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Keterangan jika status sudah final */}
+            {isFinal && (
+              <p className="text-center text-xs text-muted-foreground">
+                Status ini sudah final dan tidak dapat diubah.
+              </p>
             )}
           </div>
         </div>

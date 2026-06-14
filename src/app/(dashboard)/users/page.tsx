@@ -50,7 +50,7 @@ import {
 
 type Role = "owner" | "kasir" | "gudang" | "manajer";
 type Status = "aktif" | "nonaktif";
-type Outlet = "Senopati" | "Kemang" | "Sudirman";
+type Outlet = "Senopati";
 
 interface User {
   id: string;
@@ -84,7 +84,7 @@ const SEED_USERS: User[] = [
     username: "dewi.lestari",
     email: "dewi@arunika.id",
     role: "kasir",
-    outlet: "Kemang",
+    outlet: "Senopati",
     status: "aktif",
     lastLogin: "Hari ini, 09.02",
     avatar: "DL",
@@ -105,8 +105,8 @@ const SEED_USERS: User[] = [
     name: "Siti Rahayu",
     username: "siti.rahayu",
     email: "siti@arunika.id",
-    role: "kasir",
-    outlet: "Sudirman",
+    role: "manajer",
+    outlet: "Senopati",
     status: "aktif",
     lastLogin: "Hari ini, 07.55",
     avatar: "SR",
@@ -117,9 +117,9 @@ const SEED_USERS: User[] = [
     username: "fajar.nugroho",
     email: "fajar@arunika.id",
     role: "manajer",
-    outlet: "Kemang",
+    outlet: "Senopati",
     status: "nonaktif",
-    lastLogin: "3 hari lalu",
+    lastLogin: "6 Juni 2024, 14.20",
     avatar: "FN",
   },
   {
@@ -169,7 +169,7 @@ const STATUS_META: Record<Status, { label: string; color: string }> = {
   nonaktif: { label: "Nonaktif", color: "bg-muted text-muted-foreground border-border" },
 };
 
-const OUTLETS: Outlet[] = ["Senopati", "Kemang", "Sudirman"];
+const OUTLETS: Outlet[] = ["Senopati"];
 
 // ─── Empty form ───────────────────────────────────────────────────────────────
 
@@ -356,8 +356,9 @@ export default function UsersPage() {
                 <thead>
                   <tr className="border-y border-border/60 bg-secondary/40">
                     <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Pengguna</th>
-                    <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Role</th>
-                    <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-muted-foreground font-medium">Status</th>
+                    <th className="px-4 py-3 text-center text-xs uppercase tracking-wider text-muted-foreground font-medium">Email</th>
+                    <th className="px-4 py-3 text-center text-xs uppercase tracking-wider text-muted-foreground font-medium">Role</th>
+                    <th className="px-4 py-3 text-center text-xs uppercase tracking-wider text-muted-foreground font-medium">Status</th>
                     <th className="px-4 py-3 text-center text-xs uppercase tracking-wider text-muted-foreground font-medium">Login Terakhir</th>
                     <th className="px-6 py-3 text-center text-xs uppercase tracking-wider text-muted-foreground font-medium">Aksi</th>
                   </tr>
@@ -388,15 +389,18 @@ export default function UsersPage() {
                           </div>
                         </td>
 
+                        {/* Email */}
+                        <td className="px-4 py-4 text-muted-foreground text-xs text-center"> {u.email}</td>
+
                         {/* Role */}
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 text-center">
                           <Badge variant="outline" className={`text-xs ${role.color}`}>
                             {role.label}
                           </Badge>
                         </td>
 
                         {/* Status */}
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 text-center">
                           <Badge variant="outline" className={`text-xs ${status.color}`}>
                             {status.label}
                           </Badge>
@@ -411,7 +415,7 @@ export default function UsersPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary-foreground"
                               onClick={() => openEdit(u)}
                             >
                               <Pencil className="h-3.5 w-3.5" />
@@ -419,7 +423,7 @@ export default function UsersPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary-foreground"
                               onClick={() => setDeleteTarget(u)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />

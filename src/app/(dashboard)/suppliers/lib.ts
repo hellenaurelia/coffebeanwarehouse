@@ -1,7 +1,19 @@
 export type SupplierStatus = "Aktif" | "Pending" | "Non-aktif";
-export type POStatus       = "Dikirim" | "Diterima" | "Pending";
+export type POStatus       = "Dikirim" | "Diterima" | "Pending" | "Cancelled";
 
-export type SupplierBean = { name: string; price: number; type: string };
+export type SupplierBean = { name: string; price: number; type: string; active?: boolean };
+export interface InventoryItem {
+  sku: string;
+  name: string;
+  type: string;
+  stock: number;
+  unit: string;
+  cost: number;
+  price: number;
+  exp: string;
+  supplier: string;
+  photo?: string;
+}
 
 export type Supplier = {
   id: string; name: string; pic: string; region: string;
@@ -18,13 +30,13 @@ export type PO = {
 };
 
 export const initSuppliers: Supplier[] = [
-  { id:"S-001", name:"Koperasi Tani Gayo",    pic:"Pak Munir",   region:"Aceh Tengah",      phone:"+62 812-3344-5566", email:"munir@gayotani.id",  beans:[{name:"Arabica",       price:95000,  type:"Arabica"},{name:"Gayo Wine",     price:180000, type:"Arabica"}],  lastDelivery:"2 hari lalu",   totalKg:1840, status:"Aktif",     address:"Jl. Raya Bebesen No.12, Aceh Tengah",       notes:"Supplier utama arabica premium. Min order 100kg." },
-  { id:"S-002", name:"Kintamani Highland",    pic:"Bu Wayan",    region:"Bangli, Bali",     phone:"+62 821-7788-9900", email:"wayan@kintamani.co", beans:[{name:"Arabica Honey", price:120000, type:"Arabica"}],                                                          lastDelivery:"5 hari lalu",   totalKg:1240, status:"Aktif",     address:"Desa Batur, Kintamani, Bangli",             notes:"Musim panen April–Juni. Kualitas konsisten." },
-  { id:"S-003", name:"Toraja Coffee Hub",     pic:"Pak Reynaldi",region:"Tana Toraja",      phone:"+62 813-2211-0099", email:"rey@torajacoffee.id",beans:[{name:"Arabica Sapan", price:110000, type:"Arabica"}],                                                          lastDelivery:"1 minggu lalu", totalKg:980,  status:"Aktif",     address:"Jl. Pongtiku 45, Rantepao, Tana Toraja" },
-  { id:"S-004", name:"Lampung Robusta Mills", pic:"Pak Hendra",  region:"Lampung Barat",    phone:"+62 822-5544-3322", email:"hendra@lrm.id",      beans:[{name:"Robusta AAA",   price:48000,  type:"Robusta"},{name:"Robusta Honey", price:52000,  type:"Robusta"}],  lastDelivery:"3 hari lalu",   totalKg:3120, status:"Aktif",     address:"Kawasan Industri Way Laga, Lampung Barat",  notes:"Lead time 3 hari kerja. Harga negotiable untuk >500kg." },
-  { id:"S-005", name:"Civet Farm Lampung",    pic:"Pak Jaka",    region:"Liwa, Lampung",    phone:"+62 815-9988-7766", email:"jaka@civetfarm.id",  beans:[{name:"Luwak Premium", price:850000, type:"Luwak"}],                                                            lastDelivery:"2 minggu lalu", totalKg:64,   status:"Aktif",     address:"Desa Sukaraja, Liwa, Lampung Barat",        notes:"Produksi terbatas 5–10kg/minggu." },
-  { id:"S-006", name:"Preanger Estate",       pic:"Bu Salma",    region:"Garut, Jawa Barat",phone:"+62 819-1122-3344", email:"salma@preanger.id",  beans:[{name:"Arabica Java",  price:105000, type:"Arabica"}],                                                          lastDelivery:"10 hari lalu",  totalKg:1520, status:"Pending",   address:"Perkebunan Cikajang, Garut",                notes:"Menunggu verifikasi dokumen BPOM." },
-  { id:"S-007", name:"Riau Liberica Co",      pic:"Pak Daud",    region:"Meranti, Riau",    phone:"+62 811-2233-4455", email:"daud@liberica.id",   beans:[{name:"Liberica",      price:65000,  type:"Liberica"}],                                                         lastDelivery:"3 minggu lalu", totalKg:280,  status:"Non-aktif", address:"Jl. Merbau No.7, Selat Panjang, Riau" },
+  { id:"S-001", name:"Koperasi Tani Gayo",    pic:"Pak Munir",   region:"Aceh Tengah",      phone:"+62 812-3344-5566", email:"munir@gayotani.id",  beans:[{name:"Arabica",       price:95000,  type:"Arabica",  active:true},{name:"Gayo Wine",     price:180000, type:"Arabica",  active:true}],  lastDelivery:"2 hari lalu",   totalKg:1840, status:"Aktif",     address:"Jl. Raya Bebesen No.12, Aceh Tengah",       notes:"Supplier utama arabica premium. Min order 100kg." },
+  { id:"S-002", name:"Kintamani Highland",    pic:"Bu Wayan",    region:"Bangli, Bali",     phone:"+62 821-7788-9900", email:"wayan@kintamani.co", beans:[{name:"Arabica Honey", price:120000, type:"Arabica", active:true}],                                                          lastDelivery:"5 hari lalu",   totalKg:1240, status:"Aktif",     address:"Desa Batur, Kintamani, Bangli",             notes:"Musim panen April–Juni. Kualitas konsisten." },
+  { id:"S-003", name:"Toraja Coffee Hub",     pic:"Pak Reynaldi",region:"Tana Toraja",      phone:"+62 813-2211-0099", email:"rey@torajacoffee.id",beans:[{name:"Arabica Sapan", price:110000, type:"Arabica", active:true}],                                                          lastDelivery:"1 minggu lalu", totalKg:980,  status:"Aktif",     address:"Jl. Pongtiku 45, Rantepao, Tana Toraja" },
+  { id:"S-004", name:"Lampung Robusta Mills", pic:"Pak Hendra",  region:"Lampung Barat",    phone:"+62 822-5544-3322", email:"hendra@lrm.id",      beans:[{name:"Robusta AAA",   price:48000,  type:"Robusta",  active:true},{name:"Robusta Honey", price:52000,  type:"Robusta",  active:true}],  lastDelivery:"3 hari lalu",   totalKg:3120, status:"Aktif",     address:"Kawasan Industri Way Laga, Lampung Barat",  notes:"Lead time 3 hari kerja. Harga negotiable untuk >500kg." },
+  { id:"S-005", name:"Civet Farm Lampung",    pic:"Pak Jaka",    region:"Liwa, Lampung",    phone:"+62 815-9988-7766", email:"jaka@civetfarm.id",  beans:[{name:"Luwak Premium", price:850000, type:"Luwak",    active:true}],                                                            lastDelivery:"2 minggu lalu", totalKg:64,   status:"Aktif",     address:"Desa Sukaraja, Liwa, Lampung Barat",        notes:"Produksi terbatas 5–10kg/minggu." },
+  { id:"S-006", name:"Preanger Estate",       pic:"Bu Salma",    region:"Garut, Jawa Barat",phone:"+62 819-1122-3344", email:"salma@preanger.id",  beans:[{name:"Arabica Java",  price:105000, type:"Arabica",  active:true}],                                                          lastDelivery:"10 hari lalu",  totalKg:1520, status:"Pending",   address:"Perkebunan Cikajang, Garut",                notes:"Menunggu verifikasi dokumen BPOM." },
+  { id:"S-007", name:"Riau Liberica Co",      pic:"Pak Daud",    region:"Meranti, Riau",    phone:"+62 811-2233-4455", email:"daud@liberica.id",   beans:[{name:"Liberica",      price:65000,  type:"Liberica", active:true}],                                                         lastDelivery:"3 minggu lalu", totalKg:280,  status:"Non-aktif", address:"Jl. Merbau No.7, Selat Panjang, Riau" },
 ];
 
 export const initPOs: PO[] = [
@@ -51,3 +63,12 @@ export const statusTone = (s: SupplierStatus) =>
 export const BTN_HOVER_COKLAT = "border border-border text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-colors";
 export const BTN_ICON_DEL = "h-8 w-8 p-0 rounded-lg border border-border text-muted-foreground hover:border-red-300 hover:bg-red-50 hover:text-red-600 transition-colors";
 export const BTN_ICON_EDT = `h-8 w-8 p-0 rounded-lg ${BTN_HOVER_COKLAT}`;
+
+export const initialItems: InventoryItem[] = [
+  { sku: "GYO-WN-001", name: "Gayo Wine Natural",    type: "Arabica",  stock: 142, unit: "kg", cost: 165000, price: 280000, exp: "Mar 2027", supplier: "CV Gayo Mandiri" },
+  { sku: "KIN-HN-002", name: "Kintamani Honey",       type: "Arabica",  stock: 38,  unit: "kg", cost: 140000, price: 240000, exp: "Feb 2027", supplier: "UD Subak Bali" },
+  { sku: "TRJ-SP-003", name: "Toraja Sapan",           type: "Arabica",  stock: 96,  unit: "kg", cost: 180000, price: 310000, exp: "Jan 2027", supplier: "PT Toraja Coffee" },
+  { sku: "LWK-PR-004", name: "Luwak Premium",          type: "Luwak",    stock: 8,   unit: "kg", cost: 780000, price: 1250000, exp: "—",       supplier: "CV Luwak Nusantara" },
+  { sku: "LMP-RB-005", name: "Lampung Robusta AAA",    type: "Robusta",  stock: 220, unit: "kg", cost: 78000,  price: 145000, exp: "Mar 2027", supplier: "PT Sinar Robusta" },
+  { sku: "LBR-MR-006", name: "Liberica Meranti",       type: "Liberica", stock: 24,  unit: "kg", cost: 105000, price: 185000, exp: "—",       supplier: "UD Riau Kopi" },
+];
