@@ -11,7 +11,7 @@ function SupplierModals() {
   const {
     suppliers, pos, inventory, modal, setModal, close,
     handleSaveSupplier, handleDeleteSupplier, handleSavePO,
-    handleUpdatePOStatus, handleToggleBean,
+    handleUpdatePOStatus, handleToggleBean, handleUpdateArrival
   } = useSupplierContext();
 
   return (
@@ -37,7 +37,7 @@ function SupplierModals() {
       {modal.type === "po"        && <BuatPOModal suppliers={suppliers} defaultSupplier={modal.supplier} onClose={close} onSave={handleSavePO} />}
       {modal.type === "po-detail" && (() => {
         const currentPO = pos.find(p => p.id === modal.po.id) ?? modal.po;
-        return <PODetailModal po={currentPO} onClose={close} onUpdateStatus={handleUpdatePOStatus} />;
+        return <PODetailModal po={currentPO} onClose={close} onUpdateStatus={handleUpdatePOStatus}  onUpdateArrival={handleUpdateArrival}/>;
       })()}
     </>
   );

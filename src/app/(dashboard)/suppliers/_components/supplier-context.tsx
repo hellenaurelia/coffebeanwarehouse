@@ -25,6 +25,7 @@ type SupplierContextValue = {
   handleSavePO: (partial: Omit<PO, "id">) => void;
   handleUpdatePOStatus: (poId: string, newStatus: PO["status"]) => void;
   handleToggleBean: (supplierId: string, beanName: string) => void;
+  handleUpdateArrival: (poId: string, date: string) => void;
 };
 
 const SupplierContext = createContext<SupplierContextValue | null>(null);
@@ -76,6 +77,10 @@ export function SupplierProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const handleUpdateArrival = (poId: string, date: string) => {
+  setPOs(p => p.map(po => po.id === poId ? { ...po, arrivalDate: date } : po));
+};
+
   return (
     <SupplierContext.Provider value={{
       suppliers, setSuppliers,
@@ -87,6 +92,7 @@ export function SupplierProvider({ children }: { children: ReactNode }) {
       handleSavePO,
       handleUpdatePOStatus,
       handleToggleBean,
+      handleUpdateArrival,
     }}>
       {children}
     </SupplierContext.Provider>

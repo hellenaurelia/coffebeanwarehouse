@@ -79,7 +79,6 @@ export function BuatPOModal({
     const e: Record<string, string> = {};
     if (!supplierId) e.supplier = "Pilih supplier";
     if (!date) e.date = "Wajib diisi";
-    if (!eta) e.eta = "Wajib diisi";
     items.forEach((item, i) => {
       if (!item.bean.trim()) e[`bean_${i}`] = "Wajib diisi";
       if (!item.qty || parseInt(item.qty, 10) <= 0) e[`qty_${i}`] = "Harus > 0";
@@ -92,7 +91,7 @@ export function BuatPOModal({
       supplierId,
       supplierName: selected?.name ?? "",
       date,
-      arrivalDate: eta,
+      arrivalDate: "-",
       notes: notes.trim(),
       status: "Pending",
       items: items.map((i) => ({

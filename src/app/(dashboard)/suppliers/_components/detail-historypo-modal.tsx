@@ -32,14 +32,17 @@ const STATUS_LABEL: Record<PO["status"], string> = {
   Cancelled: "Cancelled",
 };
 
+
 export function PODetailModal({
   po,
   onClose,
   onUpdateStatus,
+  onUpdateArrival,
 }: {
   po: PO;
   onClose: () => void;
   onUpdateStatus?: (poId: string, newStatus: PO["status"]) => void;
+  onUpdateArrival?: (poId: string, date: string) => void;
 }) {
   const total = poTotal(po);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -56,6 +59,14 @@ export function PODetailModal({
   const handleConfirm = () => {
     if (pendingStatus && onUpdateStatus) {
       onUpdateStatus(po.id, pendingStatus);
+      if (pendingStatus === "Diterima") {
+        const today = new Date().toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        onUpdateArrival?.(po.id, today);
+      }
       setPendingStatus(null);
     }
   };
