@@ -216,7 +216,6 @@ function NotifikasiPanel() {
     { key: "transaksi" as const, label: "Notifikasi Transaksi", desc: "Setiap transaksi baru masuk" },
     { key: "stok" as const, label: "Peringatan Stok", desc: "Saat stok biji kopi menipis atau kritis" },
     { key: "laporan" as const, label: "Laporan Harian", desc: "Ringkasan penjualan dikirim tiap pukul 22.00" },
-    { key: "login" as const, label: "Login Baru", desc: "Saat akun diakses dari perangkat baru" },
     { key: "promosi" as const, label: "Info & Promo", desc: "Pembaruan fitur dan penawaran dari Arunika" },
   ];
 
