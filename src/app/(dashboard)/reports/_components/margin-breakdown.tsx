@@ -36,14 +36,6 @@ const beanTypeTone = (type: string): string =>
     Luwak:    "bg-rose-500/10 text-rose-700 border-rose-500/20",
   } as Record<string, string>)[type] ?? "bg-secondary text-muted-foreground border-border";
 
-const BAR_COLORS = [
-  "bg-bean",
-  "bg-bean/80",
-  "bg-bean/65",
-  "bg-bean/50",
-  "bg-bean/38",
-];
-
 export function ExpenseBreakdown({ data }: ExpenseBreakdownProps) {
   const [hoveredSku, setHoveredSku] = useState<string | null>(null);
 
@@ -109,7 +101,7 @@ export function ExpenseBreakdown({ data }: ExpenseBreakdownProps) {
                 <span className="w-4 shrink-0" />
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
                   <div
-                    className={`h-full rounded-full transition-all ${BAR_COLORS[i]}`}
+                    className={`h-full rounded-full transition-all bg-bean`}
                     style={{ width: `${(item.marginPct / maxPct) * 100}%` }}
                   />
                 </div>
