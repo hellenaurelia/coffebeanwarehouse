@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Mail, Trash2, Pencil, ClipboardList, Tag, AlertCircle } from "lucide-react";
@@ -29,7 +30,6 @@ const formatPhone = (phone: string) => {
   return phone;
 };
 
-// Guard: apakah bean masih punya stok aktif di inventory?
 const beanHasStock = (beanName: string, inventory: InventoryItem[] | undefined): boolean =>
   (inventory ?? []).some(
     item =>
@@ -37,7 +37,7 @@ const beanHasStock = (beanName: string, inventory: InventoryItem[] | undefined):
       item.stock > 0
   );
 
-// ── Bean Card ─────────────────────────────────────────────────────────────────
+// Bean Card 
 function BeanCard({
   bean,
   hasStock,
@@ -117,7 +117,7 @@ function BeanCard({
             {isActive ? "Nonaktifkan" : "Aktifkan"}
           </button>
 
-          {/* Tooltip — muncul hover saat disabled */}
+          {/* Tooltip */}
           {blockToggle && (
             <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-52 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20">
               <div className="bg-foreground/95 text-background rounded-lg px-3 py-2 text-[11px] leading-snug shadow-lg">
@@ -136,7 +136,7 @@ function BeanCard({
   );
 }
 
-// ── Main Modal ────────────────────────────────────────────────────────────────
+// Main Modal
 export function DetailModal({
   supplier,
   pos,
@@ -158,46 +158,69 @@ export function DetailModal({
   onOpenPODetail: (po: PO) => void;
   onToggleBean?: (supplierId: string, beanName: string) => void;
 }) {
-  const sPOs = pos.filter(p => p.supplierId === supplier.id);
-  const totalValue = sPOs.reduce((a, p) => a + poTotal(p), 0);
-  const go = (fn: (s: Supplier) => void) => { onClose(); fn(supplier); };
+  // 1. Buat local state untuk menyimpan data supplier agar bisa di-update seketika
+  const [localSupplier, setLocalSupplier] = useState<Supplier>(supplier);
 
-  const activeBeanCount = supplier.beans.filter(b => b.active !== false).length;
+  // 2. Sinkronisasikan jika ada perubahan prop dari parent
+  useEffect(() => {
+    setLocalSupplier(supplier);
+  }, [supplier]);
+
+  const sPOs = pos.filter(p => p.supplierId === localSupplier.id);
+  const totalValue = sPOs.reduce((a, p) => a + poTotal(p), 0);
+  const go = (fn: (s: Supplier) => void) => { onClose(); fn(localSupplier); };
+
+  const activeBeanCount = localSupplier.beans.filter(b => b.active !== false).length;
+
+  // 3. Handler khusus untuk merespon klik toggle secara real-time
+  const handleToggleBean = (beanName: string) => {
+
+    onToggleBean?.(localSupplier.id, beanName);
+
+    setLocalSupplier(prev => ({
+      ...prev,
+      beans: prev.beans.map(b => 
+        b.name === beanName 
+          ? { ...b, active: b.active === false ? true : false } 
+          : b
+      )
+    }));
+  };
 
   return (
     <Modal onClose={onClose} wide>
       <ModalHeader
-        title={supplier.name}
-        subtitle={`${supplier.id} · ${supplier.pic}`}
+        title={localSupplier.name}
+        subtitle={`${localSupplier.id} · ${localSupplier.pic}`}
         onClose={onClose}
       />
 
       <div className="p-6 space-y-5 overflow-y-auto">
 
-        {/* ── Status + stats ── */}
+        {/* Status and stats */}
         <div className="flex items-center justify-between gap-4">
-          <Badge variant="outline" className={`${statusTone(supplier.status)} text-xs`}>
-            {supplier.status}
+          <Badge variant="outline" className={`${statusTone(localSupplier.status)} text-xs`}>
+            {localSupplier.status}
           </Badge>
           <div className="flex items-center gap-4 text-sm">
             <div className="text-right">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Total Pasokan</div>
-              <div className="font-semibold tabular-nums">{fmtKg(supplier.totalKg)}</div>
+              <div className="font-semibold tabular-nums">{fmtKg(localSupplier.totalKg)}</div>
             </div>
             <div className="w-px h-7 bg-border/50" />
             <div className="text-right">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Terakhir Kirim</div>
-              <div className="font-semibold">{supplier.lastDelivery}</div>
+              <div className="font-semibold">{localSupplier.lastDelivery}</div>
             </div>
           </div>
         </div>
 
-        {/* ── Kontak ── */}
+        {/* Kontak */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { icon: MapPin, label: "Region",  val: supplier.region },
-            { icon: Phone,  label: "Telepon", val: formatPhone(supplier.phone), mono: true },
-            { icon: Mail,   label: "Email",   val: supplier.email },
+            { icon: MapPin, label: "Region",  val: localSupplier.region },
+            { icon: Phone,  label: "Telepon", val: formatPhone(localSupplier.phone), mono: true },
+            { icon: Mail,   label: "Email",   val: localSupplier.email },
           ].map(({ icon: Icon, label, val, mono }) => (
             <div
               key={label}
@@ -212,52 +235,52 @@ export function DetailModal({
           ))}
         </div>
 
-        {/* ── Biji Kopi & Harga Kontrak ── */}
+        {/* Biji Kopi & Harga Kontrak */}
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <Tag className="h-3.5 w-3.5 text-muted-foreground" />
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Biji Kopi & Harga Kontrak
             </h3>
-            {/* Counter aktif/total — hanya tampil jika ada yang non-aktif */}
-            {activeBeanCount < supplier.beans.length && (
+            {/* Counter aktif/total */}
+            {activeBeanCount < localSupplier.beans.length && (
               <Badge
                 variant="outline"
                 className="ml-auto text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-700 border-amber-500/20"
               >
-                {activeBeanCount}/{supplier.beans.length} aktif
+                {activeBeanCount}/{localSupplier.beans.length} aktif
               </Badge>
             )}
           </div>
           <div className="flex flex-col gap-2">
-            {supplier.beans.map(bean => (
+            {localSupplier.beans.map(bean => (
               <BeanCard
                 key={bean.name}
                 bean={bean}
                 hasStock={beanHasStock(bean.name, inventory)}
-                onToggle={() => onToggleBean?.(supplier.id, bean.name)}
+                onToggle={() => handleToggleBean(bean.name)}
               />
             ))}
           </div>
         </div>
 
-        {/* ── Alamat ── */}
-        {supplier.address && (
+        {/* Alamat */}
+        {localSupplier.address && (
           <div className="flex gap-2 text-xs text-muted-foreground bg-secondary/30 rounded-xl px-4 py-3 border border-border/40">
             <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <span>{supplier.address}</span>
+            <span>{localSupplier.address}</span>
           </div>
         )}
 
-        {/* ── Catatan ── */}
-        {supplier.notes && (
+        {/* Catatan */}
+        {localSupplier.notes && (
           <div className="bg-secondary/30 border border-border/60 rounded-xl px-4 py-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">Catatan</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">{supplier.notes}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{localSupplier.notes}</p>
           </div>
         )}
 
-        {/* ── Riwayat PO ── */}
+        {/* Riwayat PO */}
         <div>
           <div className="flex items-center justify-between mb-2.5">
             <h3 className="text-sm font-semibold">Riwayat Purchase Order</h3>
@@ -293,7 +316,7 @@ export function DetailModal({
         </div>
       </div>
 
-      {/* ── Footer actions ── */}
+      {/* Footer actions */}
       <div className="border-t border-border/60 px-6 py-4">
         <div className="flex items-center gap-2">
           <Button className={`flex-1 ${BTN_PRIMARY}`} onClick={() => go(onBuatPO)}>
