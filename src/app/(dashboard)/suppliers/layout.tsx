@@ -53,9 +53,9 @@ function SupplierModals() {
 
 export default function SuppliersLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SupplierProvider>
-      {children}
+    <>
+     {children}
       <SupplierModals />
-    </SupplierProvider>
+    </>
   );
 }

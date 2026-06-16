@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Greeting from "@/components/ui/greetings";
 import { Progress } from "@/components/ui/progress";
+import { useSupplierContext } from "./suppliers/_components/supplier-context";
 import { initSuppliers } from "./suppliers/lib";
 import {
   ArrowUpRight, ArrowDownRight, Coffee, Package, Receipt, TrendingUp, TrendingDown, AlertTriangle, ScanBarcode, ShoppingBasket
@@ -73,6 +74,8 @@ export default function DashboardPage() {
   const [showPO, setShowPO] = useState(false);
  
   const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
+
+  const { handleSavePO } = useSupplierContext();
 
   return (
     <>
@@ -235,7 +238,7 @@ export default function DashboardPage() {
           suppliers={initSuppliers}
           onClose={() => setShowPO(false)}
           onSave={(po) => {
-            console.log("PO dibuat:", po);
+            handleSavePO(po);
             setShowPO(false);
           }}
         />
