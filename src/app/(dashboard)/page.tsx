@@ -10,8 +10,7 @@ import Greeting from "@/components/ui/greetings";
 import { Progress } from "@/components/ui/progress";
 import { initSuppliers } from "./suppliers/lib";
 import {
-  ArrowUpRight, ArrowDownRight, Coffee, Package, Receipt, TrendingUp,
-  AlertTriangle, ScanBarcode, ShoppingBasket
+  ArrowUpRight, ArrowDownRight, Coffee, Package, Receipt, TrendingUp, TrendingDown, AlertTriangle, ScanBarcode, ShoppingBasket
 } from "lucide-react";
 
 import { DetailModal } from "./transactions/_components/detailModal";
