@@ -103,11 +103,11 @@ export default function InventoryDetailDialog({ item, open, onOpenChange, onSave
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-5 py-2">
               <Field label="SKU" value={draft.sku} editing={false} />
-              <Field label="Supplier" value={draft.supplier} editing={editing} onChange={(v) => setDraft({ ...draft, supplier: v })} />
-              <Field label="Tipe" value={draft.type} editing={editing} onChange={(v) => setDraft({ ...draft, type: v })} />
-              <Field label="Exp." value={draft.exp || "—"} editing={editing} onChange={(v) => setDraft({ ...draft, exp: v })} />
-              <Field label="Stok" value={`${draft.stock} ${draft.unit}`} editing={editing} type="number" rawValue={String(draft.stock)} onChange={(v) => setDraft({ ...draft, stock: Number(v) || 0 })} />
-              <Field label="HPP" value={fmt(draft.cost)} editing={editing} type="number" rawValue={String(draft.cost)} onChange={(v) => setDraft({ ...draft, cost: Number(v) || 0 })} />
+              <Field label="Supplier" value={draft.supplier} editing={false} />
+              <Field label="Tipe" value={draft.type} editing={false} />
+              <Field label="Exp." value={draft.exp || "—"} editing={false} />
+              <Field label="Stok" value={`${draft.stock} ${draft.unit}`} editing={false} />
+              <Field label="Harga Beli" value={fmt(draft.cost)} editing={editing} type="number" rawValue={String(draft.cost)} onChange={(v) => setDraft({ ...draft, cost: Number(v) || 0 })} />
               <Field label="Harga Jual" value={fmt(draft.price)} editing={editing} type="number" rawValue={String(draft.price)} onChange={(v) => setDraft({ ...draft, price: Number(v) || 0 })} />
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">Margin</div>

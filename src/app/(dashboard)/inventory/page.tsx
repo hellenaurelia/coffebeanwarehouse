@@ -66,7 +66,7 @@ export default function Inventory() {
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           {[
-            { label: "Total SKU",       value: `${items.length}`,                             sub: "Arabica · Robusta · Liberica · Luwak" },
+            { label: "Total SKU",       value: `${items.length}`,                       sub: "Arabica · Robusta · Liberica · Luwak" },
             { label: "Total Stok",      value: `${totalStock.toLocaleString("id-ID")} kg`,    sub: "Green bean nusantara" },
             { label: "Nilai Inventori", value: `Rp ${(totalValue/1_000_000).toFixed(0)} jt`, sub: "Estimasi cost" },
             { label: "Perlu Re-order",  value: `${reorderCount} SKU`,                         sub: "Stok < 25 kg" },
@@ -134,7 +134,7 @@ export default function Inventory() {
                     <th className="text-left font-medium px-3 py-3">Tipe</th>
                     <th className="text-left font-medium px-3 py-3">Exp.</th>
                     <th className="text-right font-medium px-3 py-3">Stok</th>
-                    <th className="text-right font-medium px-3 py-3">HPP</th>
+                    <th className="text-right font-medium px-3 py-3">Harga Beli</th>
                     <th className="text-right font-medium px-3 py-3">Harga Jual</th>
                     <th className="text-center font-medium px-3 py-3">Status</th>
                     <th className="text-center font-medium px-3 py-3">Aksi</th>
