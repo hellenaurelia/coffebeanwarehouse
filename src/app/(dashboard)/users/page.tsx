@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ShieldCheck, Package, Users } from "lucide-react";
+import { Plus, Search, ShieldCheck, Users } from "lucide-react";
 
 import { StatCard } from "./_components/stat-card";
 import { RoleCard } from "./_components/role-card";
@@ -47,7 +47,6 @@ export default function UsersPage() {
     { label: "Total User", value: users.length, icon: Users },
     { label: "Aktif", value: users.filter((u) => u.status === "aktif").length, icon: ShieldCheck },
     { label: "Owner", value: users.filter((u) => u.role === "owner").length, icon: ShieldCheck },
-    { label: "Outlet", value: 3, icon: Package },
   ];
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -105,7 +104,7 @@ export default function UsersPage() {
 
       <main className="flex-1 p-6 space-y-6">
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {stats.map((s) => <StatCard key={s.label} {...s} />)}
         </div>
 
