@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Coffee, Search, Filter, Download, Plus, Package } from "lucide-react";
 import { FilterModal, FilterValues } from "./_components/filter-modal";
 import InventoryDetailDialog from "./_components/modal-detail-edit";
-import { TambahBijiModal } from "./_components/tambah-biji-modal";
 import { RekonsiliasiModal } from "./_components/rekonsiliasi-modal";
 import { exportToCSV } from "./_components/export-utils";
 import { useInventorySearch } from "./_components/search-hooks";
@@ -118,9 +117,6 @@ export default function Inventory() {
                 <Button variant="outline" className="rounded-xl" onClick={() => exportToCSV(filtered)}>
                   <Download className="h-4 w-4 mr-2" />Ekspor
                 </Button>
-                <Button className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setTambahOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />Tambah Biji
-                </Button>
               </div>
             </div>
 
@@ -188,7 +184,6 @@ export default function Inventory() {
       </main>
 
       <FilterModal open={filterOpen} onClose={() => setFilterOpen(false)} items={items} values={activeFilters} onChange={setActiveFilters} />
-      <TambahBijiModal open={tambahOpen} onClose={() => setTambahOpen(false)} onSave={(newItem) => setItems((prev) => [...prev, newItem])} />
       <RekonsiliasiModal open={rekonOpen} onClose={() => setRekonOpen(false)} items={items} onSave={(updated) => setItems(updated)} />
       <InventoryDetailDialog
         open={!!detailItem}
