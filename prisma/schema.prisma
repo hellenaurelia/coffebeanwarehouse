@@ -1,20 +1,199 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// Draf tabel pertama untuk sistem kasir
+// ================= ENUMS =================
+enum Role {
+  OWNER
+  MANAGER
+  WAREHOUSE
+  KASIR
+}
+
+enum SupplierStatus {
+  Aktif
+  Pending
+  Non_aktif
+}
+
+enum POStatus {
+  Pending
+  Dikirim
+  Diterima
+  Cancelled
+}
+
+enum PaymentMethod {
+  Cash
+  QRIS
+  Transfer
+}
+
+enum MovementType {
+  Purchase_In // Dari PO
+  Sale_Out // Dari POS
+  Adjustment // Dari Rekonsiliasi
+}
+
+enum BeanType {
+  Whole_Bean
+  Ground
+}
+
+// ================= MODELS =================
+
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  role      String   @default("STAFF") // Role: ADMIN, WAREHOUSE, STAFF
+  id       String  @id @default(cuid())
+  name     String
+  email    String  @unique
+  password String
+  role     Role    @default(KASIR)
+  isActive Boolean @default(true)
+
+  // Relasi: User membuat PO, Transaksi, dan StockMovement
+  purchaseOrders PurchaseOrder[]
+  transactions   Transaction[]
+  stockMovements StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id      String         @id @default(cuid())
+  name    String
+  picName String
+  phone   String
+  email   String
+  region  String
+  address String?
+  notes   String?
+  status  SupplierStatus @default(Aktif)
+
+  // Relasi
+  supplierProducts SupplierProduct[]
+  purchaseOrders   PurchaseOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id           String    @id @default(cuid())
+  sku          String    @unique
+  name         String
+  type         String // Arabica, Robusta, dll
+  sellingPrice Float // Harga Jual
+  minimumStock Float     @default(25)
+  currentStock Float     @default(0) // Sistem Hybrid: Simpan stok di sini
+  isActive     Boolean   @default(true)
+  expDate      DateTime?
+
+  // Relasi
+  supplierProducts SupplierProduct[]
+  poItems          PurchaseOrderItem[]
+  transactionItems TransactionItem[]
+  stockMovements   StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Tabel Pivot: 1 Produk bisa banyak Supplier, 1 Supplier bisa banyak Produk
+model SupplierProduct {
+  id            String  @id @default(cuid())
+  supplierId    String
+  productId     String
+  contractPrice Float // Harga Beli/HPP dari supplier ini
+  isActive      Boolean @default(true)
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([supplierId, productId]) // Mencegah duplikasi data supplier-produk yang sama
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  poNumber    String   @unique
+  supplierId  String
+  createdById String
+  status      POStatus @default(Pending)
+  totalAmount Float    @default(0)
+  notes       String?
+
+  supplier  Supplier            @relation(fields: [supplierId], references: [id])
+  createdBy User                @relation(fields: [createdById], references: [id])
+  items     PurchaseOrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PurchaseOrderItem {
+  id              String @id @default(cuid())
+  purchaseOrderId String
+  productId       String
+  quantityKg      Float
+  unitPrice       Float
+  subtotal        Float
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  product       Product       @relation(fields: [productId], references: [id])
+}
+
+model Transaction {
+  id                String        @id @default(cuid())
+  transactionNumber String        @unique
+  cashierId         String
+  paymentMethod     PaymentMethod
+  totalAmount       Float         @default(0)
+  cashPaid          Float? // Uang yang dibayarkan (jika cash)
+
+  cashier User              @relation(fields: [cashierId], references: [id])
+  items   TransactionItem[]
+
+  createdAt DateTime @default(now())
+}
+
+model TransactionItem {
+  id            String   @id @default(cuid())
+  transactionId String
+  productId     String
+  quantityKg    Float
+  beanType      BeanType @default(Whole_Bean)
+  grindingFee   Float    @default(0)
+  sellingPrice  Float // Harga jual saat itu
+  buyingPrice   Float // HPP saat itu (Penting untuk hitung profit)
+  subtotal      Float
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  product     Product     @relation(fields: [productId], references: [id])
+}
+
+model StockMovement {
+  id           String       @id @default(cuid())
+  productId    String
+  movementType MovementType
+  quantity     Float // Angka perubahannya (misal: 100 atau -5)
+  stockBefore  Float
+  stockAfter   Float
+  reason       String // e.g., "PO-001 Diterima", "Penjualan Kasir"
+
+  // Opsional: Untuk melacak pergerakan ini berasal dari dokumen apa
+  referenceType String? // "PO" atau "TRANSACTION" atau "RECONCILIATION"
+  referenceId   String? // ID dari tabel referensinya
+
+  createdById String
+  createdBy   User    @relation(fields: [createdById], references: [id])
+  product     Product @relation(fields: [productId], references: [id])
+
   createdAt DateTime @default(now())
 }
