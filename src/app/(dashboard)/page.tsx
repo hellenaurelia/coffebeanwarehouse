@@ -119,7 +119,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="mt-3 font-display text-2xl font-semibold">{s.value}</div>
                 <div className={`mt-1 flex items-center gap-1 text-xs ${s.up ? "text-emerald-600" : "text-red-600"}`}>
-                  {s.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                  {s.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                   {s.delta} <span className="text-muted-foreground">vs kemarin</span>
                 </div>
               </CardContent>
