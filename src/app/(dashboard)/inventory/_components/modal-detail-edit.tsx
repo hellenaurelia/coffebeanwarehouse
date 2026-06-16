@@ -90,12 +90,8 @@ export default function InventoryDetailDialog({ item, open, onOpenChange, onSave
 
                 {/* Name */}
                 <div className="flex-1 pt-1">
-                  {editing ? (
-                    <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                      className="font-display text-xl font-semibold h-auto py-1" />
-                  ) : (
-                    <DialogTitle className="font-display text-2xl">{item?.name}</DialogTitle>
-                  )}
+                  {/* Hapus ternary operator di sini, jadikan teks statis (DialogTitle) */}
+                  <DialogTitle className="font-display text-2xl">{draft.name}</DialogTitle>
                   {editing && <p className="text-xs text-muted-foreground mt-1.5">Klik foto untuk mengganti gambar</p>}
                 </div>
               </div>
@@ -107,7 +103,7 @@ export default function InventoryDetailDialog({ item, open, onOpenChange, onSave
               <Field label="Tipe" value={draft.type} editing={false} />
               <Field label="Exp." value={draft.exp || "—"} editing={false} />
               <Field label="Stok" value={`${draft.stock} ${draft.unit}`} editing={false} />
-              <Field label="Harga Beli" value={fmt(draft.cost)} editing={editing} type="number" rawValue={String(draft.cost)} onChange={(v) => setDraft({ ...draft, cost: Number(v) || 0 })} />
+              <Field label="Harga Beli" value={fmt(draft.cost)} editing={false} />
               <Field label="Harga Jual" value={fmt(draft.price)} editing={editing} type="number" rawValue={String(draft.price)} onChange={(v) => setDraft({ ...draft, price: Number(v) || 0 })} />
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">Margin</div>
