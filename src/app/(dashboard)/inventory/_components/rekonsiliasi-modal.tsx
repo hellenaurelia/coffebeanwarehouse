@@ -16,6 +16,7 @@ interface RekonsiliasiModalProps {
 interface RekonEntry {
   sku: string;
   fisik: string; // string for input, convert to number on save
+  alasan: string;
 }
 
 type Step = "input" | "review" | "done";
@@ -23,7 +24,7 @@ type Step = "input" | "review" | "done";
 export function RekonsiliasiModal({ open, onClose, items, onSave }: RekonsiliasiModalProps) {
   const [step, setStep] = useState<Step>("input");
   const [entries, setEntries] = useState<RekonEntry[]>(
-    items.map((i) => ({ sku: i.sku, fisik: "" }))
+    items.map((i) => ({ sku: i.sku, fisik: "", alasan: "" }))
   );
 
   if (!open) return null;
@@ -31,6 +32,12 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
   const setFisik = (sku: string, val: string) => {
     setEntries((prev) =>
       prev.map((e) => (e.sku === sku ? { ...e, fisik: val } : e))
+    );
+  };
+
+  const setAlasan = (sku: string, val: string) => {
+    setEntries((prev) =>
+      prev.map((e) => (e.sku === sku ? { ...e, alasan: val } : e))
     );
   };
 
@@ -42,7 +49,7 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
     const item = items.find((i) => i.sku === e.sku)!;
     const fisik = Number(e.fisik);
     const selisih = fisik - item.stock;
-    return { item, fisik, selisih };
+    return { item, fisik, selisih, alasan: e.alasan };
   });
 
   const handleSave = () => {
@@ -59,7 +66,7 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
 
   const handleClose = () => {
     setStep("input");
-    setEntries(items.map((i) => ({ sku: i.sku, fisik: "" })));
+    setEntries(items.map((i) => ({ sku: i.sku, fisik: "", alasan: "" })));
     onClose();
   };
 
@@ -106,15 +113,16 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
         <div className="overflow-y-auto flex-1 space-y-2 pr-1">
           {step === "input" && (
             <>
-              <div className="grid grid-cols-[1fr_auto_auto] gap-3 text-xs uppercase tracking-wider text-muted-foreground px-2 mb-1">
+              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 text-xs uppercase tracking-wider text-muted-foreground px-2 mb-1">
                 <span>Produk</span>
                 <span className="text-right w-20">Sistem</span>
                 <span className="text-right w-24">Fisik (kg)</span>
+                <span className="w-40">Alasan</span>
               </div>
               {items.map((item) => {
                 const entry = entries.find((e) => e.sku === item.sku)!;
                 return (
-                  <div key={item.sku} className="grid grid-cols-[1fr_auto_auto] gap-3 items-center rounded-xl bg-secondary/40 px-3 py-3">
+                  <div key={item.sku} className="grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center rounded-xl bg-secondary/40 px-3 py-3">
                     <div>
                       <div className="font-medium text-sm">{item.name}</div>
                       <div className="text-xs text-muted-foreground font-mono">{item.sku}</div>
@@ -132,6 +140,16 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
                         className="h-8 text-sm rounded-lg text-right tabular-nums"
                       />
                     </div>
+                    <div className="w-40">
+                      <Input
+                        type="text"
+                        value={entry.alasan}
+                        onChange={(e) => setAlasan(item.sku, e.target.value)}
+                        placeholder="mis. rusak, salah input"
+                        disabled={entry.fisik === ""}
+                        className="h-8 text-sm rounded-lg"
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -145,8 +163,8 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
                   Tidak ada perubahan stok yang dimasukkan.
                 </div>
               ) : (
-                diffs.map(({ item, fisik, selisih }) => (
-                  <div key={item.sku} className="rounded-xl border border-border/60 px-4 py-3 space-y-1">
+                diffs.map(({ item, fisik, selisih, alasan }) => (
+                  <div key={item.sku} className="rounded-xl border border-border/60 px-4 py-3 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm">{item.name}</span>
                       <Badge
@@ -166,6 +184,14 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
                       <span>Sistem: <strong>{item.stock} kg</strong></span>
                       <span>Fisik: <strong>{fisik} kg</strong></span>
                     </div>
+                    {alasan ? (
+                      <div className="text-xs flex items-start gap-1.5 text-muted-foreground">
+                        <span className="shrink-0 font-medium">Alasan:</span>
+                        <span className="italic">{alasan}</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground/50 italic">Tidak ada alasan</div>
+                    )}
                   </div>
                 ))
               )}

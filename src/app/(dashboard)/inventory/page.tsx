@@ -40,6 +40,14 @@ const stockTone = (s: number) =>
   : s < 60 ? "bg-crema/40 text-roast border-crema/50"
   : "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
 
+const beanTypeTone = (type: string): string =>
+  ({
+    Arabica:  "bg-sky-500/10 text-sky-700 border-sky-500/20",
+    Robusta:  "bg-amber-500/10 text-amber-700 border-amber-500/20",
+    Liberica: "bg-violet-500/10 text-violet-700 border-violet-500/20",
+    Luwak:    "bg-rose-500/10 text-rose-700 border-rose-500/20",
+  } as Record<string, string>)[type] ?? "bg-secondary text-muted-foreground border-border";
+
 const stockLabel = (s: number) => (s < 25 ? "Kritis" : s < 60 ? "Menipis" : "Aman");
 
 export default function Inventory() {
@@ -161,7 +169,7 @@ export default function Inventory() {
                       </td>
                       <td className="px-3 py-4 font-mono text-xs text-muted-foreground">{it.sku}</td>
                       <td className="px-3 py-4 text-sm text-muted-foreground">{it.supplier}</td>
-                      <td className="px-3 py-4"><Badge variant="outline" className="text-xs">{it.type}</Badge></td>
+                      <td className="px-3 py-4"><Badge variant="outline" className={`text-xs ${beanTypeTone(it.type)}`}>{it.type}</Badge></td>
                       <td className="px-3 py-4 text-sm text-muted-foreground">{it.exp}</td>
                       <td className="px-3 py-4 text-right tabular-nums font-medium">{it.stock} <span className="text-muted-foreground font-normal">{it.unit}</span></td>
                       <td className="px-3 py-4 text-right tabular-nums text-muted-foreground">{fmt(it.cost)}</td>

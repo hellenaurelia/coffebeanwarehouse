@@ -22,7 +22,7 @@ const PRESET_RANGES = [
 ];
 
 export default function DashboardPage() {
-  const [rangeKey, setRangeKey]           = useState<"7H" | "30H" | "90H" | null>("7H");
+  const [rangeKey, setRangeKey]             = useState<"7H" | "30H" | "90H" | null>("7H");
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<DateRange>({ from: null, to: null });
 
@@ -74,15 +74,16 @@ export default function DashboardPage() {
       <Topbar title="Dashboard Penjualan Kopi" />
 
       <main className="min-h-screen bg-background">
-        <div className="mx-auto max-w-screen-xl space-y-8 px-6 py-8">
+        <div className="mx-auto max-w-screen-xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 sm:space-y-8">
 
           {/* ── Page Header ─────────────────────────────────────────────── */}
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-4">
+            {/* Title row */}
             <div>
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 Overview
               </p>
-              <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
+              <h1 className="mt-1 font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">
                 Dashboard Penjualan
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -91,9 +92,9 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              {/* Period filter group */}
+            {/* Controls row — wraps on mobile */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Preset range pills */}
               <div className="flex items-center rounded-lg border border-border bg-muted/40 p-1 gap-0.5">
                 {PRESET_RANGES.map(({ key, label }) => (
                   <button
@@ -128,7 +129,7 @@ export default function DashboardPage() {
                     : "Custom"}
                 </Button>
                 {isCalendarOpen && (
-                  <div className="absolute right-0 top-full mt-2 z-50">
+                  <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-2 z-50">
                     <CalendarPicker
                       value={customDateRange}
                       onChange={handleCustomRange}
@@ -138,17 +139,19 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              <Separator orientation="vertical" className="h-6" />
-
-              {/* Export */}
-              <Button
-                size="sm"
-                onClick={handleExportPDF}
-                className="gap-2 bg-bean text-white hover:bg-bean/90 text-xs"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export PDF
-              </Button>
+              {/* Spacer + Export pushed to right on wider screens */}
+              <div className="flex items-center gap-2 ml-auto">
+                <Separator orientation="vertical" className="h-6 hidden sm:block" />
+                <Button
+                  size="sm"
+                  onClick={handleExportPDF}
+                  className="gap-2 bg-bean text-white hover:bg-bean/90 text-xs"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="hidden xs:inline">Export PDF</span>
+                  <span className="xs:hidden">PDF</span>
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -158,7 +161,7 @@ export default function DashboardPage() {
           {/* ── Charts Row ──────────────────────────────────────────────── */}
           <section>
             <SectionLabel icon={BarChart3} title="Analitik Penjualan" subtitle="Tren & breakdown periode ini" />
-            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <div className="mt-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
               <SalesChart data={data} />
               <ExpenseBreakdown data={data} />
             </div>
@@ -167,7 +170,7 @@ export default function DashboardPage() {
           {/* ── Products & Stock ────────────────────────────────────────── */}
           <section>
             <SectionLabel icon={BarChart3} title="Produk & Inventori" subtitle="Performa produk dan status gudang" />
-            <div className="mt-4 grid gap-4 lg:grid-cols-5">
+            <div className="mt-4 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
               <TopProducts data={data} />
               <StockMonitoring data={data} />
             </div>
@@ -191,10 +194,10 @@ function SectionLabel({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-bean/10">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-bean/10">
         <Icon className="h-4 w-4 text-bean" />
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <p className="text-xs text-muted-foreground">{subtitle}</p>
       </div>
