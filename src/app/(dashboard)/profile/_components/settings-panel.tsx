@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { useUser } from "../page";
 import {
   User,
@@ -145,12 +144,6 @@ function KeamananPanel() {
   const [show, setShow] = useState({ old: false, new: false, confirm: false });
   const toggle = (k: keyof typeof show) => setShow((p) => ({ ...p, [k]: !p[k] }));
 
-  const sessions = [
-    { device: 'MacBook Pro 14"', location: "Jakarta, ID", time: "Aktif sekarang", current: true },
-    { device: "iPhone 14 Pro", location: "Jakarta, ID", time: "2 jam lalu", current: false },
-    { device: "Chrome · Windows", location: "Tangerang, ID", time: "Kemarin, 19.45", current: false },
-  ];
-
   return (
     <div className="space-y-8">
       {/* Change password */}
@@ -202,41 +195,6 @@ function KeamananPanel() {
           <Button size="sm" className="gradient-bean text-primary-foreground border-0">
             Update Password
           </Button>
-        </div>
-      </div>
-
-      <div className="border-t border-border/60" />
-
-      {/* Active sessions */}
-      <div className="space-y-3">
-        <div>
-          <h3 className="text-sm font-semibold">Sesi Aktif</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Perangkat yang sedang login ke akun Anda</p>
-        </div>
-        <div className="space-y-2">
-          {sessions.map((s, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3 hover:bg-secondary/40 transition-colors"
-            >
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{s.device}</span>
-                  {s.current && (
-                    <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20 text-[10px] px-1.5 py-0">
-                      Perangkat ini
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground">{s.location} · {s.time}</div>
-              </div>
-              {!s.current && (
-                <Button variant="ghost" size="sm" className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50">
-                  Cabut Akses
-                </Button>
-              )}
-            </div>
-          ))}
         </div>
       </div>
     </div>
