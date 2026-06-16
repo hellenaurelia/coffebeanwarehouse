@@ -6,6 +6,7 @@ import { DeleteModal } from "./_components/delete-modal";
 import { DetailModal } from "./_components/detail-supplier-modal";
 import { BuatPOModal } from "./_components/make-po-modal";
 import { PODetailModal } from "./_components/detail-historypo-modal";
+import { POSuccessModal } from "./_components/po-success-modal";
 
 function SupplierModals() {
   const {
@@ -39,6 +40,13 @@ function SupplierModals() {
         const currentPO = pos.find(p => p.id === modal.po.id) ?? modal.po;
         return <PODetailModal po={currentPO} onClose={close} onUpdateStatus={handleUpdatePOStatus}  onUpdateArrival={handleUpdateArrival}/>;
       })()}
+      {modal.type === "po-success" && (
+        <POSuccessModal
+          po={modal.po}
+          supplier={modal.supplier}
+          onClose={close}
+        />
+      )}
     </>
   );
 }

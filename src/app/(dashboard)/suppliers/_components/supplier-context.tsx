@@ -9,7 +9,8 @@ export type ModalState =
   | { type: "detail";   supplier: Supplier }
   | { type: "hapus";    supplier: Supplier }
   | { type: "po";       supplier?: Supplier }
-  | { type: "po-detail"; po: PO };
+  | { type: "po-detail"; po: PO }
+  | { type: "po-success"; po: PO; supplier?: Supplier };
 
 type SupplierContextValue = {
   suppliers: Supplier[];
@@ -53,8 +54,10 @@ export function SupplierProvider({ children }: { children: ReactNode }) {
   };
 
   const handleSavePO = (partial: Omit<PO, "id">) => {
-    setPOs(p => [{ ...partial, id: nextId(pos, "PO-", 4) }, ...p]);
-    close();
+    const newPO = { ...partial, id: nextId(pos, "PO-", 4) };
+    setPOs(p => [newPO, ...p]);
+    const relatedSupplier = suppliers.find(s => s.id === partial.supplierId);
+    setModal({ type: "po-success", po: newPO, supplier: relatedSupplier });
   };
 
   const handleUpdatePOStatus = (poId: string, newStatus: PO["status"]) => {
