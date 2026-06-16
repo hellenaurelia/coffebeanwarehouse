@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Greeting from "@/components/ui/greetings";
 import { Progress } from "@/components/ui/progress";
+import { initSuppliers } from "./suppliers/lib";
 import {
   ArrowUpRight, ArrowDownRight, Coffee, Package, Receipt, TrendingUp,
   AlertTriangle, ScanBarcode, ShoppingBasket
@@ -232,7 +233,7 @@ export default function DashboardPage() {
 
       {showPO && (
         <BuatPOModal
-          suppliers={[]} // ganti dengan data suppliers jika sudah ada
+          suppliers={initSuppliers}
           onClose={() => setShowPO(false)}
           onSave={(po) => {
             console.log("PO dibuat:", po);
