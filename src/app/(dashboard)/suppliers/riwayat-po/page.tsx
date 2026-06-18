@@ -20,7 +20,7 @@ export default function RiwayatPOPage() {
                 <thead>
                   <tr className="bg-secondary/60 text-xs text-muted-foreground">
                     {["ID PO","Supplier","Tanggal PO","Tanggal Tiba","Total","Status","Aksi"].map((h, i) => (
-                      <th key={h} className={`font-medium px-4 py-2.5 ${i===4?"text-right":i===5||i===6?"text-center":"text-left"}`}>{h}</th>
+                      <th key={h} className={`font-medium px-4 py-2.5 ${i===4 || i===5 || i===6?"text-center":"text-left"}`}>{h}</th>
                     ))}
                   </tr>
                 </thead>

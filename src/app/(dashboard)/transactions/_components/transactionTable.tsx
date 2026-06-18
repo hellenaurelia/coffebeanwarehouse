@@ -103,7 +103,9 @@ export function TransactionTable({
                   <th
                     key={i}
                     className={`font-medium px-3 py-3 ${
-                      h === "Item" || h === "Total" ? "text-right" : "text-left"
+                      h === "Item" || h === "Total"
+                      ? "text-center"
+                      : "text-left"
                     }`}
                   >
                     {h}
@@ -137,10 +139,10 @@ export function TransactionTable({
                         </div>
                       </td>
                       <td className="px-3 py-4">{t.cashier}</td>
-                      <td className="px-3 py-4 text-right tabular-nums">
+                      <td className="px-3 py-4 text-center tabular-nums">
                         {t.items}
                       </td>
-                      <td className="px-3 py-4 text-right tabular-nums font-medium">
+                      <td className="px-3 py-4 text-center tabular-nums font-medium">
                         {fmt(t.total)}
                       </td>
                       <td className="px-3 py-4">
@@ -149,7 +151,7 @@ export function TransactionTable({
                           {t.method}
                         </span>
                       </td>
-                      <td className="px-3 py-4 text-right">
+                      <td className="px-3 py-4 text-center">
                         <Button
                           variant="ghost"
                           size="sm"

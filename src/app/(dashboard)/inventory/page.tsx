@@ -134,10 +134,10 @@ export default function Inventory() {
                     <th className="text-left font-medium px-3 py-3">Produk</th>
                     <th className="text-left font-medium px-3 py-3">SKU</th>
                     <th className="text-left font-medium px-3 py-3">Supplier</th>
-                    <th className="text-left font-medium px-3 py-3">Tipe</th>
-                    <th className="text-right font-medium px-3 py-3">Stok</th>
-                    <th className="text-right font-medium px-3 py-3">Harga Beli</th>
-                    <th className="text-right font-medium px-3 py-3">Harga Jual</th>
+                    <th className="text-center font-medium px-3 py-3">Tipe</th>
+                    <th className="text-center font-medium px-3 py-3">Stok</th>
+                    <th className="text-center font-medium px-3 py-3">Harga Beli</th>
+                    <th className="text-center font-medium px-3 py-3">Harga Jual</th>
                     <th className="text-center font-medium px-3 py-3">Status</th>
                     <th className="text-center font-medium px-3 py-3">Aksi</th>
                   </tr>
