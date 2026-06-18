@@ -30,7 +30,7 @@ enum POStatus {
 enum PaymentMethod {
   Cash
   QRIS
-  Transfer
+  Card
 }
 
 enum MovementType {
@@ -91,7 +91,6 @@ model Product {
   minimumStock Float     @default(25)
   currentStock Float     @default(0) // Sistem Hybrid: Simpan stok di sini
   isActive     Boolean   @default(true)
-  expDate      DateTime?
 
   // Relasi
   supplierProducts SupplierProduct[]
