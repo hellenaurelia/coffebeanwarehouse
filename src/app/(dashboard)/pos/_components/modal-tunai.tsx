@@ -15,7 +15,13 @@ export function TunaiModal({ total, onSuccess, onClose }: { total: number; onSuc
   const change = received - total;
   const valid = received >= total;
 
-  function addNominal(n: number) { setInput(String(received + n)); }
+  function formatRupiah(raw: string) {
+    const digits = raw.replace(/\D/g, "");
+    if (!digits) return "";
+    return parseInt(digits, 10).toLocaleString("id-ID");
+  }
+
+  function addNominal(n: number) { setInput((received + n).toLocaleString("id-ID")); }
 
   function handleProcess() {
     setDone(true);
@@ -63,8 +69,8 @@ export function TunaiModal({ total, onSuccess, onClose }: { total: number; onSuc
         <div className="relative">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">Rp</span>
           <Input className="h-14 pl-10 text-xl font-semibold rounded-xl bg-card border-border tabular-nums"
-            type="number" placeholder="0" value={input}
-            onChange={e => setInput(e.target.value)} autoFocus />
+            type="text" inputMode="numeric" placeholder="0" value={input}
+            onChange={e => setInput(formatRupiah(e.target.value))} autoFocus />
         </div>
       </div>
 

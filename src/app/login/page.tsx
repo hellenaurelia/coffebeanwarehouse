@@ -88,7 +88,7 @@ export default function LoginPage() {
           {[
             { label: "Transaksi/hari", value: "200+" },
             { label: "SKU Aktif", value: "50+" },
-            { label: "Outlet", value: "3" },
+            { label: "Stok Gudang", value: "1.247 kg" },
           ].map((s) => (
             <div key={s.label}>
               <p className="font-display text-2xl font-semibold text-primary-foreground">{s.value}</p>
