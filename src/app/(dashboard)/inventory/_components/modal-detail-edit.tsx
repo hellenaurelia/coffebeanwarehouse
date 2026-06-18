@@ -13,7 +13,6 @@ export type Item = {
   unit: string;
   cost: number;
   price: number;
-  exp: string;
   supplier: string;
   photo?: string;
 };
@@ -101,7 +100,6 @@ export default function InventoryDetailDialog({ item, open, onOpenChange, onSave
               <Field label="SKU" value={draft.sku} editing={false} />
               <Field label="Supplier" value={draft.supplier} editing={false} />
               <Field label="Tipe" value={draft.type} editing={false} />
-              <Field label="Exp." value={draft.exp || "—"} editing={false} />
               <Field label="Stok" value={`${draft.stock} ${draft.unit}`} editing={false} />
               <Field label="Harga Beli" value={fmt(draft.cost)} editing={false} />
               <Field label="Harga Jual" value={fmt(draft.price)} editing={editing} type="number" rawValue={String(draft.price)} onChange={(v) => setDraft({ ...draft, price: Number(v) || 0 })} />

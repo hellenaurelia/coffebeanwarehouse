@@ -21,18 +21,17 @@ export interface InventoryItem {
   unit: string;
   cost: number;
   price: number;
-  exp: string;
   supplier: string;
   photo?: string;
 }
 
 const initialItems: InventoryItem[] = [
-  { sku: "GYO-WN-001", name: "Gayo Wine Natural",    type: "Arabica",  stock: 142, unit: "kg", cost: 165000, price: 280000, exp: "Mar 2027", supplier: "CV Gayo Mandiri" },
-  { sku: "KIN-HN-002", name: "Kintamani Honey",       type: "Arabica",  stock: 38,  unit: "kg", cost: 140000, price: 240000, exp: "Feb 2027", supplier: "UD Subak Bali" },
-  { sku: "TRJ-SP-003", name: "Toraja Sapan",           type: "Arabica",  stock: 96,  unit: "kg", cost: 180000, price: 310000, exp: "Jan 2027", supplier: "PT Toraja Coffee" },
-  { sku: "LWK-PR-004", name: "Luwak Premium",          type: "Luwak",    stock: 8,   unit: "kg", cost: 780000, price: 1250000, exp: "—",       supplier: "CV Luwak Nusantara" },
-  { sku: "LMP-RB-005", name: "Lampung Robusta AAA",    type: "Robusta",  stock: 220, unit: "kg", cost: 78000,  price: 145000, exp: "Mar 2027", supplier: "PT Sinar Robusta" },
-  { sku: "LBR-MR-006", name: "Liberica Meranti",       type: "Liberica", stock: 24,  unit: "kg", cost: 105000, price: 185000, exp: "—",       supplier: "UD Riau Kopi" },
+  { sku: "GYO-WN-001", name: "Gayo Wine Natural",    type: "Arabica",  stock: 142, unit: "kg", cost: 165000, price: 280000, supplier: "CV Gayo Mandiri" },
+  { sku: "KIN-HN-002", name: "Kintamani Honey",       type: "Arabica",  stock: 38,  unit: "kg", cost: 140000, price: 240000, supplier: "UD Subak Bali" },
+  { sku: "TRJ-SP-003", name: "Toraja Sapan",           type: "Arabica",  stock: 96,  unit: "kg", cost: 180000, price: 310000, supplier: "PT Toraja Coffee" },
+  { sku: "LWK-PR-004", name: "Luwak Premium",          type: "Luwak",    stock: 8,   unit: "kg", cost: 780000, price: 1250000, supplier: "CV Luwak Nusantara" },
+  { sku: "LMP-RB-005", name: "Lampung Robusta AAA",    type: "Robusta",  stock: 220, unit: "kg", cost: 78000,  price: 145000, supplier: "PT Sinar Robusta" },
+  { sku: "LBR-MR-006", name: "Liberica Meranti",       type: "Liberica", stock: 24,  unit: "kg", cost: 105000, price: 185000, supplier: "UD Riau Kopi" },
 ];
 
 const stockTone = (s: number) =>
@@ -136,7 +135,6 @@ export default function Inventory() {
                     <th className="text-left font-medium px-3 py-3">SKU</th>
                     <th className="text-left font-medium px-3 py-3">Supplier</th>
                     <th className="text-left font-medium px-3 py-3">Tipe</th>
-                    <th className="text-left font-medium px-3 py-3">Exp.</th>
                     <th className="text-right font-medium px-3 py-3">Stok</th>
                     <th className="text-right font-medium px-3 py-3">Harga Beli</th>
                     <th className="text-right font-medium px-3 py-3">Harga Jual</th>
@@ -147,7 +145,7 @@ export default function Inventory() {
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-3 py-10 text-center text-muted-foreground text-sm">
+                      <td colSpan={9} className="px-3 py-10 text-center text-muted-foreground text-sm">
                         Tidak ada item yang cocok dengan pencarian.
                       </td>
                     </tr>
@@ -170,7 +168,6 @@ export default function Inventory() {
                       <td className="px-3 py-4 font-mono text-xs text-muted-foreground">{it.sku}</td>
                       <td className="px-3 py-4 text-sm text-muted-foreground">{it.supplier}</td>
                       <td className="px-3 py-4"><Badge variant="outline" className={`text-xs ${beanTypeTone(it.type)}`}>{it.type}</Badge></td>
-                      <td className="px-3 py-4 text-sm text-muted-foreground">{it.exp}</td>
                       <td className="px-3 py-4 text-right tabular-nums font-medium">{it.stock} <span className="text-muted-foreground font-normal">{it.unit}</span></td>
                       <td className="px-3 py-4 text-right tabular-nums text-muted-foreground">{fmt(it.cost)}</td>
                       <td className="px-3 py-4 text-right tabular-nums font-medium">{fmt(it.price)}</td>
