@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, MapPin, Phone, Mail, Truck, PackageCheck, Users, X, ClipboardList, Pencil, Trash2 } from "lucide-react";
 
-import { BTN_OUTLINE, BTN_PRIMARY } from "./_components/shared-components";
-import { fmtKg, initials, statusTone, BTN_HOVER_COKLAT, BTN_ICON_DEL, BTN_ICON_EDT } from "./lib";
+import { BTN_PRIMARY } from "./_components/shared-components";
+import { fmtKg, initials, statusTone, formatPhone, BTN_HOVER_COKLAT, BTN_ICON_DEL, BTN_ICON_EDT } from "./lib";
 import { useSupplierContext } from "./_components/supplier-context";
 
 export type { SupplierStatus, POStatus, SupplierBean, Supplier, PO } from "./lib";
@@ -149,7 +149,7 @@ export default function SuppliersPage() {
                     {/* Kontak */}
                     <div className="space-y-1.5 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2"><MapPin className="h-3 w-3" />{s.region}</div>
-                      <div className="flex items-center gap-2"><Phone className="h-3 w-3" />{s.phone}</div>
+                      <div className="flex items-center gap-2"><Phone className="h-3 w-3" />{formatPhone(s.phone)}</div>
                       <div className="flex items-center gap-2"><Mail className="h-3 w-3" />{s.email}</div>
                     </div>
 

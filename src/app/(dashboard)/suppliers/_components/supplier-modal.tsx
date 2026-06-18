@@ -45,6 +45,22 @@ function BeanTypeSelect({ value, onChange }: { value: string; onChange: (v: stri
   );
 }
 
+// Simpan nomor sebagai +62 diikuti digit murni (tanpa spasi/strip).
+// Saat ditampilkan, diformat jadi: +62 812-3456-4116
+function parsePhone(raw: string): string {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  if (digits.startsWith("62")) digits = digits.slice(2);
+  return digits ? "+62" + digits : "";
+}
+
+function formatPhoneDisplay(value: string): string {
+  const digits = value.replace(/^\+62/, "");
+  if (!digits) return value.startsWith("+62") ? "+62 " : value;
+  const groups = [digits.slice(0, 3), digits.slice(3, 7), digits.slice(7, 11)].filter(Boolean);
+  return "+62 " + groups.join("-");
+}
+
 type BeanFormItem = { name: string; price: string; type: string };
 type SForm = {
   name: string; pic: string; region: string; phone: string; email: string;
@@ -58,7 +74,7 @@ const blankForm: SForm = {
 };
 
 const toForm = (s: Supplier): SForm => ({
-  name: s.name, pic: s.pic, region: s.region, phone: s.phone, email: s.email,
+  name: s.name, pic: s.pic, region: s.region, phone: parsePhone(s.phone), email: s.email,
   beans: s.beans.map(b => ({ name: b.name, price: b.price.toString(), type: b.type })),
   address: s.address ?? "", notes: s.notes ?? "", status: s.status,
 });
@@ -78,6 +94,9 @@ export function SupplierModal({ supplier, onClose, onSave }: {
     (["name", "pic", "region", "phone", "email"] as (keyof SForm)[]).forEach(k => {
       if (!(form[k] as string).trim()) e[k] = "Wajib diisi";
     });
+    if (form.phone && !/^\+62\d{9,11}$/.test(form.phone)) {
+      e.phone = "Format nomor tidak valid";
+    }
 
     const cleanedBeans = form.beans
       .map(b => ({ name: b.name.trim(), price: parseInt(b.price, 10) || 0, type: b.type }))
@@ -130,8 +149,8 @@ export function SupplierModal({ supplier, onClose, onSave }: {
           <Field label="No. Telepon">
             <Input
               className={INP} placeholder="+62 812-xxxx-xxxx"
-              type="tel" inputMode="tel" value={form.phone}
-              onChange={e => set("phone", e.target.value.replace(/[^\d+\-\s]/g, ""))}
+              type="tel" inputMode="tel" value={formatPhoneDisplay(form.phone)}
+              onChange={e => set("phone", parsePhone(e.target.value))}
             />
             <ErrMsg msg={errors.phone} />
           </Field>

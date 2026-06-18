@@ -24,10 +24,12 @@ const typeTone = (type: string): string =>
   } as Record<string, string>)[type] ?? "bg-secondary text-muted-foreground border-border";
 
 const formatPhone = (phone: string) => {
-  const cleaned = phone.replace(/[^\d+]/g, "");
-  const match = cleaned.match(/^(\+62|0)(\d{3,4})(\d{4})(\d{3,4})?$/);
-  if (match) return `${match[1]} ${match[2]}-${match[3]}${match[4] ? "-" + match[4] : ""}`;
-  return phone;
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  if (digits.startsWith("62")) digits = digits.slice(2);
+  if (!digits) return phone;
+  const groups = [digits.slice(0, 3), digits.slice(3, 7), digits.slice(7, 11)].filter(Boolean);
+  return "+62 " + groups.join("-");
 };
 
 const beanHasStock = (beanName: string, inventory: InventoryItem[] | undefined): boolean =>

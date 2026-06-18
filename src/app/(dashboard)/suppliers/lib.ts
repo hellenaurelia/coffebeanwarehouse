@@ -49,6 +49,14 @@ export const initPOs: PO[] = [
 ];
 
 export const fmtKg = (n: number) => n.toLocaleString("id-ID") + " kg";
+export const formatPhone = (phone: string) => {
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  if (digits.startsWith("62")) digits = digits.slice(2);
+  if (!digits) return phone;
+  const groups = [digits.slice(0, 3), digits.slice(3, 7), digits.slice(7, 11)].filter(Boolean);
+  return "+62 " + groups.join("-");
+};
 export const initials = (name: string) => name.split(" ").map(w => w[0]).slice(0, 2).join("");
 export const nextId = (list: { id: string }[], prefix: string, pad: number) => {
   const nums = list.map(x => parseInt(x.id.replace(prefix, ""))).filter(n => !isNaN(n));
