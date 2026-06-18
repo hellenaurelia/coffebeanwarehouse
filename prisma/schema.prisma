@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Pastikan URL database kamu diatur di .env (prisma.config.ts)
 }
 
 // ================= ENUMS =================
@@ -14,185 +15,238 @@ enum Role {
   KASIR
 }
 
-enum SupplierStatus {
-  Aktif
-  Pending
-  Non_aktif
+enum PaymentMethod {
+  CASH
+  QRIS
+  CARD
 }
 
 enum POStatus {
-  Pending
-  Dikirim
-  Diterima
-  Cancelled
+  PENDING
+  DIKIRIM
+  DITERIMA
+  CANCELLED
 }
 
-enum PaymentMethod {
-  Cash
-  QRIS
-  Card
-}
-
-enum MovementType {
-  Purchase_In // Dari PO
-  Sale_Out // Dari POS
-  Adjustment // Dari Rekonsiliasi
+enum TrxStatus {
+  PENDING
+  PAID
 }
 
 enum BeanType {
-  Whole_Bean
-  Ground
+  WHOLE_BEAN
+  GROUND
+}
+
+enum StockLogType {
+  PO_IN
+  SALE
+  RECONCILIATION
+  ADJUSTMENT
 }
 
 // ================= MODELS =================
 
 model User {
-  id       String  @id @default(cuid())
-  name     String
-  email    String  @unique
-  password String
-  role     Role    @default(KASIR)
-  isActive Boolean @default(true)
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(100)
+  passwordHash String   @map("password_hash")
+  role         Role
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  // Relasi: User membuat PO, Transaksi, dan StockMovement
-  purchaseOrders PurchaseOrder[]
-  transactions   Transaction[]
-  stockMovements StockMovement[]
+  // Relasi sebagai pembuat data
+  createdSuppliers        Supplier[]            @relation("SupplierCreatedBy")
+  createdProducts         Product[]             @relation("ProductCreatedBy")
+  createdPurchaseOrders   PurchaseOrder[]       @relation("POCreatedBy")
+  cashierTransactions     Transaction[]         @relation("TrxCashier")
+  createdStockLogs        StockLog[]            @relation("StockLogCreatedBy")
+  createdReconciliations  StockReconciliation[] @relation("ReconCreatedBy")
+  activityLogs            ActivityLog[]         @relation("UserActivityLog")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@map("users")
 }
 
 model Supplier {
-  id      String         @id @default(cuid())
-  name    String
-  picName String
-  phone   String
-  email   String
-  region  String
-  address String?
-  notes   String?
-  status  SupplierStatus @default(Aktif)
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(150)
+  picName     String   @map("pic_name") @db.VarChar(100)
+  region      String   @db.VarChar(100)
+  phone       String   @db.VarChar(20)
+  email       String?  @db.VarChar(100)
+  address     String?  @db.Text
+  notes       String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdById String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relasi
+  createdBy       User              @relation("SupplierCreatedBy", fields: [createdById], references: [id])
   supplierProducts SupplierProduct[]
-  purchaseOrders   PurchaseOrder[]
+  purchaseOrders  PurchaseOrder[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@map("suppliers")
 }
 
 model Product {
-  id           String    @id @default(cuid())
-  sku          String    @unique
-  name         String
-  type         String // Arabica, Robusta, dll
-  sellingPrice Float // Harga Jual
-  minimumStock Float     @default(25)
-  currentStock Float     @default(0) // Sistem Hybrid: Simpan stok di sini
-  isActive     Boolean   @default(true)
+  id           String   @id @default(uuid()) @db.Uuid
+  sku          String   @unique @db.VarChar(20)
+  name         String   @db.VarChar(150)
+  type         BeanType
+  sellPrice    Float    @map("sell_price") // Disimpan sebagai Float untuk kemudahan kalkulasi di Frontend JS
+  stockKg      Float    @map("stock_kg")
+  minStockKg   Float    @map("min_stock_kg")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdById  String   @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relasi
-  supplierProducts SupplierProduct[]
-  poItems          PurchaseOrderItem[]
-  transactionItems TransactionItem[]
-  stockMovements   StockMovement[]
+  createdBy             User                  @relation("ProductCreatedBy", fields: [createdById], references: [id])
+  supplierProducts      SupplierProduct[]
+  poItems               POItem[]
+  transactionItems      TransactionItem[]
+  stockLogs             StockLog[]
+  stockReconciliations  StockReconciliation[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@map("products")
 }
 
-// Tabel Pivot: 1 Produk bisa banyak Supplier, 1 Supplier bisa banyak Produk
 model SupplierProduct {
-  id            String  @id @default(cuid())
-  supplierId    String
-  productId     String
-  contractPrice Float // Harga Beli/HPP dari supplier ini
-  isActive      Boolean @default(true)
+  id            String   @id @default(uuid()) @db.Uuid
+  supplierId    String   @map("supplier_id") @db.Uuid
+  productId     String   @map("product_id") @db.Uuid
+  buyPricePerKg Float    @map("buy_price_per_kg")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
+  // Relasi
   supplier Supplier @relation(fields: [supplierId], references: [id])
   product  Product  @relation(fields: [productId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([supplierId, productId]) // Mencegah duplikasi data supplier-produk yang sama
+  @@map("supplier_products")
 }
 
 model PurchaseOrder {
-  id          String   @id @default(cuid())
-  poNumber    String   @unique
-  supplierId  String
-  createdById String
-  status      POStatus @default(Pending)
-  totalAmount Float    @default(0)
-  notes       String?
+  id          String    @id @default(uuid()) @db.Uuid
+  poNumber    String    @unique @map("po_number") @db.VarChar(20)
+  supplierId  String    @map("supplier_id") @db.Uuid
+  status      POStatus  @default(PENDING)
+  totalAmount Float     @default(0) @map("total_amount")
+  notes       String?   @db.Text
+  createdById String    @map("created_by") @db.Uuid
+  receivedAt  DateTime? @map("received_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  supplier  Supplier            @relation(fields: [supplierId], references: [id])
-  createdBy User                @relation(fields: [createdById], references: [id])
-  items     PurchaseOrderItem[]
+  // Relasi
+  supplier  Supplier @relation(fields: [supplierId], references: [id])
+  createdBy User     @relation("POCreatedBy", fields: [createdById], references: [id])
+  items     POItem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@map("purchase_orders")
 }
 
-model PurchaseOrderItem {
-  id              String @id @default(cuid())
-  purchaseOrderId String
-  productId       String
-  quantityKg      Float
-  unitPrice       Float
-  subtotal        Float
+model POItem {
+  id            String @id @default(uuid()) @db.Uuid
+  poId          String @map("po_id") @db.Uuid
+  productId     String @map("product_id") @db.Uuid
+  qtyKg         Float  @map("qty_kg")
+  buyPricePerKg Float  @map("buy_price_per_kg")
+  subtotal      Float
 
-  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id])
   product       Product       @relation(fields: [productId], references: [id])
+
+  @@map("po_items")
 }
 
 model Transaction {
-  id                String        @id @default(cuid())
-  transactionNumber String        @unique
-  cashierId         String
-  paymentMethod     PaymentMethod
-  totalAmount       Float         @default(0)
-  cashPaid          Float? // Uang yang dibayarkan (jika cash)
+  id            String        @id @default(uuid()) @db.Uuid
+  trxNumber     String        @unique @map("trx_number") @db.VarChar(20)
+  paymentMethod PaymentMethod @map("payment_method")
+  status        TrxStatus     @default(PENDING)
+  totalAmount   Float         @default(0) @map("total_amount")
+  totalCogs     Float         @default(0) @map("total_cogs")
+  grossProfit   Float         @default(0) @map("gross_profit")
+  cashierId     String        @map("cashier_id") @db.Uuid
+  paidAt        DateTime?     @map("paid_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  cashier User              @relation(fields: [cashierId], references: [id])
+  // Relasi
+  cashier User              @relation("TrxCashier", fields: [cashierId], references: [id])
   items   TransactionItem[]
 
-  createdAt DateTime @default(now())
+  @@map("transactions")
 }
 
 model TransactionItem {
-  id            String   @id @default(cuid())
-  transactionId String
-  productId     String
-  quantityKg    Float
-  beanType      BeanType @default(Whole_Bean)
-  grindingFee   Float    @default(0)
-  sellingPrice  Float // Harga jual saat itu
-  buyingPrice   Float // HPP saat itu (Penting untuk hitung profit)
-  subtotal      Float
+  id             String @id @default(uuid()) @db.Uuid
+  transactionId  String @map("transaction_id") @db.Uuid
+  productId      String @map("product_id") @db.Uuid
+  qtyKg          Float  @map("qty_kg")
+  sellPricePerKg Float  @map("sell_price_per_kg")
+  buyPricePerKg  Float  @map("buy_price_per_kg")
+  subtotal       Float
+  profit         Float
 
   transaction Transaction @relation(fields: [transactionId], references: [id])
   product     Product     @relation(fields: [productId], references: [id])
+
+  @@map("transaction_items")
 }
 
-model StockMovement {
-  id           String       @id @default(cuid())
-  productId    String
-  movementType MovementType
-  quantity     Float // Angka perubahannya (misal: 100 atau -5)
-  stockBefore  Float
-  stockAfter   Float
-  reason       String // e.g., "PO-001 Diterima", "Penjualan Kasir"
+model StockLog {
+  id            String       @id @default(uuid()) @db.Uuid
+  productId     String       @map("product_id") @db.Uuid
+  type          StockLogType
+  qtyChange     Float        @map("qty_change")
+  qtyBefore     Float        @map("qty_before")
+  qtyAfter      Float        @map("qty_after")
+  referenceId   String?      @map("reference_id") @db.Uuid // ID dari PO atau Transaksi (Tanpa Relasi Kaku)
+  referenceType String?      @map("reference_type") @db.VarChar(50) // "PO", "SALE", "RECONCILIATION"
+  note          String?      @db.Text
+  createdById   String       @map("created_by") @db.Uuid
+  createdAt     DateTime     @default(now()) @map("created_at")
 
-  // Opsional: Untuk melacak pergerakan ini berasal dari dokumen apa
-  referenceType String? // "PO" atau "TRANSACTION" atau "RECONCILIATION"
-  referenceId   String? // ID dari tabel referensinya
+  createdBy User    @relation("StockLogCreatedBy", fields: [createdById], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 
-  createdById String
-  createdBy   User    @relation(fields: [createdById], references: [id])
-  product     Product @relation(fields: [productId], references: [id])
+  @@map("stock_logs")
+}
 
-  createdAt DateTime @default(now())
+model StockReconciliation {
+  id          String   @id @default(uuid()) @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  systemQty   Float    @map("system_qty")
+  physicalQty Float    @map("physical_qty")
+  difference  Float
+  reason      String   @db.Text
+  createdById String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  createdBy User    @relation("ReconCreatedBy", fields: [createdById], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("stock_reconciliations")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  action     String   @db.VarChar(100)
+  entityType String   @map("entity_type") @db.VarChar(50)
+  entityId   String?  @map("entity_id") @db.Uuid
+  payload    Json?    // Menyimpan data tambahan dalam format JSON
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation("UserActivityLog", fields: [userId], references: [id])
+
+  @@map("activity_logs")
 }
