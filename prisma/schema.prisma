@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Pastikan URL database kamu diatur di .env (prisma.config.ts)
 }
 
 // ================= ENUMS =================
@@ -96,7 +95,7 @@ model Product {
   sku          String   @unique @db.VarChar(20)
   name         String   @db.VarChar(150)
   type         BeanType
-  sellPrice    Float    @map("sell_price") // Disimpan sebagai Float untuk kemudahan kalkulasi di Frontend JS
+  sellPrice    Float    @map("sell_price") 
   stockKg      Float    @map("stock_kg")
   minStockKg   Float    @map("min_stock_kg")
   isActive     Boolean  @default(true) @map("is_active")
@@ -208,8 +207,8 @@ model StockLog {
   qtyChange     Float        @map("qty_change")
   qtyBefore     Float        @map("qty_before")
   qtyAfter      Float        @map("qty_after")
-  referenceId   String?      @map("reference_id") @db.Uuid // ID dari PO atau Transaksi (Tanpa Relasi Kaku)
-  referenceType String?      @map("reference_type") @db.VarChar(50) // "PO", "SALE", "RECONCILIATION"
+  referenceId   String?      @map("reference_id") @db.Uuid 
+  referenceType String?      @map("reference_type") @db.VarChar(50) 
   note          String?      @db.Text
   createdById   String       @map("created_by") @db.Uuid
   createdAt     DateTime     @default(now()) @map("created_at")
@@ -242,7 +241,7 @@ model ActivityLog {
   action     String   @db.VarChar(100)
   entityType String   @map("entity_type") @db.VarChar(50)
   entityId   String?  @map("entity_id") @db.Uuid
-  payload    Json?    // Menyimpan data tambahan dalam format JSON
+  payload    Json?    
   ipAddress  String?  @map("ip_address") @db.VarChar(45)
   createdAt  DateTime @default(now()) @map("created_at")
 
