@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -15,6 +15,7 @@ import {
   Users,
   ClipboardList,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -78,11 +79,17 @@ const insights: NavItem[] = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
 
   useEffect(() => {
     if (isMobile) setOpenMobile(false);
   }, [pathname]);
+
+  const handleLogout = () => {
+    document.cookie = "arunika_session=; path=/; max-age=0";
+    router.push("/login");
+  };
 
   const isGroupActive = (path: string) => {
     if (path === "/") {
@@ -208,11 +215,11 @@ export function AppSidebar() {
         {renderGroup("Lainnya", insights)}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border hover:bg-sidebar-accent/60">
-        <div className="flex items-center gap-3 px-0 py-2 ">
+      <SidebarFooter className="border-t border-sidebar-border">
+        <div className="flex items-center justify-between px-0 py-2 hover:bg-sidebar-accent/60 rounded-md">
           <Link
             href="/profile"
-            className="flex items-center gap-2.5 overflow-hidden "
+            className="flex items-center gap-2.5 overflow-hidden"
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full gradient-bean text-xs font-semibold text-primary-foreground">
               AR
@@ -228,6 +235,14 @@ export function AppSidebar() {
               </span>
             </div>
           </Link>
+
+          <button
+            onClick={handleLogout}
+            className="shrink-0 p-1.5 rounded-md text-sidebar-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors group-data-[collapsible=icon]:hidden"
+            title="Logout"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </SidebarFooter>
     </Sidebar>
