@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { loginAction } from "@/lib/auth/action";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,16 +29,17 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    // Simulate auth — ganti dengan API call nyata
-    await new Promise((r) => setTimeout(r, 1200));
+    // Login pakai email (sesuai data seed, mis. arif@arunika.id). Field di form
+    // tetap bernama "username" agar tampilan tidak berubah — nilainya dipakai
+    // sebagai email. Verifikasi password pakai bcrypt di server (loginAction),
+    // yang juga memasang cookie sesi ber-HMAC.
+    const result = await loginAction(form.username, form.password);
 
-    // Contoh validasi sederhana (ganti dengan backend auth)
-    if (form.username === "admin" && form.password === "arunika123") {
-      // Set cookie session sebelum redirect
-      document.cookie = "arunika_session=demo_token; path=/; max-age=86400";
+    if (result.ok) {
       router.push("/");
+      router.refresh();
     } else {
-      setError("Username atau password salah.");
+      setError(result.error ?? "Email atau password salah.");
       setIsLoading(false);
     }
   };
@@ -199,7 +201,7 @@ export default function LoginPage() {
             <CardContent className="p-4 space-y-1">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Akun Demo</p>
               <p className="text-xs text-muted-foreground">
-                Username: <span className="font-mono text-foreground">admin</span>
+                Email: <span className="font-mono text-foreground">arif@arunika.id</span>
                 {" · "}
                 Password: <span className="font-mono text-foreground">arunika123</span>
               </p>

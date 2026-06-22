@@ -1,65 +1,47 @@
-"use client";
+// Server component: resolves the logged-in user and hands it to the client UI.
+// The visual component (profile-client.tsx) keeps the original JSX intact.
 
-import { createContext, useContext, useState } from "react";
-import { Topbar } from "@/components/topbar";
-import { ProfileHeader } from "./_components/profile-header";
-import { ActivityStats } from "./_components/activity-stats";
-import { RecentActivity } from "./_components/recent-activity";
-import { SettingsPanel } from "./_components/settings-panel";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
+import ProfileClient, { type UserData } from "./_components/profile-client";
 
-export interface UserData {
-  name: string;
-  role: string;
-  outlet: string;
-  email: string;
-  joinDate: string;
-  avatar: string;
-  status: "aktif" | "nonaktif";
-}
+export const dynamic = "force-dynamic";
 
-interface UserContextType {
-  user: UserData;
-  setUser: (u: UserData) => void;
-}
-
-export const UserContext = createContext<UserContextType | null>(null);
-
-export function useUser() {
-  const ctx = useContext(UserContext);
-  if (!ctx) throw new Error("useUser must be inside UserProvider");
-  return ctx;
-}
-
-const INITIAL_USER: UserData = {
-  name: "Arif Rahman",
-  role: "owner",
-  outlet: "senopati",
-  email: "arif@arunika.id",
-  joinDate: "Maret 2024",
-  avatar: "AR",
-  status: "aktif",
+const ROLE_LABEL: Record<string, string> = {
+  OWNER: "owner",
+  MANAJER: "manajer",
+  KASIR: "kasir",
+  GUDANG: "gudang",
 };
 
-export default function ProfilePage() {
-  const [user, setUser] = useState<UserData>(INITIAL_USER);
+const ID_MONTHS = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
 
-  return (
-    <UserContext.Provider value={{ user, setUser }}>
-      <Topbar title="Profil" subtitle="Informasi akun & pengaturan preferensi" />
+function initials(name: string): string {
+  return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+}
 
-      <main className="flex-1 p-6 space-y-6">
-        <ProfileHeader user={user} />
-        <ActivityStats />
+export default async function ProfilePage() {
+  const session = await getCurrentUser();
+  if (!session) redirect("/login");
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <SettingsPanel />
-          </div>
-          <div>
-            <RecentActivity />
-          </div>
-        </div>
-      </main>
-    </UserContext.Provider>
-  );
+  const row = await prisma.user.findUniqueOrThrow({
+    where: { id: session.id },
+    select: { name: true, email: true, role: true, isActive: true, createdAt: true },
+  });
+
+  const initialUser: UserData = {
+    name: row.name,
+    role: ROLE_LABEL[row.role] ?? row.role.toLowerCase(),
+    outlet: "senopati",
+    email: row.email,
+    joinDate: `${ID_MONTHS[row.createdAt.getMonth()]} ${row.createdAt.getFullYear()}`,
+    avatar: initials(row.name),
+    status: row.isActive ? "aktif" : "nonaktif",
+  };
+
+  return <ProfileClient initialUser={initialUser} />;
 }

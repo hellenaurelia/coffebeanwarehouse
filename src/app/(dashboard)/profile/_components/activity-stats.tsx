@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Receipt, TrendingUp, Package, Clock, ArrowDownUp, BoxesIcon, AlertTriangle, RefreshCw } from "lucide-react";
-import { useUser } from "../page"; 
+import { useUser } from "./profile-client"; 
 
 const kasirStats = [
   {

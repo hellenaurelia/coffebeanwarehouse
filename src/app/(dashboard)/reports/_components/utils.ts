@@ -238,23 +238,23 @@ export function exportToPDF({ title, fileName, tableData, summaryData }: PDFExpo
   const margin = 15;
 
   doc.setFontSize(18);
-  doc.setFont(undefined, "bold");
+  doc.setFont("helvetica", "bold");
   doc.text(title, margin, margin + 10);
 
   doc.setFontSize(10);
-  doc.setFont(undefined, "normal");
+  doc.setFont("helvetica", "normal");
   doc.setTextColor(128);
   doc.text(`Tanggal: ${new Date().toLocaleDateString("id-ID")}`, margin, margin + 16);
 
   let yPosition = margin + 25;
   if (summaryData?.length) {
     doc.setFontSize(11);
-    doc.setFont(undefined, "bold");
+    doc.setFont("helvetica", "bold");
     doc.setTextColor(0);
     doc.text("Ringkasan:", margin, yPosition);
     yPosition += 6;
     doc.setFontSize(9);
-    doc.setFont(undefined, "normal");
+    doc.setFont("helvetica", "normal");
     for (const item of summaryData) {
       doc.text(`${item.label}: ${item.value}`, margin + 5, yPosition);
       yPosition += 5;

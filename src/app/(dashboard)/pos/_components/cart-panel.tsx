@@ -4,7 +4,8 @@ import { Coffee, Trash2, Percent, Banknote, CreditCard, QrCode, X } from "lucide
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { fmt, products } from "./data";
+import { fmt } from "./data";
+import { usePOSProducts } from "./pos-context";
 import type { PayMethod, GrindOption } from "./types";
 
 const GRIND_FEE = 20000;
@@ -35,6 +36,7 @@ export function CartPanel({
   onDiscToggle, onDiscInputChange, onDiscApply, onDiscRemove,
   onPayMethodChange, onPay,
 }: Props) {
+  const products = usePOSProducts();
   const lines = Object.entries(cart).map(([id, qty]) => ({
     p: products.find(x => x.id === id)!,
     qty,

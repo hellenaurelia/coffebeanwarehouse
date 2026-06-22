@@ -49,9 +49,10 @@ export function CalendarPicker({ value, onChange, onClose }: CalendarPickerProps
 
   const firstDay = getFirstDayOfMonth(viewMonth);
   const daysInMonth = getDaysInMonth(viewMonth);
-  const calendarDays = Array.from({ length: firstDay }, () => null).concat(
-    Array.from({ length: daysInMonth }, (_, i) => i + 1)
-  );
+  const calendarDays: (number | null)[] = Array.from(
+    { length: firstDay },
+    () => null as number | null
+  ).concat(Array.from({ length: daysInMonth }, (_, i) => i + 1));
 
   return (
     <Card className="w-72 border-border/60 bg-card shadow-lg">

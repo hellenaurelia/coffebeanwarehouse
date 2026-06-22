@@ -10,7 +10,10 @@ interface RekonsiliasiModalProps {
   open: boolean;
   onClose: () => void;
   items: InventoryItem[];
-  onSave: (updated: InventoryItem[]) => void;
+  onSave: (
+    updated: InventoryItem[],
+    lines?: { sku: string; physicalQty: number; reason: string }[]
+  ) => void;
 }
 
 interface RekonEntry {
@@ -60,7 +63,12 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
       }
       return item;
     });
-    onSave(updated);
+    const lines = changed.map((e) => ({
+      sku: e.sku,
+      physicalQty: Number(e.fisik),
+      reason: e.alasan,
+    }));
+    onSave(updated, lines);
     setStep("done");
   };
 

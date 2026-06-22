@@ -1,7 +1,15 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
-import { Supplier, PO, InventoryItem, initSuppliers, initPOs, initialItems, nextId } from "../lib";
+import { Supplier, PO, InventoryItem } from "../lib";
+import {
+  saveSupplierAction,
+  deleteSupplierAction,
+  savePOAction,
+  updatePOStatusAction,
+  updatePOArrivalAction,
+  toggleBeanAction,
+} from "../_data/actions";
 
 export type ModalState =
   | { type: "none" }
@@ -31,58 +39,84 @@ type SupplierContextValue = {
 
 const SupplierContext = createContext<SupplierContextValue | null>(null);
 
-export function SupplierProvider({ children }: { children: ReactNode }) {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(initSuppliers);
-  const [pos, setPOs]             = useState<PO[]>(initPOs);
-  const [inventory]               = useState<InventoryItem[]>(initialItems);
+export function SupplierProvider({
+  children,
+  initialSuppliers,
+  initialPOs,
+  initialInventory,
+}: {
+  children: ReactNode;
+  initialSuppliers: Supplier[];
+  initialPOs: PO[];
+  initialInventory: InventoryItem[];
+}) {
+  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
+  const [pos, setPOs]             = useState<PO[]>(initialPOs);
+  const [inventory]               = useState<InventoryItem[]>(initialInventory);
   const [modal, setModal]         = useState<ModalState>({ type: "none" });
 
   const close = () => setModal({ type: "none" });
 
   const handleSaveSupplier = (data: Omit<Supplier, "id"> & { id?: string }) => {
-    setSuppliers(p =>
-      data.id
-        ? p.map(s => s.id === data.id ? data as Supplier : s)
-        : [...p, { ...data, id: nextId(suppliers, "S-", 3) } as Supplier]
-    );
+    saveSupplierAction(data)
+      .then((saved) => {
+        setSuppliers((p) =>
+          data.id
+            ? p.map((s) => (s.id === saved.id ? saved : s))
+            : [...p, saved]
+        );
+      })
+      .catch((err) => console.error("Gagal menyimpan supplier:", err));
     close();
   };
 
   const handleDeleteSupplier = (id: string) => {
-    setSuppliers(p => p.filter(s => s.id !== id));
+    deleteSupplierAction(id)
+      .then(() => setSuppliers((p) => p.filter((s) => s.id !== id)))
+      .catch((err) => console.error("Gagal menghapus supplier:", err));
     close();
   };
 
   const handleSavePO = (partial: Omit<PO, "id">) => {
-    const newPO = { ...partial, id: nextId(pos, "PO-", 4) };
-    setPOs(p => [newPO, ...p]);
-    const relatedSupplier = suppliers.find(s => s.id === partial.supplierId);
-    setModal({ type: "po-success", po: newPO, supplier: relatedSupplier });
+    savePOAction(partial)
+      .then((newPO) => {
+        setPOs((p) => [newPO, ...p]);
+        const relatedSupplier = suppliers.find((s) => s.id === partial.supplierId);
+        setModal({ type: "po-success", po: newPO, supplier: relatedSupplier });
+      })
+      .catch((err) => console.error("Gagal membuat PO:", err));
   };
 
   const handleUpdatePOStatus = (poId: string, newStatus: PO["status"]) => {
-    setPOs(p => p.map(po => po.id === poId ? { ...po, status: newStatus } : po));
+    setPOs((p) => p.map((po) => (po.id === poId ? { ...po, status: newStatus } : po)));
+    updatePOStatusAction(poId, newStatus).catch((err) =>
+      console.error("Gagal memperbarui status PO:", err)
+    );
   };
 
-  // Toggle active state sebuah bean — guard dilakukan di UI (beanHasStock),
-  // context hanya bertanggung jawab untuk membalik flag active.
   const handleToggleBean = (supplierId: string, beanName: string) => {
-    setSuppliers(prev =>
-      prev.map(s => {
+    setSuppliers((prev) =>
+      prev.map((s) => {
         if (s.id !== supplierId) return s;
         return {
           ...s,
-          beans: s.beans.map(b =>
+          beans: s.beans.map((b) =>
             b.name !== beanName ? b : { ...b, active: !(b.active ?? true) }
           ),
         };
       })
     );
+    toggleBeanAction(supplierId, beanName).catch((err) =>
+      console.error("Gagal mengubah status bean:", err)
+    );
   };
 
   const handleUpdateArrival = (poId: string, date: string) => {
-  setPOs(p => p.map(po => po.id === poId ? { ...po, arrivalDate: date } : po));
-};
+    setPOs((p) => p.map((po) => (po.id === poId ? { ...po, arrivalDate: date } : po)));
+    updatePOArrivalAction(poId, date).catch((err) =>
+      console.error("Gagal memperbarui tanggal kedatangan:", err)
+    );
+  };
 
   return (
     <SupplierContext.Provider value={{

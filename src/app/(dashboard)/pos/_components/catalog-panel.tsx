@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Coffee, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { products, cats, fmt } from "./data";
+import { cats, fmt } from "./data";
+import { usePOSProducts } from "./pos-context";
 import type { Product } from "./types";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function CatalogPanel({ cart, onAdd }: Props) {
+  const products = usePOSProducts();
   const [activeCat, setActiveCat] = useState("Semua");
   const [search, setSearch] = useState("");
 

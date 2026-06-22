@@ -42,6 +42,27 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+import { logoutAction } from "@/lib/auth/action";
+import type { SessionUser } from "@/lib/auth/session";
+
+// DB roles are uppercase (OWNER, MANAJER, KASIR, GUDANG). Friendly labels for
+// the footer. Outlet currently single-site.
+const ROLE_LABEL: Record<string, string> = {
+  OWNER: "Owner",
+  MANAJER: "Manajer",
+  KASIR: "Kasir",
+  GUDANG: "Gudang",
+};
+
+function toInitials(name: string): string {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+}
+
 type NavItem = {
   title: string;
   url: string;
@@ -77,7 +98,7 @@ const insights: NavItem[] = [
   { title: "User Management", url: "/users", icon: UserRoundCog },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ user }: { user: SessionUser | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
@@ -86,10 +107,16 @@ export function AppSidebar() {
     if (isMobile) setOpenMobile(false);
   }, [pathname]);
 
-  const handleLogout = () => {
-    document.cookie = "arunika_session=; path=/; max-age=0";
+  const handleLogout = async () => {
+    await logoutAction();
     router.push("/login");
+    router.refresh();
   };
+
+  // Display values fall back gracefully if there is no session.
+  const displayName = user?.name ?? "Pengguna";
+  const displayRole = user ? ROLE_LABEL[user.role] ?? user.role : "—";
+  const displayInitials = user ? toInitials(user.name) : "AR";
 
   const isGroupActive = (path: string) => {
     if (path === "/") {
@@ -222,16 +249,16 @@ export function AppSidebar() {
             className="flex items-center gap-2.5 overflow-hidden"
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full gradient-bean text-xs font-semibold text-primary-foreground">
-              AR
+              {displayInitials}
             </div>
 
             <div className="flex flex-col text-xs group-data-[collapsible=icon]:hidden">
               <span className="font-medium text-sidebar-foreground">
-                Arif Rahman
+                {displayName}
               </span>
 
               <span className="text-sidebar-foreground/60">
-                Manager · Senopati
+                {displayRole} · Senopati
               </span>
             </div>
           </Link>

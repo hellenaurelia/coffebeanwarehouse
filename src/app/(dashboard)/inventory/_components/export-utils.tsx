@@ -1,11 +1,11 @@
 import { InventoryItem } from "../page";
 
 export function exportToCSV(items: InventoryItem[]) {
-  const headers = ["SKU", "Nama", "Supplier", "Tipe", "Exp.", "Stok (kg)", "HPP (Rp)", "Harga Jual (Rp)", "Status"];
+  const headers = ["SKU", "Nama", "Supplier", "Tipe", "Stok (kg)", "HPP (Rp)", "Harga Jual (Rp)", "Status"];
   const stockLabel = (s: number) => (s < 25 ? "Kritis" : s < 60 ? "Menipis" : "Aman");
 
   const rows = items.map((it) => [
-    it.sku, it.name, it.supplier, it.type, it.exp,
+    it.sku, it.name, it.supplier, it.type,
     it.stock, it.cost, it.price, stockLabel(it.stock),
   ]);
 

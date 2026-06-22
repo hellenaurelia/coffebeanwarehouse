@@ -1,6 +1,7 @@
 import { PrismaClient, Role, BeanType, POStatus, PaymentMethod, TrxStatus, StockLogType } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
@@ -11,10 +12,13 @@ const prisma = new PrismaClient({
   log: ['warn', 'error'],
 });
 
+
 async function main() {
   console.log("Mulai proses seeding... 🌱");
   console.log("Menghapus data lama (jika ada)...");
   
+  const defaultPassword = await bcrypt.hash("arunika123", 10);
+
   // Bersihkan database agar tidak bentrok kalau di-run berkali-kali
   await prisma.transactionItem.deleteMany();
   await prisma.transaction.deleteMany();
@@ -33,9 +37,9 @@ async function main() {
   const usersData = [
     { name: "Arif Rahman", email: "arif@arunika.id", role: Role.OWNER, isActive: true },
     { name: "Dewi Lestari", email: "dewi@arunika.id", role: Role.KASIR, isActive: true },
-    { name: "Budi Santoso", email: "budi@arunika.id", role: Role.WAREHOUSE, isActive: true },
-    { name: "Siti Rahayu", email: "siti@arunika.id", role: Role.MANAGER, isActive: true },
-    { name: "Fajar Nugroho", email: "fajar@arunika.id", role: Role.MANAGER, isActive: false },
+    { name: "Budi Santoso", email: "budi@arunika.id", role: Role.GUDANG, isActive: true },
+    { name: "Siti Rahayu", email: "siti@arunika.id", role: Role.MANAJER, isActive: true },
+    { name: "Fajar Nugroho", email: "fajar@arunika.id", role: Role.MANAJER, isActive: false },
     { name: "Rina Kusuma", email: "rina@arunika.id", role: Role.KASIR, isActive: true },
   ];
 
@@ -45,7 +49,7 @@ async function main() {
       data: {
         name: u.name,
         email: u.email,
-        passwordHash: "rahasia123", // Dummy password
+        passwordHash: defaultPassword, // Dummy password
         role: u.role,
         isActive: u.isActive
       }
