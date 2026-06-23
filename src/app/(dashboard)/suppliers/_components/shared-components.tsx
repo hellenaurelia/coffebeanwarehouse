@@ -16,6 +16,13 @@ export const BTN_OUTLINE = "rounded-xl border border-border hover:bg-secondary/8
 export const fmt = (n: number) => "Rp " + n.toLocaleString("id-ID");
 export const poTotal = (po: PO) => po.items.reduce((a, i) => a + i.qty * i.pricePerKg, 0);
 
+export const fmtDateTime = (d: string | Date) =>
+  new Date(d).toLocaleString("id-ID", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  }).replace(/\./g, ":");
+
 export function Modal({ onClose, children, wide = false }: { onClose: () => void; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }} onClick={onClose}>
@@ -62,7 +69,14 @@ export const ErrMsg = ({ msg }: { msg?: string }) => msg ? <p className="text-xs
 
 export function NumericInput({ className, placeholder, value, onChange }: { className?: string; placeholder?: string; value: string; onChange: (v: string) => void; }) {
   return (
-    <Input className={className} placeholder={placeholder} inputMode="numeric" type="text" pattern="[0-9]*" value={value} onChange={e => onChange(e.target.value.replace(/[^0-9]/g, ""))} />
+    <Input
+      className={className}
+      placeholder={placeholder}
+      inputMode="numeric"
+      type="text"
+      value={value ? Number(value).toLocaleString("id-ID") : ""}
+      onChange={e => onChange(e.target.value.replace(/\D/g, ""))}
+    />
   );
 }
 
