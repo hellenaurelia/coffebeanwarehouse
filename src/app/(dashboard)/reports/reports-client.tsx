@@ -40,10 +40,26 @@ export default function ReportsClient({ dataByRange }: { dataByRange: DataByRang
   }, [rangeKey, customDateRange, isCustomActive, dataByRange]);
 
   const periodeLabel = useMemo(() => {
-    if (isCustomActive)
+    if (isCustomActive) {
       return `${formatDateID(customDateRange.from!, "long")} – ${formatDateID(customDateRange.to!, "long")}`;
-    if (rangeKey) return dataByRange[rangeKey].label;
-    return "—";
+    }
+
+    if (!rangeKey) return "—";
+
+    const today = new Date();
+    const end = new Date(today);
+
+    const days =
+      rangeKey === "7H"
+        ? 7
+        : rangeKey === "30H"
+        ? 30
+        : 90;
+
+    const start = new Date(today);
+    start.setDate(today.getDate() - (days - 1));
+
+    return `${formatDateID(start, "long")} – ${formatDateID(end, "long")}`;
   }, [rangeKey, customDateRange, isCustomActive]);
 
   const handlePresetRange = (key: "7H" | "30H" | "90H") => {
