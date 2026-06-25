@@ -173,7 +173,7 @@ export default function ReportsClient({ dataByRange }: { dataByRange: DataByRang
           {/* ── Products & Stock ────────────────────────────────────────── */}
           <section>
             <SectionLabel icon={BarChart3} title="Produk & Inventori" subtitle="Performa produk dan status gudang" />
-            <div className="mt-4 grid gap-4 lg:grid-cols-5">
+            <div className="mt-4 grid gap-4 lg:grid-cols-5 items-start">
               <TopProducts data={data} />
               <StockMonitoring data={data} />
             </div>

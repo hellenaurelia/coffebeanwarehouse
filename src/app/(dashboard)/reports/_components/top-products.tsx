@@ -19,7 +19,7 @@ export function TopProducts({ data }: TopProductsProps) {
         <CardTitle className="font-display text-lg">Top 5 Barang Terlaris</CardTitle>
         <p className="text-xs text-muted-foreground">Berdasarkan jumlah transaksi periode ini</p>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 pb-4">
         <div className="divide-y divide-border/60">
           {data.topProducts.map((p) => (
             <div
