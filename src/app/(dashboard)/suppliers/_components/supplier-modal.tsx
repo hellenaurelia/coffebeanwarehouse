@@ -45,8 +45,6 @@ function BeanTypeSelect({ value, onChange }: { value: string; onChange: (v: stri
   );
 }
 
-// Simpan nomor sebagai +62 diikuti digit murni (tanpa spasi/strip).
-// Saat ditampilkan, diformat jadi: +62 812-3456-4116
 function parsePhone(raw: string): string {
   let digits = raw.replace(/\D/g, "");
   if (digits.startsWith("0")) digits = digits.slice(1);
@@ -118,8 +116,16 @@ export function SupplierModal({ supplier, onClose, onSave }: {
     });
   }
 
+  // ← Handler Enter: skip jika focus di textarea (biar bisa newline)
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Enter" && !e.shiftKey && !(e.target instanceof HTMLTextAreaElement)) {
+      e.preventDefault();
+      handleSave();
+    }
+  }
+
   return (
-    <Modal onClose={onClose} wide>
+    <Modal onClose={onClose} wide onKeyDown={handleKeyDown}>
       <ModalHeader
         title={isEdit ? "Edit Supplier" : "Tambah Supplier"}
         subtitle={isEdit ? `${supplier!.code} · ${supplier!.name}` : "Daftarkan mitra pemasok biji kopi baru"}
@@ -170,7 +176,6 @@ export function SupplierModal({ supplier, onClose, onSave }: {
         <Field label="Daftar Biji Kopi & Harga Kontrak">
           <div className="rounded-xl border border-border/50 bg-secondary/20 p-3 space-y-2.5">
 
-            {/* Header kolom */}
             <div className="flex gap-2 items-center px-1">
               <span className="flex-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Nama Kopi</span>
               <span className="w-36 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Tipe</span>

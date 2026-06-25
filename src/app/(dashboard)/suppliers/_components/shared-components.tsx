@@ -16,10 +16,28 @@ export const BTN_OUTLINE = "rounded-xl border border-border hover:bg-secondary/8
 export const fmt = (n: number) => "Rp " + n.toLocaleString("id-ID");
 export const poTotal = (po: PO) => po.items.reduce((a, i) => a + i.qty * i.pricePerKg, 0);
 
-export function Modal({ onClose, children, wide = false }: { onClose: () => void; children: React.ReactNode; wide?: boolean }) {
+export function Modal({
+  onClose,
+  children,
+  wide = false,
+  onKeyDown,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+  wide?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLDivElement>) => void; // ← tambah prop ini
+}) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div className={`w-full ${wide ? "max-w-2xl" : "max-w-lg"} bg-card border border-border/60 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto`} onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+    >
+      <div
+        className={`w-full ${wide ? "max-w-2xl" : "max-w-lg"} bg-card border border-border/60 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto`}
+        onClick={e => e.stopPropagation()}
+        onKeyDown={onKeyDown} // ← teruskan ke inner div
+      >
         {children}
       </div>
     </div>
@@ -68,15 +86,11 @@ export function Field({ label, children }: { label: string; children: React.Reac
 export const ErrMsg = ({ msg }: { msg?: string }) => msg ? <p className="text-xs text-destructive mt-1">{msg}</p> : null;
 
 export function NumericInput({ className, placeholder, value, onChange, allowDecimal = false }: { className?: string; placeholder?: string; value: string; onChange: (v: string) => void; allowDecimal?: boolean; }) {
-  // Saat allowDecimal aktif: izinkan satu pemisah desimal. Pengguna boleh
-  // mengetik koma (gaya Indonesia) — koma otomatis jadi titik agar konsisten
-  // saat di-parse. Hanya satu pemisah & hanya digit yang dipertahankan.
   const sanitize = (raw: string) => {
     if (!allowDecimal) return raw.replace(/[^0-9]/g, "");
     let s = raw.replace(",", ".").replace(/[^0-9.]/g, "");
     const firstDot = s.indexOf(".");
     if (firstDot !== -1) {
-      // buang titik kedua dan seterusnya
       s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
     }
     return s;
