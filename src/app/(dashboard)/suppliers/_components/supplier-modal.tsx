@@ -45,6 +45,7 @@ function BeanTypeSelect({ value, onChange }: { value: string; onChange: (v: stri
   );
 }
 
+// Phone helper functions
 function parsePhone(raw: string): string {
   let digits = raw.replace(/\D/g, "");
   if (digits.startsWith("0")) digits = digits.slice(1);
@@ -59,25 +60,54 @@ function formatPhoneDisplay(value: string): string {
   return "+62 " + groups.join("-");
 }
 
-type BeanFormItem = { name: string; price: string; type: string };
+type BeanFormItem = { name: string; price: string; type: string; active: boolean };
+
 type SForm = {
-  name: string; pic: string; region: string; phone: string; email: string;
-  beans: BeanFormItem[]; address: string; notes: string; status: SupplierStatus;
+  name: string;
+  pic: string;
+  region: string;
+  phone: string;
+  email: string;
+  beans: BeanFormItem[];
+  address: string;
+  notes: string;
+  status: SupplierStatus;
 };
 
 const blankForm: SForm = {
-  name: "", pic: "", region: "", phone: "", email: "",
-  beans: [{ name: "", price: "", type: "" }],
-  address: "", notes: "", status: "Aktif",
+  name: "",
+  pic: "",
+  region: "",
+  phone: "",
+  email: "",
+  beans: [{ name: "", price: "", type: "", active: true }],
+  address: "",
+  notes: "",
+  status: "Aktif",
 };
 
 const toForm = (s: Supplier): SForm => ({
-  name: s.name, pic: s.pic, region: s.region, phone: parsePhone(s.phone), email: s.email,
-  beans: s.beans.map(b => ({ name: b.name, price: b.price.toString(), type: b.type })),
-  address: s.address ?? "", notes: s.notes ?? "", status: s.status,
+  name: s.name,
+  pic: s.pic,
+  region: s.region,
+  phone: parsePhone(s.phone),
+  email: s.email,
+  beans: s.beans.map(b => ({
+    name: b.name,
+    price: b.price.toString(),
+    type: b.type,
+    active: b.active ?? true,
+  })),
+  address: s.address ?? "",
+  notes: s.notes ?? "",
+  status: s.status,
 });
 
-export function SupplierModal({ supplier, onClose, onSave }: {
+export function SupplierModal({
+  supplier,
+  onClose,
+  onSave,
+}: {
   supplier?: Supplier;
   onClose: () => void;
   onSave: (data: Omit<Supplier, "id" | "code"> & { id?: string; code?: string }) => void;
@@ -85,44 +115,63 @@ export function SupplierModal({ supplier, onClose, onSave }: {
   const isEdit = !!supplier;
   const [form, setForm] = useState<SForm>(isEdit ? toForm(supplier!) : blankForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
   const set = (k: keyof SForm, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   function handleSave() {
-    const e: Record<string, string> = {};
-    (["name", "pic", "region", "phone", "email"] as (keyof SForm)[]).forEach(k => {
-      if (!(form[k] as string).trim()) e[k] = "Wajib diisi";
+    const er: Record<string, string> = {};
+
+    // Validasi field wajib
+    (["name", "pic", "region", "phone", "email"] as const).forEach(k => {
+      if (!form[k]?.toString().trim()) er[k] = "Wajib diisi";
     });
+
     if (form.phone && !/^\+62\d{9,11}$/.test(form.phone)) {
-      e.phone = "Format nomor tidak valid";
+      er.phone = "Format nomor tidak valid";
     }
 
+    // Validasi beans
     const cleanedBeans = form.beans
-      .map(b => ({ name: b.name.trim(), price: parseInt(b.price, 10) || 0, type: b.type }))
+      .map(b => ({
+        name: b.name.trim(),
+        price: parseInt(b.price, 10) || 0,
+        type: b.type,
+        active: b.active,
+      }))
       .filter(b => b.name !== "");
 
-    if (cleanedBeans.length === 0) e.beans = "Minimal isi 1 jenis biji kopi";
-    else if (cleanedBeans.some(b => b.price <= 0)) e.beans = "Harga per kg harus diisi dengan benar";
-    else if (cleanedBeans.some(b => !b.type)) e.beans = "Tipe biji kopi harus dipilih";
+    if (cleanedBeans.length === 0) {
+      er.beans = "Minimal isi 1 jenis biji kopi";
+    } else if (cleanedBeans.some(b => b.price <= 0)) {
+      er.beans = "Harga per kg harus diisi dengan benar";
+    } else if (cleanedBeans.some(b => !b.type)) {
+      er.beans = "Tipe biji kopi harus dipilih";
+    }
 
-    setErrors(e);
-    if (Object.keys(e).length) return;
+    setErrors(er);
+    if (Object.keys(er).length > 0) return;
 
     onSave({
       ...(isEdit ? supplier! : { lastDelivery: "Belum ada", totalKg: 0 }),
-      name: form.name.trim(), pic: form.pic.trim(), region: form.region.trim(),
-      phone: form.phone.trim(), email: form.email.trim(),
+      name: form.name.trim(),
+      pic: form.pic.trim(),
+      region: form.region.trim(),
+      phone: form.phone.trim(),
+      email: form.email.trim(),
       beans: cleanedBeans,
-      address: form.address.trim(), notes: form.notes.trim(), status: form.status,
+      address: form.address.trim(),
+      notes: form.notes.trim(),
+      status: form.status,
     });
   }
 
-  // ← Handler Enter: skip jika focus di textarea (biar bisa newline)
-  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+  // Enter key handler (skip di textarea)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" && !e.shiftKey && !(e.target instanceof HTMLTextAreaElement)) {
       e.preventDefault();
       handleSave();
     }
-  }
+  };
 
   return (
     <Modal onClose={onClose} wide onKeyDown={handleKeyDown}>
@@ -133,37 +182,59 @@ export function SupplierModal({ supplier, onClose, onSave }: {
       />
 
       <div className="p-6 space-y-5">
-
-        {/* ── Identitas Supplier ── */}
+        {/* Identitas Supplier */}
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <Field label="Nama Supplier">
-              <Input className={INP} placeholder="Koperasi Tani Gayo" value={form.name} onChange={e => set("name", e.target.value)} />
+              <Input
+                className={INP}
+                placeholder="Koperasi Tani Gayo"
+                value={form.name}
+                onChange={e => set("name", e.target.value)}
+              />
               <ErrMsg msg={errors.name} />
             </Field>
           </div>
 
           <Field label="Nama PIC">
-            <Input className={INP} placeholder="Pak Munir" value={form.pic} onChange={e => set("pic", e.target.value)} />
+            <Input
+              className={INP}
+              placeholder="Pak Munir"
+              value={form.pic}
+              onChange={e => set("pic", e.target.value)}
+            />
             <ErrMsg msg={errors.pic} />
           </Field>
+
           <Field label="Region">
-            <Input className={INP} placeholder="Aceh Tengah" value={form.region} onChange={e => set("region", e.target.value)} />
+            <Input
+              className={INP}
+              placeholder="Aceh Tengah"
+              value={form.region}
+              onChange={e => set("region", e.target.value)}
+            />
             <ErrMsg msg={errors.region} />
           </Field>
 
           <Field label="No. Telepon">
             <Input
-              className={INP} placeholder="+62 812-xxxx-xxxx"
-              type="tel" inputMode="tel" value={formatPhoneDisplay(form.phone)}
+              className={INP}
+              placeholder="+62 812-xxxx-xxxx"
+              type="tel"
+              inputMode="tel"
+              value={formatPhoneDisplay(form.phone)}
               onChange={e => set("phone", parsePhone(e.target.value))}
             />
             <ErrMsg msg={errors.phone} />
           </Field>
+
           <Field label="Email">
             <Input
-              className={INP} placeholder="email@supplier.id"
-              type="email" inputMode="email" value={form.email}
+              className={INP}
+              placeholder="email@supplier.id"
+              type="email"
+              inputMode="email"
+              value={form.email}
               onChange={e => set("email", e.target.value)}
             />
             <ErrMsg msg={errors.email} />
@@ -172,14 +243,21 @@ export function SupplierModal({ supplier, onClose, onSave }: {
 
         <div className="border-t border-border/40" />
 
-        {/* ── Daftar Biji Kopi ── */}
+        {/* Daftar Biji Kopi */}
         <Field label="Daftar Biji Kopi & Harga Kontrak">
           <div className="rounded-xl border border-border/50 bg-secondary/20 p-3 space-y-2.5">
-
+            {/* Header */}
             <div className="flex gap-2 items-center px-1">
-              <span className="flex-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Nama Kopi</span>
+              <span className="flex-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Nama Kopi
+              </span>
               <span className="w-36 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Tipe</span>
-              <span className="w-32 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Harga / kg</span>
+              <span className="w-32 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Harga / kg
+              </span>
+              <span className="w-16 text-[11px] font-medium uppercase tracking-wider text-muted-foreground text-center">
+                Aktif
+              </span>
               <span className="w-8" />
             </div>
 
@@ -195,6 +273,7 @@ export function SupplierModal({ supplier, onClose, onSave }: {
                     set("beans", nb);
                   }}
                 />
+
                 <BeanTypeSelect
                   value={b.type}
                   onChange={v => {
@@ -203,16 +282,50 @@ export function SupplierModal({ supplier, onClose, onSave }: {
                     set("beans", nb);
                   }}
                 />
-                <NumericInput
-                  className={`${INP} w-32 border border-input`}
-                  placeholder="0"
-                  value={b.price}
-                  onChange={v => {
-                    const nb = [...form.beans];
-                    nb[i] = { ...nb[i], price: v };
-                    set("beans", nb);
-                  }}
-                />
+
+                <Input
+                className={`${INP} w-32 border border-input`}
+                placeholder="0"
+                inputMode="numeric"
+                value={
+                  b.price
+                    ? Number(b.price.replace(/\D/g, "")).toLocaleString("id-ID")
+                    : ""
+                }
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "");
+
+                  const nb = [...form.beans];
+                  nb[i] = {
+                    ...nb[i],
+                    price: raw, // tetap disimpan tanpa titik
+                  };
+                  set("beans", nb);
+                }}
+              />
+
+                <div className="w-16 flex items-center justify-center shrink-0 self-stretch">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={b.active}
+                    onClick={() => {
+                      const nb = [...form.beans];
+                      nb[i] = { ...nb[i], active: !nb[i].active };
+                      set("beans", nb);
+                    }}
+                    className={`relative h-5 w-9 rounded-full transition-colors shrink-0 ${
+                      b.active ? "bg-emerald-500" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1/2 left-0.5 h-4 w-4 -translate-y-1/2 rounded-full bg-white shadow transition-transform ${
+                        b.active ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 <button
                   type="button"
                   disabled={form.beans.length === 1}
@@ -227,7 +340,9 @@ export function SupplierModal({ supplier, onClose, onSave }: {
 
             <button
               type="button"
-              onClick={() => set("beans", [...form.beans, { name: "", price: "", type: "" }])}
+              onClick={() =>
+                set("beans", [...form.beans, { name: "", price: "", type: "", active: true }])
+              }
               className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline underline-offset-2 transition-colors px-1 pt-0.5"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -239,11 +354,16 @@ export function SupplierModal({ supplier, onClose, onSave }: {
 
         <div className="border-t border-border/40" />
 
-        {/* ── Info Tambahan ── */}
+        {/* Info Tambahan */}
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <Field label="Alamat">
-              <Input className={INP} placeholder="Jl. Raya Bebesen No.12" value={form.address} onChange={e => set("address", e.target.value)} />
+              <Input
+                className={INP}
+                placeholder="Jl. Raya Bebesen No.12"
+                value={form.address}
+                onChange={e => set("address", e.target.value)}
+              />
             </Field>
           </div>
 
@@ -279,7 +399,6 @@ export function SupplierModal({ supplier, onClose, onSave }: {
             </Field>
           </div>
         </div>
-
       </div>
 
       <ModalFooter
