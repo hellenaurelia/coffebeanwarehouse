@@ -121,7 +121,7 @@ export default function SuppliersPage() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <h3 className="font-display text-base font-semibold truncate">{s.name}</h3>
-                            <div className="text-xs text-muted-foreground">{s.id} · {s.pic}</div>
+                            <div className="text-xs text-muted-foreground">{s.code} · {s.pic}</div>
                           </div>
                           <Badge variant="outline" className={statusTone(s.status)}>{s.status}</Badge>
                         </div>

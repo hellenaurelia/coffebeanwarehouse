@@ -63,12 +63,14 @@ export type DashStat = {
 };
 
 export type DashBean = {
+  id: string;           // product UUID asli — untuk link ke /beans/[id]
   name: string;
   origin: string;
   stock: number;
   max: number;
   price: string;
   status: "Tersedia" | "Menipis" | "Kritis";
+  trxCount: number;     // jumlah transaksi berbeda dalam 30 hari (frekuensi)
 };
 
 export type DashRecent = {
@@ -120,6 +122,7 @@ export async function getSuppliers(): Promise<Supplier[]> {
 
   return suppliers.map((s) => ({
     id: s.id,
+    code: s.supplierCode,
     name: s.name,
     pic: s.picName,
     region: s.region,
@@ -192,32 +195,66 @@ export async function getDashboardData(): Promise<DashboardData> {
     { label: "Avg. Basket", value: rupiah(basketToday), ...basketD },
   ];
 
-  // ── Beans: top 5 by stock, with origin from linked supplier region ────────
-  const products = await prisma.product.findMany({
-    where: { isActive: true },
-    orderBy: { stockKg: "desc" },
-    take: 5,
-    select: {
-      name: true,
-      stockKg: true,
-      minStockKg: true,
-      sellPrice: true,
-      supplierProducts: {
-        where: { isActive: true },
-        take: 1,
-        select: { supplier: { select: { region: true } } },
-      },
-    },
-  });
+  // ── Beans: top 5 PALING SERING DIBELI (frekuensi transaksi, 30 hari) ──────
+  // "Digemari" = jumlah transaksi BERBEDA yang memuat biji ini dalam 30 hari
+  // terakhir (PAID). COUNT(DISTINCT transaction_id) supaya satu transaksi
+  // dengan produk yang sama di beberapa baris tetap dihitung 1.
+  const since30 = startOfDay(new Date(now.getTime() - 30 * 86_400_000));
 
-  const beans: DashBean[] = products.map((p) => ({
-    name: p.name,
-    origin: p.supplierProducts[0]?.supplier.region ?? "—",
-    stock: p.stockKg,
-    max: Math.max(p.minStockKg * 8, 200),
-    price: rupiahShortK(p.sellPrice),
-    status: beanStatus(p.stockKg, p.minStockKg),
-  }));
+  const topFreq = await prisma.$queryRaw<
+    { product_id: string; trx_count: bigint }[]
+  >`
+    SELECT ti.product_id, COUNT(DISTINCT ti.transaction_id) AS trx_count
+    FROM transaction_items ti
+    JOIN transactions t ON t.id = ti.transaction_id
+    WHERE t.status = 'PAID'
+      AND t.created_at >= ${since30}
+    GROUP BY ti.product_id
+    ORDER BY trx_count DESC
+    LIMIT 5
+  `;
+
+  const topIds = topFreq.map((r) => r.product_id);
+  const freqById = new Map(topIds.map((id, i) => [id, Number(topFreq[i].trx_count)]));
+
+  // Ambil detail produk untuk id-id teratas (termasuk origin via supplier).
+  const topProducts =
+    topIds.length === 0
+      ? []
+      : await prisma.product.findMany({
+          where: { id: { in: topIds } },
+          select: {
+            id: true,
+            name: true,
+            stockKg: true,
+            minStockKg: true,
+            sellPrice: true,
+            supplierProducts: {
+              where: { isActive: true },
+              take: 1,
+              select: { supplier: { select: { region: true } } },
+            },
+          },
+        });
+
+  // Susun ulang mengikuti urutan frekuensi (findMany tidak menjamin urutan).
+  const productById = new Map(topProducts.map((p) => [p.id, p]));
+  const beans: DashBean[] = topIds
+    .map((id) => {
+      const p = productById.get(id);
+      if (!p) return null;
+      return {
+        id: p.id,
+        name: p.name,
+        origin: p.supplierProducts[0]?.supplier.region ?? "—",
+        stock: p.stockKg,
+        max: Math.max(p.minStockKg * 8, 200),
+        price: rupiahShortK(p.sellPrice),
+        status: beanStatus(p.stockKg, p.minStockKg),
+        trxCount: freqById.get(id) ?? 0,
+      } satisfies DashBean;
+    })
+    .filter((b): b is DashBean => b !== null);
 
   // ── Low-stock alert: the single most-critical product ─────────────────────
   const lowList = await prisma.product.findMany({

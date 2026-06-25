@@ -29,7 +29,7 @@ type SupplierContextValue = {
   modal: ModalState;
   setModal: React.Dispatch<React.SetStateAction<ModalState>>;
   close: () => void;
-  handleSaveSupplier: (data: Omit<Supplier, "id"> & { id?: string }) => void;
+  handleSaveSupplier: (data: Omit<Supplier, "id" | "code"> & { id?: string; code?: string }) => void;
   handleDeleteSupplier: (id: string) => void;
   handleSavePO: (partial: Omit<PO, "id">) => void;
   handleUpdatePOStatus: (poId: string, newStatus: PO["status"]) => void;
@@ -57,7 +57,7 @@ export function SupplierProvider({
 
   const close = () => setModal({ type: "none" });
 
-  const handleSaveSupplier = (data: Omit<Supplier, "id"> & { id?: string }) => {
+  const handleSaveSupplier = (data: Omit<Supplier, "id" | "code"> & { id?: string; code?: string }) => {
     saveSupplierAction(data)
       .then((saved) => {
         setSuppliers((p) =>

@@ -193,7 +193,7 @@ export function DetailModal({
     <Modal onClose={onClose} wide>
       <ModalHeader
         title={localSupplier.name}
-        subtitle={`${localSupplier.id} · ${localSupplier.pic}`}
+        subtitle={`${localSupplier.code} · ${localSupplier.pic}`}
         onClose={onClose}
       />
 

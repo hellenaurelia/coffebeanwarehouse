@@ -84,6 +84,7 @@ export function inferBeanType(name: string): string {
 
 export type DbSupplierRow = {
   id: string;
+  supplierCode: string;
   name: string;
   picName: string;
   region: string;
@@ -144,6 +145,7 @@ export function mapSupplier(row: DbSupplierRow): UISupplier {
 
   return {
     id: row.id,
+    code: row.supplierCode,
     name: row.name,
     pic: row.picName,
     region: row.region,

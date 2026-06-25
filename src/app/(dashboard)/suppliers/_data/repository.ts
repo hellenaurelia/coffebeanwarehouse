@@ -15,6 +15,7 @@ export async function getSuppliers(): Promise<Supplier[]> {
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
+      supplierCode: true,
       name: true,
       picName: true,
       region: true,

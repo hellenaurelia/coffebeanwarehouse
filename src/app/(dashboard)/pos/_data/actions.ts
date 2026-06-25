@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import type { PaymentMethod } from "@prisma/client";
 import { requireUser } from "@/lib/auth/session";
+import { nextDocNumber } from "@/lib/docnumber";
 
 // The cashier is whoever is logged in.
 async function resolveCashierId(): Promise<string> {
@@ -60,20 +61,14 @@ export async function checkoutAction(
 
   try {
     const result: string = await prisma.$transaction(async (tx): Promise<string> => {
-      const last = await tx.transaction.findFirst({
-        orderBy: {
-          trxNumber: "desc",
-        },
-        select: {
-          trxNumber: true,
-        },
+      const trxNumber = await nextDocNumber("TRX", async (datePrefix) => {
+        const last = await tx.transaction.findFirst({
+          where: { trxNumber: { startsWith: datePrefix } },
+          orderBy: { trxNumber: "desc" },
+          select: { trxNumber: true },
+        });
+        return last?.trxNumber ?? null;
       });
-
-      const lastNum = last
-        ? parseInt(last.trxNumber.replace(/\D/g, ""), 10) || 0
-        : 0;
-
-      const trxNumber = `TRX-${String(lastNum + 1).padStart(4, "0")}`;
 
       let totalCogs = 0;
       let grossProfit = 0;

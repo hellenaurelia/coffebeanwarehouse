@@ -18,8 +18,6 @@ import { savePOAction } from "@/app/(dashboard)/suppliers/_data/actions";
 import type { Supplier, PO } from "@/app/(dashboard)/suppliers/lib";
 import type { DashboardData } from "@/app/(dashboard)/_data/repository";
 
-// Icons matched to each stat by label (kept out of the server payload, which
-// can't carry component references).
 const STAT_ICON: Record<string, typeof Receipt> = {
   "Penjualan Hari Ini": Receipt,
   "Transaksi": ScanBarcode,
@@ -119,6 +117,11 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               </Link>
             </CardHeader>
             <CardContent className="space-y-4">
+              {beans.length === 0 && (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  Belum ada penjualan dalam 30 hari terakhir.
+                </p>
+              )}
               {beans.map((b) => {
                 const pct = Math.round((b.stock / b.max) * 100);
                 const tone =
@@ -126,8 +129,8 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                   : b.status === "Menipis" ? "bg-crema/30 text-roast border-crema/40"
                   : "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
                 return (
-                  <div key={b.name} className="rounded-xl border border-border/60 p-4 hover:bg-secondary/40 transition-colors">
-                   <Link href={`/inventory`} className="flex items-start justify-between gap-4">
+                  <div key={b.id} className="rounded-xl border border-border/60 p-4 hover:bg-secondary/40 transition-colors">
+                   <Link href={`/beans/${b.id}`} className="flex items-start justify-between gap-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-10 w-10 rounded-lg gradient-bean flex items-center justify-center shrink-0">
@@ -135,7 +138,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                         </div>
                         <div className="min-w-0">
                           <div className="font-medium truncate">{b.name}</div>
-                          <div className="text-xs text-muted-foreground">{b.origin}</div>
+                          <div className="text-xs text-muted-foreground">{b.origin} · {b.trxCount}x transaksi</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">

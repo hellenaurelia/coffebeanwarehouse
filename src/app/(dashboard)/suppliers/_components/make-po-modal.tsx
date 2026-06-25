@@ -42,9 +42,10 @@ export function BuatPOModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const selected = suppliers.find((s) => s.id === supplierId);
+  // qty boleh desimal (mis. 20,5) → konversi koma ke titik lalu parseFloat.
+  const toNum = (v: string) => parseFloat(v.replace(",", ".")) || 0;
   const total = items.reduce(
-    (acc, i) =>
-      acc + (parseInt(i.qty, 10) || 0) * (parseInt(i.pricePerKg, 10) || 0),
+    (acc, i) => acc + toNum(i.qty) * toNum(i.pricePerKg),
     0,
   );
   const setItem = (i: number, k: string, v: string) =>
@@ -75,14 +76,15 @@ export function BuatPOModal({
     );
   };
 
-  function handleSave() {
+  function handleSave(ev?: React.FormEvent) {
+    ev?.preventDefault();
     const e: Record<string, string> = {};
     if (!supplierId) e.supplier = "Pilih supplier";
     if (!date) e.date = "Wajib diisi";
     items.forEach((item, i) => {
       if (!item.bean.trim()) e[`bean_${i}`] = "Wajib diisi";
-      if (!item.qty || parseInt(item.qty, 10) <= 0) e[`qty_${i}`] = "Harus > 0";
-      if (!item.pricePerKg || parseInt(item.pricePerKg, 10) <= 0)
+      if (!item.qty || toNum(item.qty) <= 0) e[`qty_${i}`] = "Harus > 0";
+      if (!item.pricePerKg || toNum(item.pricePerKg) <= 0)
         e[`price_${i}`] = "Harus > 0";
     });
     setErrors(e);
@@ -96,8 +98,8 @@ export function BuatPOModal({
       status: "Pending",
       items: items.map((i) => ({
         bean: i.bean.trim(),
-        qty: parseInt(i.qty, 10),
-        pricePerKg: parseInt(i.pricePerKg, 10),
+        qty: toNum(i.qty),
+        pricePerKg: toNum(i.pricePerKg),
       })),
     });
   }
@@ -109,6 +111,7 @@ export function BuatPOModal({
         subtitle="Order biji kopi dari supplier"
         onClose={onClose}
       />
+      <form id="po-form" onSubmit={handleSave}>
       <div className="p-6 space-y-5">
         <Field label="Supplier">
           <select
@@ -160,6 +163,7 @@ export function BuatPOModal({
               Item Order
             </label>
             <button
+              type="button"
               onClick={() =>
                 setItems((p) => [...p, { bean: "", qty: "", pricePerKg: "" }])
               }
@@ -201,6 +205,7 @@ export function BuatPOModal({
                   placeholder="Qty (kg)"
                   value={item.qty}
                   onChange={(v) => setItem(i, "qty", v)}
+                  allowDecimal
                 />
                 <NumericInput
                   className={`${INP} w-32`}
@@ -210,6 +215,7 @@ export function BuatPOModal({
                 />
                 {items.length > 1 && (
                   <button
+                    type="button"
                     onClick={() =>
                       setItems((p) => p.filter((_, idx) => idx !== i))
                     }
@@ -261,9 +267,10 @@ export function BuatPOModal({
           />
         </Field>
       </div>
+      </form>
       <ModalFooter
         onClose={onClose}
-        onConfirm={handleSave}
+        submitForm="po-form"
         confirmLabel="Buat PO"
         icon={ClipboardList}
       />

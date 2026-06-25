@@ -16,13 +16,6 @@ export const BTN_OUTLINE = "rounded-xl border border-border hover:bg-secondary/8
 export const fmt = (n: number) => "Rp " + n.toLocaleString("id-ID");
 export const poTotal = (po: PO) => po.items.reduce((a, i) => a + i.qty * i.pricePerKg, 0);
 
-export const fmtDateTime = (d: string | Date) =>
-  new Date(d).toLocaleString("id-ID", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-    hour12: false,
-  }).replace(/\./g, ":");
-
 export function Modal({ onClose, children, wide = false }: { onClose: () => void; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }} onClick={onClose}>
@@ -47,11 +40,18 @@ export function ModalHeader({ title, subtitle, onClose }: { title: string; subti
   );
 }
 
-export function ModalFooter({ onClose, onConfirm, confirmLabel, icon: Icon }: { onClose: () => void; onConfirm: () => void; confirmLabel: string; icon?: React.ElementType; }) {
+export function ModalFooter({ onClose, onConfirm, confirmLabel, icon: Icon, submitForm }: { onClose: () => void; onConfirm?: () => void; confirmLabel: string; icon?: React.ElementType; submitForm?: string; }) {
   return (
     <div className="border-t border-border/60 px-6 py-4 flex gap-2 justify-end">
-      <Button variant="outline" className={BTN_HOVER_COKLAT} onClick={onClose}>Batal</Button>
-      <Button className={BTN_PRIMARY} onClick={onConfirm}>{Icon && <Icon className="h-4 w-4 mr-2" />}{confirmLabel}</Button>
+      <Button type="button" variant="outline" className={BTN_HOVER_COKLAT} onClick={onClose}>Batal</Button>
+      <Button
+        type={submitForm ? "submit" : "button"}
+        form={submitForm}
+        className={BTN_PRIMARY}
+        onClick={submitForm ? undefined : onConfirm}
+      >
+        {Icon && <Icon className="h-4 w-4 mr-2" />}{confirmLabel}
+      </Button>
     </div>
   );
 }
@@ -67,16 +67,22 @@ export function Field({ label, children }: { label: string; children: React.Reac
 
 export const ErrMsg = ({ msg }: { msg?: string }) => msg ? <p className="text-xs text-destructive mt-1">{msg}</p> : null;
 
-export function NumericInput({ className, placeholder, value, onChange }: { className?: string; placeholder?: string; value: string; onChange: (v: string) => void; }) {
+export function NumericInput({ className, placeholder, value, onChange, allowDecimal = false }: { className?: string; placeholder?: string; value: string; onChange: (v: string) => void; allowDecimal?: boolean; }) {
+  // Saat allowDecimal aktif: izinkan satu pemisah desimal. Pengguna boleh
+  // mengetik koma (gaya Indonesia) — koma otomatis jadi titik agar konsisten
+  // saat di-parse. Hanya satu pemisah & hanya digit yang dipertahankan.
+  const sanitize = (raw: string) => {
+    if (!allowDecimal) return raw.replace(/[^0-9]/g, "");
+    let s = raw.replace(",", ".").replace(/[^0-9.]/g, "");
+    const firstDot = s.indexOf(".");
+    if (firstDot !== -1) {
+      // buang titik kedua dan seterusnya
+      s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
+    }
+    return s;
+  };
   return (
-    <Input
-      className={className}
-      placeholder={placeholder}
-      inputMode="numeric"
-      type="text"
-      value={value ? Number(value).toLocaleString("id-ID") : ""}
-      onChange={e => onChange(e.target.value.replace(/\D/g, ""))}
-    />
+    <Input className={className} placeholder={placeholder} inputMode={allowDecimal ? "decimal" : "numeric"} type="text" value={value} onChange={e => onChange(sanitize(e.target.value))} />
   );
 }
 

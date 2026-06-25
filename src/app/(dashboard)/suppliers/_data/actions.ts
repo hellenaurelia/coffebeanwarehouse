@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/auth/session";
 import {
   poStatusToDb,
   supplierIsActiveFromUi,
@@ -12,106 +11,27 @@ import {
   type DbPORow,
 } from "./mappers";
 import type { Supplier, PO } from "../lib";
-import type { Prisma, BeanType } from "@prisma/client";
 
 const SUPPLIERS_PATH = "/suppliers";
 
-// Resolve the authenticated user id for `createdById` on writes.
+// --- Current-user resolution -------------------------------------------------
+// Auth/session is not wired yet. We resolve a default creator (first OWNER,
+// else first user) so writes that require `createdById` succeed.
+// TODO(auth): replace with the real authenticated user id from the session.
 async function resolveActorId(): Promise<string> {
-  const user = await requireUser();
-  return user.id;
-}
-
-// ---------------------------------------------------------------------------
-// Activity log helper. Best-effort: never blocks the main write if it fails.
-// Pass a `tx` to write inside an existing transaction; otherwise uses prisma.
-// ---------------------------------------------------------------------------
-async function logActivity(
-  client: Prisma.TransactionClient | typeof prisma,
-  params: {
-    userId: string;
-    action: string;
-    entityType: string;
-    entityId?: string | null;
-    payload?: Prisma.InputJsonValue;
-  }
-): Promise<void> {
-  try {
-    await client.activityLog.create({
-      data: {
-        userId: params.userId,
-        action: params.action,
-        entityType: params.entityType,
-        entityId: params.entityId ?? null,
-        payload: params.payload ?? undefined,
-      },
-    });
-  } catch (err) {
-    console.error("Gagal menulis activity log:", err);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Generate a unique SKU from a product name, e.g. "Gayo Wine Natural" -> GYO-WN-001.
-// Falls back to a numeric suffix to guarantee uniqueness.
-// ---------------------------------------------------------------------------
-async function generateSku(name: string): Promise<string> {
-  const words = name.trim().toUpperCase().split(/\s+/).filter(Boolean);
-  const prefix =
-    words.length >= 2
-      ? words[0].slice(0, 3) + "-" + words[1].slice(0, 2)
-      : (words[0] ?? "PRD").slice(0, 5);
-
-  for (let i = 1; i < 1000; i++) {
-    const candidate = `${prefix}-${String(i).padStart(3, "0")}`;
-    const exists = await prisma.product.findUnique({
-      where: { sku: candidate },
-      select: { id: true },
-    });
-    if (!exists) return candidate;
-  }
-  // Extremely unlikely fallback
-  return `${prefix}-${Date.now().toString().slice(-4)}`;
-}
-
-// Map UI bean "type" (Arabica/Robusta/etc) -> DB BeanType enum.
-// The DB enum only encodes physical form, so everything defaults to WHOLE_BEAN.
-function beanTypeToDb(_uiType: string): BeanType {
-  return "WHOLE_BEAN";
-}
-
-// ---------------------------------------------------------------------------
-// Find a product by case-insensitive name, or create it if missing.
-// Returns the product id.
-// ---------------------------------------------------------------------------
-async function findOrCreateProduct(
-  bean: { name: string; price: number; type: string },
-  actorId: string
-): Promise<string> {
-  const existing = await prisma.product.findFirst({
-    where: { name: { equals: bean.name, mode: "insensitive" } },
+  const owner = await prisma.user.findFirst({
+    where: { role: "OWNER", isActive: true },
     select: { id: true },
   });
-  if (existing) return existing.id;
-
-  const sku = await generateSku(bean.name);
-  const created = await prisma.product.create({
-    data: {
-      sku,
-      name: bean.name,
-      type: beanTypeToDb(bean.type),
-      sellPrice: 0, // diisi manual nanti di menu produk
-      stockKg: 0,
-      minStockKg: 25,
-      createdById: actorId,
-    },
-    select: { id: true },
-  });
-  return created.id;
+  if (owner) return owner.id;
+  const any = await prisma.user.findFirst({ select: { id: true } });
+  if (!any) throw new Error("Tidak ada user di database untuk dijadikan creator.");
+  return any.id;
 }
 
 const supplierSelect = {
   id: true,
+  supplierCode: true,
   name: true,
   picName: true,
   region: true,
@@ -140,7 +60,7 @@ const supplierSelect = {
 // SUPPLIER: create / update
 // ============================================================================
 export async function saveSupplierAction(
-  data: Omit<Supplier, "id"> & { id?: string }
+  data: Omit<Supplier, "id" | "code"> & { id?: string; code?: string }
 ): Promise<Supplier> {
   const actorId = await resolveActorId();
   const isActive = supplierIsActiveFromUi(data.status);
@@ -157,28 +77,46 @@ export async function saveSupplierAction(
   };
 
   let supplierId: string;
-  const isUpdate = !!data.id;
 
   if (data.id) {
+    // Update existing
     await prisma.supplier.update({ where: { id: data.id }, data: base });
     supplierId = data.id;
   } else {
-    const created = await prisma.supplier.create({
-      data: { ...base, createdById: actorId },
-      select: { id: true },
+    // Create new — generate kode S-001, S-002, ... berurutan global.
+    // Dibungkus transaksi: cari kode terakhir lalu +1, supaya dua create
+    // bersamaan tidak mendapat kode yang sama.
+    const created = await prisma.$transaction(async (tx) => {
+      const last = await tx.supplier.findFirst({
+        where: { supplierCode: { startsWith: "S-" } },
+        orderBy: { supplierCode: "desc" },
+        select: { supplierCode: true },
+      });
+      const lastNum = last
+        ? parseInt(last.supplierCode.slice(2), 10) || 0
+        : 0;
+      const supplierCode = `S-${String(lastNum + 1).padStart(3, "0")}`;
+
+      return tx.supplier.create({
+        data: { ...base, supplierCode, createdById: actorId },
+        select: { id: true },
+      });
     });
     supplierId = created.id;
   }
 
-  // Sync beans -> supplierProducts. Products are auto-created if the name is new.
+  // Sync beans -> supplierProducts. The UI bean carries a name + price + active.
+  // We match products by name; only existing products get linked (the UI does
+  // not create products here).
   for (const bean of data.beans) {
-    const productId = await findOrCreateProduct(
-      { name: bean.name, price: bean.price, type: bean.type },
-      actorId
-    );
+    const product = await prisma.product.findFirst({
+      where: { name: bean.name },
+      select: { id: true },
+    });
+    if (!product) continue;
 
     const existing = await prisma.supplierProduct.findFirst({
-      where: { supplierId, productId },
+      where: { supplierId, productId: product.id },
       select: { id: true },
     });
 
@@ -191,7 +129,7 @@ export async function saveSupplierAction(
       await prisma.supplierProduct.create({
         data: {
           supplierId,
-          productId,
+          productId: product.id,
           buyPricePerKg: bean.price,
           isActive: bean.active ?? true,
         },
@@ -204,39 +142,74 @@ export async function saveSupplierAction(
     select: supplierSelect,
   });
 
-  await logActivity(prisma, {
-    userId: actorId,
-    action: isUpdate ? "UPDATE_SUPPLIER" : "CREATE_SUPPLIER",
-    entityType: "Supplier",
-    entityId: supplierId,
-    payload: { name: data.name, beans: data.beans.length },
-  });
-
   revalidatePath(SUPPLIERS_PATH);
   return mapSupplier(row as DbSupplierRow);
 }
 
 // ============================================================================
-// SUPPLIER: delete (soft — keeps PO history)
+// SUPPLIER: delete (soft — keeps PO history, matches the modal's promise that
+// "data PO tetap tersimpan"; hard delete would violate FK constraints).
 // ============================================================================
 export async function deleteSupplierAction(id: string): Promise<void> {
-  const actorId = await resolveActorId();
-
-  const s = await prisma.supplier.update({
+  await prisma.supplier.update({
     where: { id },
     data: { isActive: false },
-    select: { name: true },
   });
+  revalidatePath(SUPPLIERS_PATH);
+}
 
-  await logActivity(prisma, {
-    userId: actorId,
-    action: "DELETE_SUPPLIER",
-    entityType: "Supplier",
-    entityId: id,
-    payload: { name: s.name },
+// ============================================================================
+// PURCHASE ORDER: create
+// ============================================================================
+export async function savePOAction(
+  partial: Omit<PO, "id">
+): Promise<PO> {
+  const actorId = await resolveActorId();
+
+  // Generate next PO number: PO-#### based on current max.
+  const last = await prisma.purchaseOrder.findFirst({
+    orderBy: { poNumber: "desc" },
+    select: { poNumber: true },
+  });
+  const lastNum = last ? parseInt(last.poNumber.replace(/\D/g, ""), 10) || 0 : 0;
+  const poNumber = `PO-${String(lastNum + 1).padStart(4, "0")}`;
+
+  // Resolve products by bean name for each line item.
+  const itemsData = [];
+  let totalAmount = 0;
+  for (const it of partial.items) {
+    const product = await prisma.product.findFirst({
+      where: { name: it.bean },
+      select: { id: true },
+    });
+    if (!product) {
+      throw new Error(`Produk "${it.bean}" tidak ditemukan di database.`);
+    }
+    const subtotal = it.qty * it.pricePerKg;
+    totalAmount += subtotal;
+    itemsData.push({
+      productId: product.id,
+      qtyKg: it.qty,
+      buyPricePerKg: it.pricePerKg,
+      subtotal,
+    });
+  }
+
+  const created = await prisma.purchaseOrder.create({
+    data: {
+      poNumber,
+      supplierId: partial.supplierId,
+      status: poStatusToDb(partial.status),
+      totalAmount,
+      notes: partial.notes || null,
+      createdById: actorId,
+      items: { create: itemsData },
+    },
+    select: poDetailSelect,
   });
 
   revalidatePath(SUPPLIERS_PATH);
+  return mapPO(created as DbPORow);
 }
 
 const poDetailSelect = {
@@ -259,70 +232,12 @@ const poDetailSelect = {
 } as const;
 
 // ============================================================================
-// PURCHASE ORDER: create
-// ============================================================================
-export async function savePOAction(partial: Omit<PO, "id">): Promise<PO> {
-  const actorId = await resolveActorId();
-
-  // Generate next PO number: PO-#### based on current max.
-  const last = await prisma.purchaseOrder.findFirst({
-    orderBy: { poNumber: "desc" },
-    select: { poNumber: true },
-  });
-  const lastNum = last ? parseInt(last.poNumber.replace(/\D/g, ""), 10) || 0 : 0;
-  const poNumber = `PO-${String(lastNum + 1).padStart(4, "0")}`;
-
-  // Resolve products by bean name (auto-create if missing) for each line item.
-  const itemsData = [];
-  let totalAmount = 0;
-  for (const it of partial.items) {
-    const productId = await findOrCreateProduct(
-      { name: it.bean, price: it.pricePerKg, type: "" },
-      actorId
-    );
-    const subtotal = it.qty * it.pricePerKg;
-    totalAmount += subtotal;
-    itemsData.push({
-      productId,
-      qtyKg: it.qty,
-      buyPricePerKg: it.pricePerKg,
-      subtotal,
-    });
-  }
-
-  const created = await prisma.purchaseOrder.create({
-    data: {
-      poNumber,
-      supplierId: partial.supplierId,
-      status: poStatusToDb(partial.status),
-      totalAmount,
-      notes: partial.notes || null,
-      createdById: actorId,
-      items: { create: itemsData },
-    },
-    select: poDetailSelect,
-  });
-
-  await logActivity(prisma, {
-    userId: actorId,
-    action: "CREATE_PO",
-    entityType: "PurchaseOrder",
-    entityId: created.id,
-    payload: { poNumber, totalAmount, items: itemsData.length },
-  });
-
-  revalidatePath(SUPPLIERS_PATH);
-  return mapPO(created as DbPORow);
-}
-
-// ============================================================================
 // PURCHASE ORDER: update status (and stock-in when received)
 // ============================================================================
 export async function updatePOStatusAction(
   poNumber: string,
   newStatus: PO["status"]
 ): Promise<void> {
-  const actorId = await resolveActorId();
   const dbStatus = poStatusToDb(newStatus);
 
   const po = await prisma.purchaseOrder.findUnique({
@@ -379,14 +294,6 @@ export async function updatePOStatusAction(
         });
       }
     }
-
-    await logActivity(tx, {
-      userId: actorId,
-      action: becomingReceived ? "RECEIVE_PO" : "UPDATE_PO_STATUS",
-      entityType: "PurchaseOrder",
-      entityId: po.id,
-      payload: { poNumber, status: newStatus, stockUpdated: becomingReceived },
-    });
   });
 
   revalidatePath(SUPPLIERS_PATH);
@@ -399,6 +306,7 @@ export async function updatePOArrivalAction(
   poNumber: string,
   dateLabel: string
 ): Promise<void> {
+  // The UI passes a date string. Parse common forms; fall back to now.
   const parsed = parseUiDate(dateLabel);
   await prisma.purchaseOrder.update({
     where: { poNumber },
@@ -415,7 +323,7 @@ export async function toggleBeanAction(
   beanName: string
 ): Promise<void> {
   const product = await prisma.product.findFirst({
-    where: { name: { equals: beanName, mode: "insensitive" } },
+    where: { name: beanName },
     select: { id: true },
   });
   if (!product) return;
@@ -436,6 +344,7 @@ export async function toggleBeanAction(
 // --- helpers ----------------------------------------------------------------
 function parseUiDate(label: string): Date | null {
   if (!label || label === "-") return null;
+  // Try native parse first (handles yyyy-mm-dd from <input type=date>)
   const native = new Date(label);
   if (!isNaN(native.getTime())) return native;
   return new Date();
