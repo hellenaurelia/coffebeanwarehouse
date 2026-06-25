@@ -15,6 +15,8 @@ interface StockMonitoringProps {
  * Komponen Stock Monitoring - menampilkan progress bar stok per varian
  */
 export function StockMonitoring({ data }: StockMonitoringProps) {
+  const kritisStock = data.stok.filter((s) => s.status === "Kritis");
+
   return (
     <Card className="lg:col-span-2 border-border/60 bg-card shadow-warm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -27,26 +29,32 @@ export function StockMonitoring({ data }: StockMonitoringProps) {
         </Badge>
       </CardHeader>
       <CardContent className="space-y-4">
-        {data.stok.map((s) => {
-          const pct = Math.round((s.stok / s.kapasitas) * 100);
-          return (
-            <div key={s.name} className="space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-medium text-foreground">{s.name}</p>
-                <Badge variant="outline" className={`rounded-full text-[10px] ${statusTone(s.status)}`}>
-                  {s.status}
-                </Badge>
+        {kritisStock.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Tidak ada stok kritis saat ini.
+          </p>
+        ) : (
+          kritisStock.map((s) => {
+            const pct = Math.round((s.stok / s.kapasitas) * 100);
+            return (
+              <div key={s.name} className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-medium text-foreground">{s.name}</p>
+                  <Badge variant="outline" className={`rounded-full text-[10px] ${statusTone(s.status)}`}>
+                    {s.status}
+                  </Badge>
+                </div>
+                <Progress value={pct} className="h-2 bg-secondary" />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    {s.stok} kg / {s.kapasitas} kg
+                  </span>
+                  <span className="font-mono">{pct}%</span>
+                </div>
               </div>
-              <Progress value={pct} className="h-2 bg-secondary" />
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  {s.stok} kg / {s.kapasitas} kg
-                </span>
-                <span className="font-mono">{pct}%</span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </CardContent>
     </Card>
   );
