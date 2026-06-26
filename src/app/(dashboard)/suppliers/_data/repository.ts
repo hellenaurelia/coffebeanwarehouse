@@ -1,6 +1,3 @@
-// Server-only read layer for the Suppliers feature.
-// Returns data already mapped into the UI's existing types.
-
 import { prisma } from "@/lib/prisma";
 import {
   mapSupplier,
@@ -12,6 +9,7 @@ import type { Supplier, PO } from "../lib";
 
 export async function getSuppliers(): Promise<Supplier[]> {
   const rows = await prisma.supplier.findMany({
+    where: { deletedAt: null },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
@@ -28,8 +26,6 @@ export async function getSuppliers(): Promise<Supplier[]> {
         select: {
           buyPricePerKg: true,
           isActive: true,
-          // === TAMBAHAN: variety ikut diambil, supaya tipe biji kopi
-          // yang disimpan lewat saveSupplierAction kebawa balik ke UI ===
           product: { select: { name: true, variety: true } },
         },
       },
@@ -70,23 +66,36 @@ export async function getPurchaseOrders(): Promise<PO[]> {
   return (rows as DbPORow[]).map(mapPO);
 }
 
-// Inventory list (used by the supplier detail modal). Mapped to the UI
-// InventoryItem shape declared in suppliers/lib.ts.
 export async function getInventoryForSuppliers() {
   const products = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      stockKg: { gt: 0 },
+      supplierProducts: {
+        some: {
+          isActive: true,
+          supplier: { isActive: true, deletedAt: null },
+        },
+      },
+    },
     orderBy: { createdAt: "asc" },
     select: {
       sku: true,
       name: true,
-      type: true,
+      variety: true,
       sellPrice: true,
       stockKg: true,
       supplierProducts: {
+        where: {
+          isActive: true,
+          supplier: { isActive: true, deletedAt: null },
+        },
+        orderBy: { createdAt: "asc" },
+        take: 1,
         select: {
           buyPricePerKg: true,
           supplier: { select: { name: true } },
         },
-        take: 1,
       },
     },
   });
@@ -94,14 +103,7 @@ export async function getInventoryForSuppliers() {
   return products.map((p) => ({
     sku: p.sku,
     name: p.name,
-    type:
-      p.name.toLowerCase().includes("luwak")
-        ? "Luwak"
-        : p.name.toLowerCase().includes("robusta")
-        ? "Robusta"
-        : p.name.toLowerCase().includes("liberica")
-        ? "Liberica"
-        : "Arabica",
+    type: p.variety ?? "",
     stock: p.stockKg,
     unit: "kg",
     cost: p.supplierProducts[0]?.buyPricePerKg ?? 0,

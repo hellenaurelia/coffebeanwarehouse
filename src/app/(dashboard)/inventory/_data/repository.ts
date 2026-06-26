@@ -1,7 +1,3 @@
-// Server-only read layer for the Inventory feature.
-// Maps Product rows into the UI's InventoryItem shape (declared in page.tsx),
-// keeping the table/modals byte-for-byte unchanged.
-
 import { prisma } from "@/lib/prisma";
 
 export type InventoryItemDTO = {
@@ -17,25 +13,30 @@ export type InventoryItemDTO = {
   exp?: string;
 };
 
-function inferType(name: string): string {
-  const n = name.toLowerCase();
-  if (n.includes("luwak")) return "Luwak";
-  if (n.includes("robusta")) return "Robusta";
-  if (n.includes("liberica")) return "Liberica";
-  return "Arabica";
-}
-
 export async function getInventory(): Promise<InventoryItemDTO[]> {
   const products = await prisma.product.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      stockKg: { gt: 0 },
+      supplierProducts: {
+        some: {
+          isActive: true,
+          supplier: { isActive: true },
+        },
+      },
+    },
     orderBy: { createdAt: "asc" },
     select: {
       sku: true,
       name: true,
+      variety: true,
       sellPrice: true,
       stockKg: true,
       supplierProducts: {
-        where: { isActive: true },
+        where: {
+          isActive: true,
+          supplier: { isActive: true },
+        },
         orderBy: { createdAt: "asc" },
         take: 1,
         select: {
@@ -49,7 +50,7 @@ export async function getInventory(): Promise<InventoryItemDTO[]> {
   return products.map((p) => ({
     sku: p.sku,
     name: p.name,
-    type: inferType(p.name),
+    type: p.variety ?? "",
     stock: p.stockKg,
     unit: "kg",
     cost: p.supplierProducts[0]?.buyPricePerKg ?? 0,

@@ -13,11 +13,8 @@ import {
 import type { Supplier, PO } from "../lib";
 
 const SUPPLIERS_PATH = "/suppliers";
+const INVENTORY_PATH = "/inventory";
 
-// --- Current-user resolution -------------------------------------------------
-// Auth/session is not wired yet. We resolve a default creator (first OWNER,
-// else first user) so writes that require `createdById` succeed.
-// TODO(auth): replace with the real authenticated user id from the session.
 async function resolveActorId(): Promise<string> {
   const owner = await prisma.user.findFirst({
     where: { role: "OWNER", isActive: true },
@@ -83,9 +80,6 @@ export async function saveSupplierAction(
     await prisma.supplier.update({ where: { id: data.id }, data: base });
     supplierId = data.id;
   } else {
-    // Create new — generate kode S-001, S-002, ... berurutan global.
-    // Dibungkus transaksi: cari kode terakhir lalu +1, supaya dua create
-    // bersamaan tidak mendapat kode yang sama.
     const created = await prisma.$transaction(async (tx) => {
       const last = await tx.supplier.findFirst({
         where: { supplierCode: { startsWith: "S-" } },
@@ -105,51 +99,64 @@ export async function saveSupplierAction(
     supplierId = created.id;
   }
 
-  // Sync beans -> supplierProducts. The UI bean carries a name + price + type + active.
-  // We match products by name; only existing products get linked (the UI does
-  // not create products here).
-  //
-  // NOTE: bean.type (Arabica/Robusta/Liberica/Luwak/custom) is the coffee
-  // VARIETY, stored on Product.variety. This is a different field from
-  // Product.type (BeanType enum: WHOLE_BEAN/GROUND), which this action does
-  // not touch.
+  const beanNames = data.beans.map((b) => b.name);
+
+  const products = await prisma.product.findMany({
+    where: { name: { in: beanNames } },
+    select: { id: true, name: true },
+  });
+  const productByName = new Map(products.map((p) => [p.name, p.id]));
+
+  const existingLinks = await prisma.supplierProduct.findMany({
+    where: { supplierId },
+    select: { id: true, productId: true },
+  });
+  const linkByProductId = new Map(existingLinks.map((l) => [l.productId, l.id]));
+
+  // Bean rows currently in the form (that resolve to a real product).
+  const keptProductIds = new Set<string>();
+
   for (const bean of data.beans) {
-    const product = await prisma.product.findFirst({
-      where: { name: bean.name },
-      select: { id: true },
-    });
-    if (!product) continue;
+    const productId = productByName.get(bean.name);
+    if (!productId) continue;
+    keptProductIds.add(productId);
 
     // Persist the variety on the product itself (variety belongs to the
     // product, not to the supplier link — keeps it consistent across
     // suppliers selling the same bean name).
     if (bean.type) {
       await prisma.product.update({
-        where: { id: product.id },
+        where: { id: productId },
         data: { variety: bean.type },
       });
     }
 
-    const existing = await prisma.supplierProduct.findFirst({
-      where: { supplierId, productId: product.id },
-      select: { id: true },
-    });
-
-    if (existing) {
+    const existingLinkId = linkByProductId.get(productId);
+    if (existingLinkId) {
       await prisma.supplierProduct.update({
-        where: { id: existing.id },
+        where: { id: existingLinkId },
         data: { buyPricePerKg: bean.price, isActive: bean.active ?? true },
       });
     } else {
       await prisma.supplierProduct.create({
         data: {
           supplierId,
-          productId: product.id,
+          productId,
           buyPricePerKg: bean.price,
           isActive: bean.active ?? true,
         },
       });
     }
+  }
+
+  const linkIdsToRemove = existingLinks
+    .filter((l) => !keptProductIds.has(l.productId))
+    .map((l) => l.id);
+
+  if (linkIdsToRemove.length > 0) {
+    await prisma.supplierProduct.deleteMany({
+      where: { id: { in: linkIdsToRemove } },
+    });
   }
 
   const row = await prisma.supplier.findUniqueOrThrow({
@@ -158,19 +165,54 @@ export async function saveSupplierAction(
   });
 
   revalidatePath(SUPPLIERS_PATH);
+  revalidatePath(INVENTORY_PATH);
   return mapSupplier(row as DbSupplierRow);
 }
 
-// ============================================================================
-// SUPPLIER: delete (soft — keeps PO history, matches the modal's promise that
-// "data PO tetap tersimpan"; hard delete would violate FK constraints).
-// ============================================================================
 export async function deleteSupplierAction(id: string): Promise<void> {
+  // Mark as deleted — separate flag from isActive.
   await prisma.supplier.update({
     where: { id },
-    data: { isActive: false },
+    data: { deletedAt: new Date() },
   });
+
+  // Products this supplier was linked to.
+  const links = await prisma.supplierProduct.findMany({
+    where: { supplierId: id },
+    select: { productId: true },
+  });
+  const productIds = [...new Set(links.map((l) => l.productId))];
+
+  if (productIds.length === 0) {
+    revalidatePath(SUPPLIERS_PATH);
+    revalidatePath(INVENTORY_PATH);
+    return;
+  }
+
+  const stillActiveLinks = await prisma.supplierProduct.findMany({
+    where: {
+      productId: { in: productIds },
+      supplierId: { not: id },
+      isActive: true,
+      supplier: { isActive: true, deletedAt: null },
+    },
+    select: { productId: true },
+  });
+  const stillSuppliedIds = new Set(stillActiveLinks.map((l) => l.productId));
+
+  const productIdsToDeactivate = productIds.filter(
+    (pid) => !stillSuppliedIds.has(pid)
+  );
+
+  if (productIdsToDeactivate.length > 0) {
+    await prisma.product.updateMany({
+      where: { id: { in: productIdsToDeactivate } },
+      data: { isActive: false },
+    });
+  }
+
   revalidatePath(SUPPLIERS_PATH);
+  revalidatePath(INVENTORY_PATH);
 }
 
 // ============================================================================
@@ -200,6 +242,27 @@ export async function savePOAction(
     if (!product) {
       throw new Error(`Produk "${it.bean}" tidak ditemukan di database.`);
     }
+
+    const existingLink = await prisma.supplierProduct.findFirst({
+      where: { supplierId: partial.supplierId, productId: product.id },
+      select: { id: true, isActive: true },
+    });
+    if (!existingLink) {
+      await prisma.supplierProduct.create({
+        data: {
+          supplierId: partial.supplierId,
+          productId: product.id,
+          buyPricePerKg: it.pricePerKg,
+          isActive: true,
+        },
+      });
+    } else if (!existingLink.isActive) {
+      await prisma.supplierProduct.update({
+        where: { id: existingLink.id },
+        data: { isActive: true },
+      });
+    }
+
     const subtotal = it.qty * it.pricePerKg;
     totalAmount += subtotal;
     itemsData.push({
@@ -224,6 +287,7 @@ export async function savePOAction(
   });
 
   revalidatePath(SUPPLIERS_PATH);
+  revalidatePath(INVENTORY_PATH);
   return mapPO(created as DbPORow);
 }
 
@@ -312,6 +376,7 @@ export async function updatePOStatusAction(
   });
 
   revalidatePath(SUPPLIERS_PATH);
+  revalidatePath(INVENTORY_PATH);
 }
 
 // ============================================================================
@@ -354,6 +419,7 @@ export async function toggleBeanAction(
     data: { isActive: !sp.isActive },
   });
   revalidatePath(SUPPLIERS_PATH);
+  revalidatePath(INVENTORY_PATH);
 }
 
 // --- helpers ----------------------------------------------------------------
