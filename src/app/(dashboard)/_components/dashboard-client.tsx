@@ -14,9 +14,12 @@ import {
 
 import { DetailModal } from "@/app/(dashboard)/transactions/_components/detailModal";
 import { BuatPOModal } from "@/app/(dashboard)/suppliers/_components/make-po-modal";
+import { POSuccessModal } from "@/app/(dashboard)/suppliers/_components/po-success-modal";
+import InventoryDetailDialog from "@/app/(dashboard)/inventory/_components/modal-detail-edit";
+import { updateProductPriceAction } from "@/app/(dashboard)/inventory/_data/actions";
 import { savePOAction } from "@/app/(dashboard)/suppliers/_data/actions";
 import type { Supplier, PO } from "@/app/(dashboard)/suppliers/lib";
-import type { DashboardData } from "@/app/(dashboard)/_data/repository";
+import type { DashboardData, DashBean } from "@/app/(dashboard)/_data/repository";
 
 const STAT_ICON: Record<string, typeof Receipt> = {
   "Penjualan Hari Ini": Receipt,
@@ -37,14 +40,25 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
 
   const [showPO, setShowPO] = useState(false);
   const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
+  const [successPO, setSuccessPO] = useState<{ po: PO; supplier?: Supplier } | null>(null);
+  const [selectedBean, setSelectedBean] = useState<DashBean | null>(null);
 
   const handleSavePO = async (po: Omit<PO, "id">) => {
     try {
-      await savePOAction(po);
+      const saved = await savePOAction(po);
+      const relatedSupplier = suppliers.find((s) => s.id === po.supplierId);
+      setSuccessPO({ po: saved, supplier: relatedSupplier });
     } catch (err) {
       console.error(err);
       window.alert(err instanceof Error ? err.message : "Gagal menyimpan PO.");
     }
+  };
+
+  const handleSaveBeanPrice = (updated: { sku: string; price: number }) => {
+    setSelectedBean((prev) => (prev ? { ...prev, priceNum: updated.price } : prev));
+    updateProductPriceAction(updated.sku, updated.price).catch((err) =>
+      console.error("Gagal menyimpan harga:", err)
+    );
   };
 
   return (
@@ -129,8 +143,8 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                   : b.status === "Menipis" ? "bg-crema/30 text-roast border-crema/40"
                   : "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
                 return (
-                  <div key={b.id} className="rounded-xl border border-border/60 p-4 hover:bg-secondary/40 transition-colors">
-                   <Link href={`/beans/${b.id}`} className="flex items-start justify-between gap-4">
+                  <div key={b.id} className="rounded-xl border border-border/60 p-4 hover:bg-secondary/40 transition-colors cursor-pointer" onClick={() => setSelectedBean(b)}>
+                    <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-10 w-10 rounded-lg gradient-bean flex items-center justify-center shrink-0">
@@ -150,7 +164,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                       <Progress value={pct} className="h-1.5 flex-1" />
                       <span className="text-xs text-muted-foreground tabular-nums w-20 text-right">{b.stock}/{b.max} kg</span>
                     </div>
-                   </Link>
+                    </div>
                   </div>
                 );
               })}
@@ -225,6 +239,34 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           }}
         />
       )}
+
+      {successPO && (
+        <POSuccessModal
+          po={successPO.po}
+          supplier={successPO.supplier}
+          onClose={() => setSuccessPO(null)}
+        />
+      )}
+
+      <InventoryDetailDialog
+        open={!!selectedBean}
+        item={
+          selectedBean
+            ? {
+                sku: selectedBean.sku,
+                name: selectedBean.name,
+                type: selectedBean.type,
+                stock: selectedBean.stock,
+                unit: selectedBean.unit,
+                cost: selectedBean.cost,
+                price: selectedBean.priceNum,
+                supplier: selectedBean.supplier,
+              }
+            : null
+        }
+        onOpenChange={(open) => !open && setSelectedBean(null)}
+        onSave={handleSaveBeanPrice}
+      />
     </>
   );
 }

@@ -14,7 +14,6 @@ function rupiah(n: number): string {
 }
 
 function rupiahShortK(n: number): string {
-  // e.g. 280000 -> "Rp 280k"
   return `Rp ${Math.round(n / 1000)}k`;
 }
 
@@ -63,14 +62,20 @@ export type DashStat = {
 };
 
 export type DashBean = {
-  id: string;           // product UUID asli — untuk link ke /beans/[id]
+  id: string;
+  sku: string;
   name: string;
+  type: string;
   origin: string;
   stock: number;
+  unit: string;
   max: number;
+  cost: number;
   price: string;
+  priceNum: number;
+  supplier: string;
   status: "Tersedia" | "Menipis" | "Kritis";
-  trxCount: number;     // jumlah transaksi berbeda dalam 30 hari (frekuensi)
+  trxCount: number;
 };
 
 export type DashRecent = {
@@ -105,17 +110,12 @@ function beanStatus(stock: number, minStock: number): DashBean["status"] {
 
 export async function getSuppliers(): Promise<Supplier[]> {
   const suppliers = await prisma.supplier.findMany({
-    orderBy: {
-      name: "asc",
-    },
+    where: { deletedAt: null },
+    orderBy: { name: "asc" },
     include: {
       supplierProducts: {
-        where: {
-          isActive: true,
-        },
-        include: {
-          product: true,
-        },
+        where: { isActive: true },
+        include: { product: true },
       },
     },
   });
@@ -132,16 +132,14 @@ export async function getSuppliers(): Promise<Supplier[]> {
     beans: s.supplierProducts.map((sp) => ({
       name: sp.product.name,
       price: sp.buyPricePerKg,
-      type: sp.product.type,
+      type: sp.product.variety ?? "",
       active: sp.isActive,
     })),
 
     lastDelivery: "-",
     totalKg: 0,
 
-    status: s.isActive
-      ? "Aktif"
-      : "Non-aktif",
+    status: s.isActive ? "Aktif" : "Non-aktif",
 
     address: s.address ?? undefined,
     notes: s.notes ?? undefined,
@@ -153,7 +151,6 @@ export async function getDashboardData(): Promise<DashboardData> {
   const todayStart = startOfDay(now);
   const yesterdayStart = startOfDay(new Date(now.getTime() - 86_400_000));
 
-  // ── KPI windows: today vs yesterday ───────────────────────────────────────
   const [todayTx, yesterdayTx] = await Promise.all([
     prisma.transaction.findMany({
       where: { createdAt: { gte: todayStart } },
@@ -195,10 +192,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     { label: "Avg. Basket", value: rupiah(basketToday), ...basketD },
   ];
 
-  // ── Beans: top 5 PALING SERING DIBELI (frekuensi transaksi, 30 hari) ──────
-  // "Digemari" = jumlah transaksi BERBEDA yang memuat biji ini dalam 30 hari
-  // terakhir (PAID). COUNT(DISTINCT transaction_id) supaya satu transaksi
-  // dengan produk yang sama di beberapa baris tetap dihitung 1.
+  // Top 5 biji kopi paling sering dibeli (frekuensi transaksi, 30 hari).
   const since30 = startOfDay(new Date(now.getTime() - 30 * 86_400_000));
 
   const topFreq = await prisma.$queryRaw<
@@ -217,7 +211,6 @@ export async function getDashboardData(): Promise<DashboardData> {
   const topIds = topFreq.map((r) => r.product_id);
   const freqById = new Map(topIds.map((id, i) => [id, Number(topFreq[i].trx_count)]));
 
-  // Ambil detail produk untuk id-id teratas (termasuk origin via supplier).
   const topProducts =
     topIds.length === 0
       ? []
@@ -225,19 +218,23 @@ export async function getDashboardData(): Promise<DashboardData> {
           where: { id: { in: topIds } },
           select: {
             id: true,
+            sku: true,
             name: true,
+            variety: true,
             stockKg: true,
             minStockKg: true,
             sellPrice: true,
             supplierProducts: {
-              where: { isActive: true },
+              where: { isActive: true, supplier: { isActive: true, deletedAt: null } },
               take: 1,
-              select: { supplier: { select: { region: true } } },
+              select: {
+                buyPricePerKg: true,
+                supplier: { select: { name: true, region: true } },
+              },
             },
           },
         });
 
-  // Susun ulang mengikuti urutan frekuensi (findMany tidak menjamin urutan).
   const productById = new Map(topProducts.map((p) => [p.id, p]));
   const beans: DashBean[] = topIds
     .map((id) => {
@@ -245,18 +242,23 @@ export async function getDashboardData(): Promise<DashboardData> {
       if (!p) return null;
       return {
         id: p.id,
+        sku: p.sku,
         name: p.name,
+        type: p.variety ?? "",
         origin: p.supplierProducts[0]?.supplier.region ?? "—",
         stock: p.stockKg,
+        unit: "kg",
         max: Math.max(p.minStockKg * 8, 200),
+        cost: p.supplierProducts[0]?.buyPricePerKg ?? 0,
         price: rupiahShortK(p.sellPrice),
+        priceNum: p.sellPrice,
+        supplier: p.supplierProducts[0]?.supplier.name ?? "-",
         status: beanStatus(p.stockKg, p.minStockKg),
         trxCount: freqById.get(id) ?? 0,
       } satisfies DashBean;
     })
     .filter((b): b is DashBean => b !== null);
 
-  // ── Low-stock alert: the single most-critical product ─────────────────────
   const lowList = await prisma.product.findMany({
     where: { isActive: true },
     orderBy: { stockKg: "asc" },
@@ -269,7 +271,6 @@ export async function getDashboardData(): Promise<DashboardData> {
       ? { name: worst.name, stock: worst.stockKg }
       : null;
 
-  // ── Recent transactions (latest 5) ────────────────────────────────────────
   const recentRows = await prisma.transaction.findMany({
     orderBy: { createdAt: "desc" },
     take: 5,
@@ -319,7 +320,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     };
   });
 
-  // Suppliers for the "Place Purchase Order" modal.
   const suppliers = await getSuppliers();
 
   return {
