@@ -69,17 +69,8 @@ export function relativeID(d: Date | null | undefined): string {
   return `${Math.floor(days / 30)} bulan lalu`;
 }
 
-// Infer a UI bean "type" bucket from a product/bean name (UI uses this only
-// for badge colours — Arabica/Robusta/Liberica/Luwak).
-export function inferBeanType(name: string): string {
-  const n = name.toLowerCase();
-  if (n.includes("luwak")) return "Luwak";
-  if (n.includes("robusta")) return "Robusta";
-  if (n.includes("liberica")) return "Liberica";
-  return "Arabica";
-}
-
-// ---- Row shapes coming from Prisma queries ---------------------------------
+// ---- Row shapes coming from Prisma queries (lihat juga repository.ts: tambahkan
+// `variety: true` di select product agar field ini ikut terbawa) ---------------------------------
 // (kept loose to avoid over-coupling; the repository selects these fields)
 
 export type DbSupplierRow = {
@@ -96,7 +87,7 @@ export type DbSupplierRow = {
   supplierProducts: {
     buyPricePerKg: number;
     isActive: boolean;
-    product: { name: string };
+    product: { name: string; variety: string | null };
   }[];
   purchaseOrders: {
     status: string;
@@ -128,7 +119,10 @@ export function mapSupplier(row: DbSupplierRow): UISupplier {
   const beans: SupplierBean[] = row.supplierProducts.map((sp) => ({
     name: sp.product.name,
     price: sp.buyPricePerKg,
-    type: inferBeanType(sp.product.name),
+    // Tipe biji kopi (Arabica/Robusta/Liberica/Luwak/custom) sekarang
+    // dibaca langsung dari Product.variety di DB — bukan ditebak dari nama.
+    // Fallback "" kalau belum pernah di-set (row lama sebelum migration).
+    type: sp.product.variety ?? "",
     active: sp.isActive,
   }));
 

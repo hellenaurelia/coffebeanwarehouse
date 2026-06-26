@@ -28,7 +28,9 @@ export async function getSuppliers(): Promise<Supplier[]> {
         select: {
           buyPricePerKg: true,
           isActive: true,
-          product: { select: { name: true } },
+          // === TAMBAHAN: variety ikut diambil, supaya tipe biji kopi
+          // yang disimpan lewat saveSupplierAction kebawa balik ke UI ===
+          product: { select: { name: true, variety: true } },
         },
       },
       purchaseOrders: {

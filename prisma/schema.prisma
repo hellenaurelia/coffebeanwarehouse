@@ -99,6 +99,7 @@ model Product {
   sku          String   @unique @db.VarChar(20)
   name         String   @db.VarChar(150)
   type         BeanType
+  variety      String?  @db.VarChar(50)
   sellPrice    Float    @map("sell_price") 
   stockKg      Float    @map("stock_kg")
   minStockKg   Float    @map("min_stock_kg")

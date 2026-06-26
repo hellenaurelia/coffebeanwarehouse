@@ -44,7 +44,7 @@ const supplierSelect = {
     select: {
       buyPricePerKg: true,
       isActive: true,
-      product: { select: { name: true } },
+      product: { select: { name: true, variety: true } },
     },
   },
   purchaseOrders: {
@@ -105,15 +105,30 @@ export async function saveSupplierAction(
     supplierId = created.id;
   }
 
-  // Sync beans -> supplierProducts. The UI bean carries a name + price + active.
+  // Sync beans -> supplierProducts. The UI bean carries a name + price + type + active.
   // We match products by name; only existing products get linked (the UI does
   // not create products here).
+  //
+  // NOTE: bean.type (Arabica/Robusta/Liberica/Luwak/custom) is the coffee
+  // VARIETY, stored on Product.variety. This is a different field from
+  // Product.type (BeanType enum: WHOLE_BEAN/GROUND), which this action does
+  // not touch.
   for (const bean of data.beans) {
     const product = await prisma.product.findFirst({
       where: { name: bean.name },
       select: { id: true },
     });
     if (!product) continue;
+
+    // Persist the variety on the product itself (variety belongs to the
+    // product, not to the supplier link — keeps it consistent across
+    // suppliers selling the same bean name).
+    if (bean.type) {
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { variety: bean.type },
+      });
+    }
 
     const existing = await prisma.supplierProduct.findFirst({
       where: { supplierId, productId: product.id },
