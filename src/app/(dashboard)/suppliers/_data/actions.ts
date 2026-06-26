@@ -15,6 +15,7 @@ import type { Supplier, PO } from "../lib";
 const SUPPLIERS_PATH = "/suppliers";
 const INVENTORY_PATH = "/inventory";
 
+// TODO(auth): ganti dengan user id dari session asli.
 async function resolveActorId(): Promise<string> {
   const owner = await prisma.user.findFirst({
     where: { role: "OWNER", isActive: true },
@@ -76,10 +77,10 @@ export async function saveSupplierAction(
   let supplierId: string;
 
   if (data.id) {
-    // Update existing
     await prisma.supplier.update({ where: { id: data.id }, data: base });
     supplierId = data.id;
   } else {
+    // Generate kode S-001, S-002, ... di dalam transaksi biar gak collide.
     const created = await prisma.$transaction(async (tx) => {
       const last = await tx.supplier.findFirst({
         where: { supplierCode: { startsWith: "S-" } },
@@ -99,6 +100,8 @@ export async function saveSupplierAction(
     supplierId = created.id;
   }
 
+  // Sync beans -> supplierProducts. Bean baru otomatis dibuat jadi Product
+  // (stock 0, type WHOLE_BEAN default) kalau namanya belum ada di DB.
   const beanNames = data.beans.map((b) => b.name);
 
   const products = await prisma.product.findMany({
@@ -113,18 +116,35 @@ export async function saveSupplierAction(
   });
   const linkByProductId = new Map(existingLinks.map((l) => [l.productId, l.id]));
 
-  // Bean rows currently in the form (that resolve to a real product).
   const keptProductIds = new Set<string>();
 
   for (const bean of data.beans) {
-    const productId = productByName.get(bean.name);
-    if (!productId) continue;
+    let productId = productByName.get(bean.name);
+    const isNewProduct = !productId;
+
+    if (!productId) {
+      const created = await prisma.product.create({
+        data: {
+          sku: await generateProductSku(),
+          name: bean.name,
+          type: "WHOLE_BEAN",
+          variety: bean.type || null,
+          sellPrice: 0,
+          stockKg: 0,
+          minStockKg: 0,
+          isActive: true,
+          createdById: actorId,
+        },
+        select: { id: true },
+      });
+      productId = created.id;
+      productByName.set(bean.name, productId);
+    }
+
     keptProductIds.add(productId);
 
-    // Persist the variety on the product itself (variety belongs to the
-    // product, not to the supplier link — keeps it consistent across
-    // suppliers selling the same bean name).
-    if (bean.type) {
+    // variety udah ke-set saat create; cuma perlu update kalau produk lama.
+    if (bean.type && !isNewProduct) {
       await prisma.product.update({
         where: { id: productId },
         data: { variety: bean.type },
@@ -149,6 +169,7 @@ export async function saveSupplierAction(
     }
   }
 
+  // Bean yang dihapus dari form -> link-nya benar-benar dihapus.
   const linkIdsToRemove = existingLinks
     .filter((l) => !keptProductIds.has(l.productId))
     .map((l) => l.id);
@@ -169,14 +190,18 @@ export async function saveSupplierAction(
   return mapSupplier(row as DbSupplierRow);
 }
 
+// ============================================================================
+// SUPPLIER: delete (soft — set deletedAt, bukan isActive, biar beda dari
+// status manual Aktif/Non-aktif). Cascade: produk yang udah gak punya
+// supplier aktif lain ikut dinonaktifkan, hilang dari Inventory. Riwayat
+// PO/transaksi gak disentuh.
+// ============================================================================
 export async function deleteSupplierAction(id: string): Promise<void> {
-  // Mark as deleted — separate flag from isActive.
   await prisma.supplier.update({
     where: { id },
     data: { deletedAt: new Date() },
   });
 
-  // Products this supplier was linked to.
   const links = await prisma.supplierProduct.findMany({
     where: { supplierId: id },
     select: { productId: true },
@@ -223,7 +248,6 @@ export async function savePOAction(
 ): Promise<PO> {
   const actorId = await resolveActorId();
 
-  // Generate next PO number: PO-#### based on current max.
   const last = await prisma.purchaseOrder.findFirst({
     orderBy: { poNumber: "desc" },
     select: { poNumber: true },
@@ -231,7 +255,6 @@ export async function savePOAction(
   const lastNum = last ? parseInt(last.poNumber.replace(/\D/g, ""), 10) || 0 : 0;
   const poNumber = `PO-${String(lastNum + 1).padStart(4, "0")}`;
 
-  // Resolve products by bean name for each line item.
   const itemsData = [];
   let totalAmount = 0;
   for (const it of partial.items) {
@@ -243,6 +266,7 @@ export async function savePOAction(
       throw new Error(`Produk "${it.bean}" tidak ditemukan di database.`);
     }
 
+    // Pastikan link supplier<->produk aktif, biar lolos filter Inventory.
     const existingLink = await prisma.supplierProduct.findFirst({
       where: { supplierId: partial.supplierId, productId: product.id },
       select: { id: true, isActive: true },
@@ -343,7 +367,6 @@ export async function updatePOStatusAction(
       },
     });
 
-    // When a PO transitions to DITERIMA, add stock + write stock logs.
     if (becomingReceived) {
       for (const item of po.items) {
         const product = await tx.product.findUniqueOrThrow({
@@ -386,7 +409,6 @@ export async function updatePOArrivalAction(
   poNumber: string,
   dateLabel: string
 ): Promise<void> {
-  // The UI passes a date string. Parse common forms; fall back to now.
   const parsed = parseUiDate(dateLabel);
   await prisma.purchaseOrder.update({
     where: { poNumber },
@@ -423,9 +445,18 @@ export async function toggleBeanAction(
 }
 
 // --- helpers ----------------------------------------------------------------
+async function generateProductSku(): Promise<string> {
+  const last = await prisma.product.findFirst({
+    where: { sku: { startsWith: "BEAN-" } },
+    orderBy: { sku: "desc" },
+    select: { sku: true },
+  });
+  const lastNum = last ? parseInt(last.sku.replace(/\D/g, ""), 10) || 0 : 0;
+  return `BEAN-${String(lastNum + 1).padStart(3, "0")}`;
+}
+
 function parseUiDate(label: string): Date | null {
   if (!label || label === "-") return null;
-  // Try native parse first (handles yyyy-mm-dd from <input type=date>)
   const native = new Date(label);
   if (!isNaN(native.getTime())) return native;
   return new Date();
