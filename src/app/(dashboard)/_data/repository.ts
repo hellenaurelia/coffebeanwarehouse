@@ -96,7 +96,7 @@ export type DashboardData = {
   stats: DashStat[];
   beans: DashBean[];
   recent: DashRecent[];
-  alert: { name: string; stock: number } | null;
+  alert: { name: string; stock: number; supplierId: string | null } | null;
   txCountToday: number;
   lowStockCount: number;
   suppliers: Supplier[];
@@ -108,6 +108,9 @@ function beanStatus(stock: number, minStock: number): DashBean["status"] {
   return "Tersedia";
 }
 
+// Supplier untuk modal "Place Purchase Order" di Dashboard.
+// Filter deletedAt: null — supplier yang sudah dihapus gak boleh kepilih
+// jadi tujuan PO baru. Samakan dengan suppliers/_data/repository.ts.
 export async function getSuppliers(): Promise<Supplier[]> {
   const suppliers = await prisma.supplier.findMany({
     where: { deletedAt: null },
@@ -262,13 +265,26 @@ export async function getDashboardData(): Promise<DashboardData> {
   const lowList = await prisma.product.findMany({
     where: { isActive: true },
     orderBy: { stockKg: "asc" },
-    select: { name: true, stockKg: true, minStockKg: true },
+    select: {
+      name: true,
+      stockKg: true,
+      minStockKg: true,
+      supplierProducts: {
+        where: { isActive: true, supplier: { isActive: true, deletedAt: null } },
+        take: 1,
+        select: { supplier: { select: { id: true } } },
+      },
+    },
   });
   const lowStockCount = lowList.filter((p) => p.stockKg < p.minStockKg).length;
   const worst = lowList[0];
   const alert =
     worst && worst.stockKg < worst.minStockKg
-      ? { name: worst.name, stock: worst.stockKg }
+      ? {
+          name: worst.name,
+          stock: worst.stockKg,
+          supplierId: worst.supplierProducts[0]?.supplier.id ?? null,
+        }
       : null;
 
   const recentRows = await prisma.transaction.findMany({

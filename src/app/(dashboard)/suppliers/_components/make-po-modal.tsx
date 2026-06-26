@@ -23,11 +23,13 @@ import {
 export function BuatPOModal({
   suppliers,
   defaultSupplier,
+  defaultBeanName,
   onClose,
   onSave,
 }: {
   suppliers: Supplier[];
   defaultSupplier?: Supplier;
+  defaultBeanName?: string;
   onClose: () => void;
   onSave: (po: Omit<PO, "id">) => void;
 }) {
@@ -38,7 +40,13 @@ export function BuatPOModal({
 
   const [eta, setEta] = useState("");
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState([{ bean: "", qty: "", pricePerKg: "" }]);
+
+  const initialBean = defaultSupplier?.beans.find((b) => b.name === defaultBeanName);
+  const [items, setItems] = useState(
+    initialBean
+      ? [{ bean: initialBean.name, qty: "", pricePerKg: initialBean.price.toString() }]
+      : [{ bean: "", qty: "", pricePerKg: "" }]
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const selected = suppliers.find((s) => s.id === supplierId);

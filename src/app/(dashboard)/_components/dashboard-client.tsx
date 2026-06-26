@@ -39,6 +39,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
   const { stats, beans, recent, alert, txCountToday, lowStockCount, suppliers } = data;
 
   const [showPO, setShowPO] = useState(false);
+  const [poPrefillBean, setPoPrefillBean] = useState<string | null>(null);
   const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
   const [successPO, setSuccessPO] = useState<{ po: PO; supplier?: Supplier } | null>(null);
   const [selectedBean, setSelectedBean] = useState<DashBean | null>(null);
@@ -189,7 +190,10 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                <Button
                   size="sm"
                   className="mt-4 w-full bg-crema/40 text-primary-foreground hover:bg-crema/30"
-                  onClick={() => setShowPO(true)}
+                  onClick={() => {
+                    setPoPrefillBean(alert?.name ?? null);
+                    setShowPO(true);
+                  }}
                 >
                   Place Purchase Order
                 </Button>
@@ -232,10 +236,20 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
       {showPO && (
         <BuatPOModal
           suppliers={suppliers}
-          onClose={() => setShowPO(false)}
+          defaultSupplier={
+            poPrefillBean && alert?.supplierId
+              ? suppliers.find((s) => s.id === alert.supplierId)
+              : undefined
+          }
+          defaultBeanName={poPrefillBean ?? undefined}
+          onClose={() => {
+            setShowPO(false);
+            setPoPrefillBean(null);
+          }}
           onSave={(po: Omit<PO, "id">) => {
             handleSavePO(po);
             setShowPO(false);
+            setPoPrefillBean(null);
           }}
         />
       )}
