@@ -39,17 +39,35 @@ export default function POSClient({ products }: { products: Product[] }) {
     setDiscOpen(false);
   };
 
+  const lines = Object.entries(cart).map(([id, qty]) => ({
+    p: products.find(x => x.id === id)!,
+    qty,
+    grindOpt: grind[id] ?? "whole" as GrindOption,
+  }));
+
+  const subtotal  = lines.reduce((s, l) => s + l.p.price * l.qty + (l.grindOpt === "ground" ? GRIND_FEE * l.qty : 0), 0);
+  const discAmt   = Math.round(subtotal * discPct / 100);
+  const afterDisc = subtotal - discAmt;
+  const tax       = Math.round(afterDisc * 0.11);
+  const total     = afterDisc + tax;
+
+  // Shape untuk TunaiModal (struk sukses)
+  const receiptLines = lines.map(l => ({
+    name: l.p.name,
+    qty: l.qty,
+    price: l.p.price,
+    grind: l.grindOpt,
+  }));
+
   const handlePaymentSuccess = () => {
-    // Persist the transaction to the DB using the just-completed cart.
     const checkoutLines = lines.map((l) => ({
       productId: l.p.id,
       qty: l.qty,
       sellPrice: l.p.price,
+      grindOption: l.grindOpt, // ← TAMBAHAN
     }));
     checkoutAction({ lines: checkoutLines, payMethod: payModal ?? payMethod ?? "cash", total })
-      .then((res) => {
-        if (!res.ok) console.error("Checkout gagal:", res.error);
-      })
+      .then((res) => { if (!res.ok) console.error("Checkout gagal:", res.error); })
       .catch((err) => console.error("Checkout error:", err));
 
     setCart({});
@@ -59,18 +77,6 @@ export default function POSClient({ products }: { products: Product[] }) {
     setGrind({});
     setPayModal(null);
   };
-
-  // Hitung total untuk modal
-  const lines = Object.entries(cart).map(([id, qty]) => ({
-    p: products.find(x => x.id === id)!,
-    qty,
-    grindOpt: grind[id] ?? "whole" as GrindOption,
-  }));
-  const subtotal  = lines.reduce((s, l) => s + l.p.price * l.qty + (l.grindOpt === "ground" ? GRIND_FEE * l.qty : 0), 0);
-  const discAmt   = Math.round(subtotal * discPct / 100);
-  const afterDisc = subtotal - discAmt;
-  const tax       = Math.round(afterDisc * 0.11);
-  const total     = afterDisc + tax;
 
   return (
     <POSDataProvider products={products}>
@@ -101,7 +107,14 @@ export default function POSClient({ products }: { products: Product[] }) {
         />
       </main>
 
-      {payModal === "cash" && <TunaiModal total={total} onSuccess={handlePaymentSuccess} onClose={() => setPayModal(null)} />}
+      {payModal === "cash" && (
+        <TunaiModal
+          total={total}
+          lines={receiptLines}
+          onSuccess={handlePaymentSuccess}
+          onClose={() => setPayModal(null)}
+        />
+      )}
       {payModal === "qris" && <QRISModal  total={total} onSuccess={handlePaymentSuccess} onClose={() => setPayModal(null)} />}
       {payModal === "card" && <KartuModal total={total} onSuccess={handlePaymentSuccess} onClose={() => setPayModal(null)} />}
     </POSDataProvider>

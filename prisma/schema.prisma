@@ -199,6 +199,7 @@ model TransactionItem {
   buyPricePerKg  Float  @map("buy_price_per_kg")
   subtotal       Float
   profit         Float
+  beanType       BeanType @default(WHOLE_BEAN) @map("bean_type")
 
   transaction Transaction @relation(fields: [transactionId], references: [id])
   product     Product     @relation(fields: [productId], references: [id])

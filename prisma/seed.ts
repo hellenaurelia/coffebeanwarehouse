@@ -19,7 +19,6 @@ async function main() {
   
   const defaultPassword = await bcrypt.hash("arunika123", 10);
 
-  // Bersihkan database agar tidak bentrok kalau di-run berkali-kali
   await prisma.transactionItem.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.pOItem.deleteMany();
@@ -31,7 +30,7 @@ async function main() {
   await prisma.user.deleteMany();
 
   // ==========================================
-  // 1. SEED USERS (Dari SEED_USERS)
+  // 1. SEED USERS
   // ==========================================
   console.log("Menyuntikkan data User...");
   const usersData = [
@@ -49,29 +48,28 @@ async function main() {
       data: {
         name: u.name,
         email: u.email,
-        passwordHash: defaultPassword, // Dummy password
+        passwordHash: defaultPassword,
         role: u.role,
         isActive: u.isActive
       }
     });
-    // Simpan referensi ID berdasarkan nama untuk dipakai di relasi bawahnya
     createdUsers[u.name.split(" ")[0]] = user.id; 
   }
   
-  const adminId = createdUsers["Arif"]; // Arif sebagai default creator
+  const adminId = createdUsers["Arif"];
 
   // ==========================================
-  // 2. SEED SUPPLIERS (Dari initSuppliers)
+  // 2. SEED SUPPLIERS
   // ==========================================
   console.log("Menyuntikkan data Supplier...");
   const suppliersData = [
-    { name: "Koperasi Tani Gayo", picName: "Pak Munir", region: "Aceh Tengah", phone: "+62 856-4392-5109", email: "munir@gayotani.id", address: "Jl. Raya Bebesen No.12, Aceh Tengah", notes: "Supplier utama arabica premium. Min order 100kg.", isActive: true },
-    { name: "Kintamani Highland", picName: "Bu Wayan", region: "Bangli, Bali", phone: "+62 856-4392-5109", email: "wayan@kintamani.co", address: "Desa Batur, Kintamani, Bangli", notes: "Musim panen April–Juni. Kualitas konsisten.", isActive: true },
-    { name: "Toraja Coffee Hub", picName: "Pak Reynaldi", region: "Tana Toraja", phone: "+62 856-4392-5109", email: "rey@torajacoffee.id", address: "Jl. Pongtiku 45, Rantepao, Tana Toraja", notes: null, isActive: true },
-    { name: "Lampung Robusta Mills", picName: "Pak Hendra", region: "Lampung Barat", phone: "+62 856-4392-5109", email: "hendra@lrm.id", address: "Kawasan Industri Way Laga, Lampung Barat", notes: "Lead time 3 hari kerja. Harga negotiable untuk >500kg.", isActive: true },
-    { name: "Civet Farm Lampung", picName: "Pak Jaka", region: "Liwa, Lampung", phone: "+62 856-4392-5109", email: "jaka@civetfarm.id", address: "Desa Sukaraja, Liwa, Lampung Barat", notes: "Produksi terbatas 5–10kg/minggu.", isActive: true },
-    { name: "Preanger Estate", picName: "Bu Salma", region: "Garut, Jawa Barat", phone: "+62 856-4392-5109", email: "salma@preanger.id", address: "Perkebunan Cikajang, Garut", notes: "Menunggu verifikasi dokumen BPOM.", isActive: false },
-    { name: "Riau Liberica Co", picName: "Pak Daud", region: "Meranti, Riau", phone: "+62 856-4392-5109", email: "daud@liberica.id", address: "Jl. Merbau No.7, Selat Panjang, Riau", notes: null, isActive: false },
+    { supplierCode: "SUP-001", name: "Koperasi Tani Gayo", picName: "Pak Munir", region: "Aceh Tengah", phone: "+62 856-4392-5109", email: "munir@gayotani.id", address: "Jl. Raya Bebesen No.12, Aceh Tengah", notes: "Supplier utama arabica premium. Min order 100kg.", isActive: true },
+    { supplierCode: "SUP-002", name: "Kintamani Highland", picName: "Bu Wayan", region: "Bangli, Bali", phone: "+62 856-4392-5109", email: "wayan@kintamani.co", address: "Desa Batur, Kintamani, Bangli", notes: "Musim panen April–Juni. Kualitas konsisten.", isActive: true },
+    { supplierCode: "SUP-003", name: "Toraja Coffee Hub", picName: "Pak Reynaldi", region: "Tana Toraja", phone: "+62 856-4392-5109", email: "rey@torajacoffee.id", address: "Jl. Pongtiku 45, Rantepao, Tana Toraja", notes: null, isActive: true },
+    { supplierCode: "SUP-004", name: "Lampung Robusta Mills", picName: "Pak Hendra", region: "Lampung Barat", phone: "+62 856-4392-5109", email: "hendra@lrm.id", address: "Kawasan Industri Way Laga, Lampung Barat", notes: "Lead time 3 hari kerja. Harga negotiable untuk >500kg.", isActive: true },
+    { supplierCode: "SUP-005", name: "Civet Farm Lampung", picName: "Pak Jaka", region: "Liwa, Lampung", phone: "+62 856-4392-5109", email: "jaka@civetfarm.id", address: "Desa Sukaraja, Liwa, Lampung Barat", notes: "Produksi terbatas 5–10kg/minggu.", isActive: true },
+    { supplierCode: "SUP-006", name: "Preanger Estate", picName: "Bu Salma", region: "Garut, Jawa Barat", phone: "+62 856-4392-5109", email: "salma@preanger.id", address: "Perkebunan Cikajang, Garut", notes: "Menunggu verifikasi dokumen BPOM.", isActive: false },
+    { supplierCode: "SUP-007", name: "Riau Liberica Co", picName: "Pak Daud", region: "Meranti, Riau", phone: "+62 856-4392-5109", email: "daud@liberica.id", address: "Jl. Merbau No.7, Selat Panjang, Riau", notes: null, isActive: false },
   ];
 
   const createdSuppliers: Record<string, any> = {};
@@ -83,7 +81,7 @@ async function main() {
   }
 
   // ==========================================
-  // 3. SEED PRODUCTS & PIVOT (Gabungan Inventory & Beans)
+  // 3. SEED PRODUCTS & PIVOT
   // ==========================================
   console.log("Menyuntikkan data Biji Kopi & HPP...");
   const productsData = [
@@ -122,7 +120,7 @@ async function main() {
   }
 
   // ==========================================
-  // 4. SEED PURCHASE ORDERS (Dari initPOs)
+  // 4. SEED PURCHASE ORDERS
   // ==========================================
   console.log("Menyuntikkan data Purchase Order...");
   const poData = [
@@ -155,7 +153,7 @@ async function main() {
   }
 
   // ==========================================
-  // 5. SEED TRANSACTIONS (Dari data POS)
+  // 5. SEED TRANSACTIONS
   // ==========================================
   console.log("Menyuntikkan data Transaksi Kasir...");
   const trxData = [
@@ -174,7 +172,6 @@ async function main() {
     let totalCogs = 0;
     let grossProfit = 0;
     
-    // Siapkan detail items untuk transaksi ini
     const itemsToCreate = trx.items.map(item => {
       const prod = createdProducts[item.name];
       const subtotal = prod.sellPrice * item.qty;
@@ -188,7 +185,8 @@ async function main() {
         sellPricePerKg: prod.sellPrice,
         buyPricePerKg: prod.buyPrice,
         subtotal: subtotal,
-        profit: profit
+        profit: profit,
+        beanType: BeanType.WHOLE_BEAN, // ← TAMBAHAN: default seed pakai whole bean
       };
     });
 
@@ -197,7 +195,7 @@ async function main() {
         trxNumber: trx.trxNumber,
         paymentMethod: trx.method,
         status: TrxStatus.PAID,
-        totalAmount: trx.total, // Dari dummy total
+        totalAmount: trx.total,
         totalCogs: totalCogs,
         grossProfit: grossProfit,
         cashierId: createdUsers[trx.cashier],

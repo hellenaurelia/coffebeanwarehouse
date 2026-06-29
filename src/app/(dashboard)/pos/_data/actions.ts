@@ -2,11 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import type { PaymentMethod } from "@prisma/client";
+import type { PaymentMethod, BeanType } from "@prisma/client";
 import { requireUser } from "@/lib/auth/session";
 import { nextDocNumber } from "@/lib/docnumber";
 
-// The cashier is whoever is logged in.
 async function resolveCashierId(): Promise<string> {
   const user = await requireUser();
   return user.id;
@@ -19,16 +18,15 @@ const PAY_MAP: Record<string, PaymentMethod> = {
 };
 
 export type CheckoutLine = {
-  productId: string; // real DB product id (POS catalog uses it as the key)
-  qty: number;       // in kg (may be fractional)
-  sellPrice: number; // unit sell price shown at checkout
+  productId: string;
+  qty: number;
+  sellPrice: number;
+  grindOption: "whole" | "ground"; // ← TAMBAHAN
 };
 
 export type CheckoutInput = {
   lines: CheckoutLine[];
   payMethod: "cash" | "qris" | "card";
-  // The exact total the customer paid (subtotal − discount + tax + grind fees),
-  // persisted as totalAmount so the record matches the receipt.
   total: number;
 };
 
@@ -38,25 +36,24 @@ export type CheckoutResult = {
   error?: string;
 };
 
+// Map UI grind option → Prisma BeanType enum
+const BEAN_TYPE_MAP: Record<"whole" | "ground", BeanType> = {
+  whole: "WHOLE_BEAN",
+  ground: "GROUND",
+};
+
 export async function checkoutAction(
   input: CheckoutInput
 ): Promise<CheckoutResult> {
   if (!input.lines || input.lines.length === 0) {
-    return {
-      ok: false,
-      error: "Keranjang kosong.",
-    };
+    return { ok: false, error: "Keranjang kosong." };
   }
 
   const cashierId = await resolveCashierId();
-
   const paymentMethod = PAY_MAP[input.payMethod];
 
   if (!paymentMethod) {
-    return {
-      ok: false,
-      error: "Metode pembayaran tidak valid.",
-    };
+    return { ok: false, error: "Metode pembayaran tidak valid." };
   }
 
   try {
@@ -80,6 +77,7 @@ export async function checkoutAction(
         buyPricePerKg: number;
         subtotal: number;
         profit: number;
+        beanType: BeanType; // ← TAMBAHAN
       }[] = [];
 
       const stockMovements: {
@@ -91,48 +89,30 @@ export async function checkoutAction(
 
       for (const line of input.lines) {
         const product = await tx.product.findUnique({
-          where: {
-            id: line.productId,
-          },
+          where: { id: line.productId },
           select: {
             id: true,
             stockKg: true,
             supplierProducts: {
-              where: {
-                isActive: true,
-              },
-              orderBy: {
-                createdAt: "asc",
-              },
+              where: { isActive: true },
+              orderBy: { createdAt: "asc" },
               take: 1,
-              select: {
-                buyPricePerKg: true,
-              },
+              select: { buyPricePerKg: true },
             },
           },
         });
 
         if (!product) {
-          throw new Error(
-            "Produk dalam keranjang tidak ditemukan."
-          );
+          throw new Error("Produk dalam keranjang tidak ditemukan.");
         }
 
         if (product.stockKg < line.qty) {
-          throw new Error(
-            `Stok tidak cukup (tersisa ${product.stockKg} kg).`
-          );
+          throw new Error(`Stok tidak cukup (tersisa ${product.stockKg} kg).`);
         }
 
-        const buyPrice =
-          product.supplierProducts[0]?.buyPricePerKg ?? 0;
-
-        const subtotal =
-          line.sellPrice * line.qty;
-
-        const profit =
-          (line.sellPrice - buyPrice) *
-          line.qty;
+        const buyPrice = product.supplierProducts[0]?.buyPricePerKg ?? 0;
+        const subtotal = line.sellPrice * line.qty;
+        const profit = (line.sellPrice - buyPrice) * line.qty;
 
         totalCogs += buyPrice * line.qty;
         grossProfit += profit;
@@ -144,6 +124,7 @@ export async function checkoutAction(
           buyPricePerKg: buyPrice,
           subtotal,
           profit,
+          beanType: BEAN_TYPE_MAP[line.grindOption], // ← TAMBAHAN
         });
 
         stockMovements.push({
@@ -164,20 +145,14 @@ export async function checkoutAction(
           grossProfit,
           cashierId,
           paidAt: new Date(),
-          items: {
-            create: itemsData,
-          },
+          items: { create: itemsData },
         },
       });
 
       for (const movement of stockMovements) {
         await tx.product.update({
-          where: {
-            id: movement.productId,
-          },
-          data: {
-            stockKg: movement.after,
-          },
+          where: { id: movement.productId },
+          data: { stockKg: movement.after },
         });
 
         await tx.stockLog.create({
@@ -204,17 +179,11 @@ export async function checkoutAction(
     revalidatePath("/inventory");
     revalidatePath("/");
 
-    return {
-      ok: true,
-      trxNumber: result,
-    };
+    return { ok: true, trxNumber: result };
   } catch (err) {
     return {
       ok: false,
-      error:
-        err instanceof Error
-          ? err.message
-          : "Gagal memproses transaksi.",
+      error: err instanceof Error ? err.message : "Gagal memproses transaksi.",
     };
   }
 }

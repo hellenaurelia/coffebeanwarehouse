@@ -6,8 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "./modal-shell";
 import { fmt, NOMINALS } from "./data";
+import type { GrindOption } from "./types";
 
-export function TunaiModal({ total, onSuccess, onClose }: { total: number; onSuccess: () => void; onClose: () => void }) {
+export type CartLineForReceipt = {
+  name: string;
+  qty: number;
+  price: number;
+  grind: GrindOption;
+};
+
+export function TunaiModal({
+  total,
+  lines,
+  onSuccess,
+  onClose,
+}: {
+  total: number;
+  lines: CartLineForReceipt[]; // ← TAMBAHAN
+  onSuccess: () => void;
+  onClose: () => void;
+}) {
   const [input, setInput] = useState("");
   const [done, setDone] = useState(false);
 
@@ -36,7 +54,23 @@ export function TunaiModal({ total, onSuccess, onClose }: { total: number; onSuc
         </div>
         <div>
           <p className="font-display text-xl font-semibold">Pembayaran Berhasil</p>
-          <p className="text-muted-foreground text-sm mt-1">Kembalian <span className="font-semibold text-foreground">{fmt(change)}</span></p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Kembalian <span className="font-semibold text-foreground">{fmt(change)}</span>
+          </p>
+        </div>
+
+        <div className="w-full text-left bg-secondary/40 rounded-xl px-4 py-3 space-y-1 text-xs font-mono">
+          {lines.map((l, i) => (
+            <div key={i} className="flex justify-between gap-2">
+              <span className="truncate">
+                {l.name}
+                <span className="ml-1 text-muted-foreground">
+                  ({l.grind === "ground" ? "Giling" : "Biji Utuh"})
+                </span>
+              </span>
+              <span className="shrink-0 text-muted-foreground">{l.qty} kg</span>
+            </div>
+          ))}
         </div>
       </div>
     </Modal>

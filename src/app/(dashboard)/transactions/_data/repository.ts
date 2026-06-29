@@ -1,5 +1,4 @@
 // Server-only read layer for Transactions.
-// Maps Transaction rows into the UI Trx shape declared in transactions/types.ts.
 
 import { prisma } from "@/lib/prisma";
 import type { Trx, Method } from "../types";
@@ -9,14 +8,12 @@ const ID_MONTHS_SHORT = [
   "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
 ];
 
-// DB enum -> UI Method label. Note the UI uses "Kartu" (not "Card").
 const METHOD_MAP: Record<string, Method> = {
   CASH: "Cash",
   QRIS: "QRIS",
   CARD: "Kartu",
 };
 
-// "9 Mei 2026" — the format transactions/lib.ts parseDate() expects.
 function fmtTanggal(d: Date): string {
   return `${d.getDate()} ${ID_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
 }
@@ -38,6 +35,7 @@ export async function getTransactions(): Promise<Trx[]> {
         select: {
           qtyKg: true,
           sellPricePerKg: true,
+          beanType: true, // ← TAMBAHAN
           product: { select: { name: true } },
         },
       },
@@ -58,6 +56,7 @@ export async function getTransactions(): Promise<Trx[]> {
         name: it.product.name,
         qty: it.qtyKg,
         price: it.sellPricePerKg,
+        grind: it.beanType === "GROUND" ? "ground" : "whole",
       })),
     } satisfies Trx;
   });

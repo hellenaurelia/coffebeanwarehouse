@@ -12,16 +12,16 @@ interface DetailModalProps {
   onClose: () => void;
 }
 
+function grindLabel(grind?: "whole" | "ground") {
+  if (grind === "ground") return "Ground";
+  if (grind === "whole") return "Whole Bean";
+  return null;
+}
+
 function PrintPreviewModal({
-  trx,
-  subtotal,
-  tax,
-  onClose,
+  trx, subtotal, tax, onClose,
 }: {
-  trx: Trx;
-  subtotal: number;
-  tax: number;
-  onClose: () => void;
+  trx: Trx; subtotal: number; tax: number; onClose: () => void;
 }) {
   const isCash = trx.method === "Cash";
   const change = isCash && trx.cashPaid != null ? trx.cashPaid - trx.total : 0;
@@ -36,30 +36,16 @@ function PrintPreviewModal({
         className="w-full max-w-xs bg-card border border-border/60 rounded-2xl shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Preview header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Preview Struk
-          </p>
-          <button
-            onClick={onClose}
-            className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center hover:bg-border transition-colors"
-          >
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Preview Struk</p>
+          <button onClick={onClose} className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center hover:bg-border transition-colors">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
 
-        {/* Receipt body — styled like a thermal receipt */}
-        <div
-          className="mx-4 mb-4 rounded-xl bg-white text-gray-900 font-mono text-xs p-4 space-y-1 shadow-inner"
-          id="print-receipt"
-        >
-          <p className="text-center font-bold text-sm tracking-wide">
-            TOKO ARUNIKA
-          </p>
-          <p className="text-center text-[10px] text-gray-500 mb-2">
-            Jl. Arabika No. 7
-          </p>
+        <div className="mx-4 mb-4 rounded-xl bg-white text-gray-900 font-mono text-xs p-4 space-y-1 shadow-inner" id="print-receipt">
+          <p className="text-center font-bold text-sm tracking-wide">TOKO ARUNIKA</p>
+          <p className="text-center text-[10px] text-gray-500 mb-2">Jl. Arabika No. 7</p>
 
           <div className="border-t border-dashed border-gray-300 my-1" />
 
@@ -69,9 +55,7 @@ function PrintPreviewModal({
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Tanggal</span>
-            <span>
-              {trx.date} {trx.time}
-            </span>
+            <span>{trx.date} {trx.time}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Kasir</span>
@@ -80,17 +64,25 @@ function PrintPreviewModal({
 
           <div className="border-t border-dashed border-gray-300 my-1" />
 
-          {trx.detail.map((item, i) => (
-            <div key={i}>
-              <p>{item.name}</p>
-              <div className="flex justify-between text-gray-600">
-                <span>
-                  {item.qty} x {fmt(item.price)}
-                </span>
-                <span>{fmt(item.qty * item.price)}</span>
+          {trx.detail.map((item, i) => {
+            const GRIND_FEE = 20000;
+            const basePrice = item.grind === "ground" ? item.price - GRIND_FEE : item.price;
+            return (
+              <div key={i}>
+                <p>{item.name}</p>
+                <div className="flex justify-between text-gray-600">
+                  <span>{item.qty} kg x {fmt(basePrice)}</span>
+                  <span>{fmt(item.qty * basePrice)}</span>
+                </div>
+                {item.grind === "ground" && (
+                  <div className="flex justify-between text-gray-500">
+                    <span>Ground</span>
+                    <span>+{fmt(GRIND_FEE)}</span>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           <div className="border-t border-dashed border-gray-300 my-1" />
 
@@ -122,19 +114,11 @@ function PrintPreviewModal({
           )}
 
           <div className="border-t border-dashed border-gray-300 my-1" />
-          <p className="text-center text-[10px] text-gray-400 pt-1">
-            Terima kasih sudah berbelanja!
-          </p>
+          <p className="text-center text-[10px] text-gray-400 pt-1">Terima kasih sudah berbelanja!</p>
         </div>
 
-        {/* Actions */}
         <div className="border-t border-border/60 px-4 py-3 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 rounded-xl"
-            onClick={onClose}
-          >
+          <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={onClose}>
             Kembali
           </Button>
         </div>
@@ -164,31 +148,23 @@ export function DetailModal({ trx, onClose }: DetailModalProps) {
           className="w-full max-w-md bg-card border border-border/60 rounded-2xl shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="flex items-start justify-between p-6 pb-4">
             <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
-                Detail Transaksi
-              </p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Detail Transaksi</p>
               <h2 className="font-mono text-lg font-semibold">{trx.id}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {trx.date} · {trx.time} · {trx.cashier}
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{trx.date} · {trx.time} · {trx.cashier}</p>
             </div>
-            <button
-              onClick={onClose}
-              className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-border transition-colors"
-            >
+            <button onClick={onClose} className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-border transition-colors">
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Items table */}
           <div className="mx-6 mb-4 rounded-xl overflow-hidden border border-border/50">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-secondary/60 text-xs text-muted-foreground">
                   <th className="text-left font-medium px-4 py-2.5">Produk</th>
+                  <th className="text-center font-medium px-3 py-2.5">Jenis</th>
                   <th className="text-center font-medium px-3 py-2.5">Qty</th>
                   <th className="text-right font-medium px-4 py-2.5">Harga</th>
                 </tr>
@@ -197,24 +173,30 @@ export function DetailModal({ trx, onClose }: DetailModalProps) {
                 {trx.detail.map((item, i) => (
                   <tr key={i} className="border-t border-border/40">
                     <td className="px-4 py-3">{item.name}</td>
-                    <td className="px-3 py-3 text-center text-muted-foreground">
-                      {item.qty}
+                    <td className="px-3 py-3 text-center">
+                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground">
+                        {item.grind === "ground" ? "Ground" : "Whole Bean"}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {fmt(item.qty * item.price)}
-                    </td>
+                    <td className="px-3 py-3 text-center text-muted-foreground">{item.qty} kg</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{fmt(item.qty * item.price)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* Totals */}
           <div className="mx-6 mb-5 space-y-2 text-sm">
             <div className="flex justify-between text-muted-foreground">
               <span>Subtotal</span>
               <span className="tabular-nums">{fmt(subtotal)}</span>
             </div>
+            {trx.detail.some(i => i.grind === "ground") && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Ground ({trx.detail.filter(i => i.grind === "ground").length} item)</span>
+                <span className="tabular-nums">+{fmt(trx.detail.filter(i => i.grind === "ground").reduce((s, i) => s + 20000, 0))}</span>
+              </div>
+            )}
             <div className="flex justify-between text-muted-foreground">
               <span>Pajak (11%)</span>
               <span className="tabular-nums">{fmt(tax)}</span>
@@ -224,7 +206,6 @@ export function DetailModal({ trx, onClose }: DetailModalProps) {
               <span className="tabular-nums">{fmt(trx.total)}</span>
             </div>
 
-            {/* Cash payment info */}
             {isCash && trx.cashPaid != null && (
               <div className="mt-3 pt-3 border-t border-border/40 space-y-2">
                 <div className="flex justify-between text-muted-foreground">
@@ -239,20 +220,13 @@ export function DetailModal({ trx, onClose }: DetailModalProps) {
             )}
           </div>
 
-          {/* Payment method */}
           <div className="px-6 mb-5 flex items-center gap-2 text-sm text-muted-foreground">
             <Icon className="h-4 w-4" />
             <span>Dibayar via {trx.method}</span>
           </div>
 
-          {/* Footer */}
           <div className="border-t border-border/60 px-6 py-4">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full rounded-xl"
-              onClick={() => setShowPrintPreview(true)}
-            >
+            <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={() => setShowPrintPreview(true)}>
               <Printer className="h-4 w-4 mr-2" />
               Cetak Struk
             </Button>
@@ -261,12 +235,7 @@ export function DetailModal({ trx, onClose }: DetailModalProps) {
       </div>
 
       {showPrintPreview && (
-        <PrintPreviewModal
-          trx={trx}
-          subtotal={subtotal}
-          tax={tax}
-          onClose={() => setShowPrintPreview(false)}
-        />
+        <PrintPreviewModal trx={trx} subtotal={subtotal} tax={tax} onClose={() => setShowPrintPreview(false)} />
       )}
     </>
   );
