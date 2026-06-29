@@ -19,6 +19,7 @@ import {
   Laptop,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { updateUserAction } from "@/app/(dashboard)/users/_data/actions";
 
 type SettingsTab = "profil" | "keamanan" | "notifikasi" | "tampilan";
 
@@ -32,12 +33,14 @@ const TABS: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
 // ─── Sub-panels ─────────────────────────────────────────────────────────────
 
 function ProfilPanel() {
-  const { user, setUser } = useUser(); 
+  const { user, setUser } = useUser();
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     name: user.name,
-    username: user.name.toLowerCase().replace(" ", "."),
+    username: user.username,
     email: user.email,
     phone: "+62 812-3456-7890",
   });
@@ -63,27 +66,46 @@ function ProfilPanel() {
     }
   };
 
-  const handleSave = () => {
-    setUser({
-      ...user,
-      name: form.name,
-      email: form.email,
-      outlet: "Senopati",
-      avatar: form.name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .substring(0, 2)
-        .toUpperCase(),
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const updated = await updateUserAction(user.id, {
+        name: form.name,
+        username: form.username,
+        email: form.email,
+        role: user.role as any,
+        outlet: user.outlet as any,
+        status: user.status,
+        password: "",
+      });
+
+      setUser({
+        ...user,
+        name: updated.name,
+        username: updated.username,
+        email: updated.email,
+        avatar: updated.name
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .substring(0, 2)
+          .toUpperCase(),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menyimpan perubahan.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
+    setError(null);
     setForm({
       name: user.name,
-      username: user.name.toLowerCase().replace(" ", "."),
+      username: user.username,
       email: user.email,
       phone: form.phone,
     });
@@ -120,20 +142,22 @@ function ProfilPanel() {
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Role</Label>
-          <Input value="Owner" disabled className="bg-secondary/30 border-border/40 text-muted-foreground" />
+          <Input value={user.role} disabled className="bg-secondary/30 border-border/40 text-muted-foreground capitalize" />
         </div>
       </div>
 
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
+
       <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/60">
-        <Button variant="outline" size="sm" onClick={handleCancel}>Batalkan</Button>
-        <Button size="sm" onClick={handleSave} className="gradient-bean text-primary-foreground border-0">
+        <Button variant="outline" size="sm" onClick={handleCancel} disabled={loading}>Batalkan</Button>
+        <Button size="sm" onClick={handleSave} disabled={loading} className="gradient-bean text-primary-foreground border-0">
           {saved ? (
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" /> Tersimpan
             </span>
-          ) : (
-            "Simpan Perubahan"
-          )}
+          ) : loading ? "Menyimpan..." : "Simpan Perubahan"}
         </Button>
       </div>
     </div>
@@ -146,7 +170,6 @@ function KeamananPanel() {
 
   return (
     <div className="space-y-8">
-      {/* Change password */}
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold">Ganti Password</h3>
@@ -230,7 +253,6 @@ function NotifikasiPanel() {
             <div className="text-sm font-medium">{item.label}</div>
             <div className="text-xs text-muted-foreground mt-0.5">{item.desc}</div>
           </div>
-          {/* Custom toggle switch */}
           <button
             type="button"
             role="switch"
@@ -254,7 +276,6 @@ function NotifikasiPanel() {
 
 function TampilanPanel() {
   const { theme, setTheme } = useTheme();
-  const [lang, setLang] = useState("id");
 
   const themes = [
     { id: "light" as const, label: "Terang", icon: Sun },
@@ -264,7 +285,6 @@ function TampilanPanel() {
 
   return (
     <div className="space-y-8">
-      {/* Theme */}
       <div className="space-y-3">
         <div>
           <h3 className="text-sm font-semibold">Tema Warna</h3>
@@ -313,7 +333,6 @@ export function SettingsPanel() {
         <CardTitle className="font-display">Pengaturan Akun</CardTitle>
         <p className="text-xs text-muted-foreground mt-1">Kelola informasi, keamanan, dan preferensi Anda</p>
 
-        {/* Tab bar */}
         <div className="flex gap-1 mt-4 border-b border-border/60 -mx-6 px-6 overflow-x-auto">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button

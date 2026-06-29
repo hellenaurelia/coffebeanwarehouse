@@ -8,7 +8,9 @@ import { RecentActivity } from "./recent-activity";
 import { SettingsPanel } from "./settings-panel";
 
 export interface UserData {
+  id: string;
   name: string;
+  username: string;
   role: string;
   outlet: string;
   email: string;

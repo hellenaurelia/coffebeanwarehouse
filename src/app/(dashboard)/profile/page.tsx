@@ -30,11 +30,13 @@ export default async function ProfilePage() {
 
   const row = await prisma.user.findUniqueOrThrow({
     where: { id: session.id },
-    select: { name: true, email: true, role: true, isActive: true, createdAt: true },
+    select: { id: true, name: true, username: true, email: true, role: true, isActive: true, createdAt: true },
   });
 
   const initialUser: UserData = {
+    id: row.id,
     name: row.name,
+    username: row.username ?? "",
     role: ROLE_LABEL[row.role] ?? row.role.toLowerCase(),
     outlet: "senopati",
     email: row.email,
