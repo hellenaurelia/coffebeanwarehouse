@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Coffee, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cats, fmt } from "./data";
@@ -48,7 +48,7 @@ export function CatalogPanel({ cart, onAdd }: Props) {
           <button key={p.id} onClick={() => onAdd(p.id)}
             className="group text-left rounded-2xl border border-border/60 bg-card p-4 hover:shadow-warm hover:border-accent/40 transition-all">
             <div className="aspect-square rounded-xl gradient-bean mb-3 flex items-center justify-center relative overflow-hidden">
-              <Coffee className="h-10 w-10 text-primary-foreground/90" />
+              <img src={p.image} alt={p.tag} className="h-full w-full object-cover" />
               <Badge className="absolute top-2 left-2 bg-primary-foreground/20 text-primary-foreground border-0 backdrop-blur text-[10px]">{p.tag}</Badge>
               {cart[p.id] && (
                 <span className="absolute bottom-2 right-2 bg-primary-foreground/90 text-primary text-[10px] font-semibold rounded-full px-2 py-0.5">

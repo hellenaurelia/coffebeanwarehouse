@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getBeanImage } from "@/lib/product-image";
 
 export type InventoryItemDTO = {
   sku: string;
@@ -12,6 +13,14 @@ export type InventoryItemDTO = {
   photo?: string;
   exp?: string;
 };
+
+function inferTag(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes("luwak")) return "Luwak";
+  if (n.includes("robusta")) return "Robusta";
+  if (n.includes("liberica")) return "Liberica";
+  return "Arabica";
+}
 
 export async function getInventory(): Promise<InventoryItemDTO[]> {
   const products = await prisma.product.findMany({
@@ -56,5 +65,6 @@ export async function getInventory(): Promise<InventoryItemDTO[]> {
     cost: p.supplierProducts[0]?.buyPricePerKg ?? 0,
     price: p.sellPrice,
     supplier: p.supplierProducts[0]?.supplier.name ?? "-",
+    photo: getBeanImage(inferTag(p.name)),
   }));
 }

@@ -20,6 +20,7 @@ import { updateProductPriceAction } from "@/app/(dashboard)/inventory/_data/acti
 import { savePOAction } from "@/app/(dashboard)/suppliers/_data/actions";
 import type { Supplier, PO } from "@/app/(dashboard)/suppliers/lib";
 import type { DashboardData, DashBean } from "@/app/(dashboard)/_data/repository";
+import { getBeanImage, inferBeanTag } from "@/lib/product-image";
 
 const STAT_ICON: Record<string, typeof Receipt> = {
   "Penjualan Hari Ini": Receipt,
@@ -148,8 +149,8 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                     <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-10 w-10 rounded-lg gradient-bean flex items-center justify-center shrink-0">
-                          <Coffee className="h-4 w-4 text-primary-foreground" />
+                        <div className="h-10 w-10 rounded-lg gradient-bean flex items-center justify-center shrink-0 overflow-hidden">
+                          <img src={getBeanImage(inferBeanTag(b.name))} alt={b.name} className="h-full w-full object-cover" />
                         </div>
                         <div className="min-w-0">
                           <div className="font-medium truncate">{b.name}</div>

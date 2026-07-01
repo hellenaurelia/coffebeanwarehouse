@@ -1,10 +1,5 @@
-// Server-only read layer for POS.
-// Maps active products into the POS catalog Product shape:
-//   { id, name, supplier, price, tag }
-// `id` is the real DB product id (the UI treats it as an opaque key, so using
-// the real id lets checkout resolve products without a name lookup).
-
 import { prisma } from "@/lib/prisma";
+import { getBeanImage } from "@/lib/product-image";
 
 export type POSProductDTO = {
   id: string;
@@ -12,6 +7,7 @@ export type POSProductDTO = {
   supplier: string;
   price: number;
   tag: string;
+  image: string;
 };
 
 function inferTag(name: string): string {
@@ -39,11 +35,15 @@ export async function getPOSProducts(): Promise<POSProductDTO[]> {
     },
   });
 
-  return products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    supplier: p.supplierProducts[0]?.supplier.name ?? "",
-    price: p.sellPrice,
-    tag: inferTag(p.name),
-  }));
+  return products.map((p) => {
+    const tag = inferTag(p.name);
+    return {
+      id: p.id,
+      name: p.name,
+      supplier: p.supplierProducts[0]?.supplier.name ?? "",
+      price: p.sellPrice,
+      tag,
+      image: getBeanImage(tag),
+    };
+  });
 }
