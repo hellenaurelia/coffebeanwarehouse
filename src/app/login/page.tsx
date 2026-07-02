@@ -29,10 +29,6 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    // Login pakai email (sesuai data seed, mis. arif@arunika.id). Field di form
-    // tetap bernama "username" agar tampilan tidak berubah — nilainya dipakai
-    // sebagai email. Verifikasi password pakai bcrypt di server (loginAction),
-    // yang juga memasang cookie sesi ber-HMAC.
     const result = await loginAction(form.username, form.password);
 
     if (result.ok) {
@@ -123,13 +119,13 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium">Username</Label>
+              <Label htmlFor="username" className="text-sm font-medium">Email</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Masukkan username"
+                  placeholder="Masukkan email"
                   className="pl-9"
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}

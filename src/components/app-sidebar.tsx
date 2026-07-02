@@ -120,7 +120,9 @@ export function AppSidebar({ user }: { user: SessionUser | null }) {
   const role = user?.role;
 
   const visibleMain =
-    role === "GUDANG" ? main.filter((i) => i.title === "Dashboard") : main;
+    role === "GUDANG" || role === "MANAJER"
+      ? main.filter((i) => i.title === "Dashboard")
+      : main;
 
   const visibleWarehouse = role === "KASIR" ? [] : warehouse;
 

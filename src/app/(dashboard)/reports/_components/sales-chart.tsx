@@ -31,9 +31,6 @@ export function SalesChart({ data }: SalesChartProps) {
           <CardTitle className="font-display text-lg">Grafik Penjualan</CardTitle>
           <p className="text-xs text-muted-foreground">Perbandingan pendapatan & pengeluaran</p>
         </div>
-        <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/5 text-primary">
-          <TrendingUp className="mr-1 h-3 w-3" /> Tren naik
-        </Badge>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -51,7 +48,7 @@ export function SalesChart({ data }: SalesChartProps) {
             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border/60" />
             <XAxis dataKey="day" tickLine={false} axisLine={false} className="text-xs" />
             <YAxis
-              tickFormatter={(v) => `${v / 1_000_000}Jt`}
+              tickFormatter={(v) => `${v / 1_000}k`}
               tickLine={false}
               axisLine={false}
               className="text-xs"
