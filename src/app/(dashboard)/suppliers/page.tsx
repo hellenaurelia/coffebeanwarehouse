@@ -24,7 +24,7 @@ const beanTypeTone = (type: string): string =>
   } as Record<string, string>)[type] ?? "bg-secondary text-muted-foreground border-border";
 
 export default function SuppliersPage() {
-  const { suppliers, setModal } = useSupplierContext();
+  const { suppliers, pos, setModal } = useSupplierContext();
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -37,10 +37,26 @@ export default function SuppliersPage() {
       : suppliers;
   }, [suppliers, search]);
 
+  // Nilai PO Aktif = total nilai semua PO yang masih berstatus "Dikirim".
+  const activePOs = pos.filter(po => po.status === "Dikirim");
+  const activePOValue = activePOs.reduce(
+    (a, po) => a + po.items.reduce((s, it) => s + it.qty * it.pricePerKg, 0),
+    0
+  );
+  const rupiah = (n: number) =>
+    "Rp" + n.toLocaleString("id-ID", { maximumFractionDigits: 0 });
+
   const stats = [
     { label: "Supplier Aktif",    value: `${suppliers.filter(s => s.status === "Aktif").length}`, sub: "Partner aktif",      icon: Users },
     { label: "Pasokan Bulan Ini", value: fmtKg(suppliers.reduce((a, s) => a + s.totalKg, 0)),    sub: "+8% vs bulan lalu",  icon: PackageCheck },
-    { label: "Nilai PO Aktif",    value: `Rp28.000.000`,                                          sub: "+15% vs bulan lalu", icon: Truck },
+    {
+      label: "Nilai PO Aktif",
+      value: rupiah(activePOValue),
+      sub: activePOs.length > 0
+        ? `${activePOs.length} PO dikirim`
+        : "Tidak ada PO dikirim",
+      icon: Truck,
+    },
   ];
 
   return (

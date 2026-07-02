@@ -14,7 +14,6 @@ export default function TransactionsClient({ data }: { data: Trx[] }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Trx | null>(null);
 
-  // "Hari ini" = the most recent transaction date present in the data.
   const today = useMemo(() => {
     if (data.length === 0) return null;
     return data.reduce((latest, t) => {

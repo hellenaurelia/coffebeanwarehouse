@@ -1,31 +1,59 @@
-import { Receipt, ArrowUpRight, QrCode } from "lucide-react";
+import { Receipt, ArrowUpRight, QrCode, CreditCard, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { fmt } from "../lib";
-import type { Trx } from "../types";
+import type { Method, Trx } from "../types";
 
 interface StatsCardsProps {
   todayData: Trx[];
 }
 
+const methodIconMap = {
+  Cash: Wallet,
+  Kartu: CreditCard,
+  QRIS: QrCode,
+} as const;
+
 export function StatsCards({ todayData }: StatsCardsProps) {
+  const count = todayData.length;
+  const totalSales = todayData.reduce((a, b) => a + b.total, 0);
+
+  // Rata-rata basket = total penjualan / jumlah transaksi
+  const avgBasket = count > 0 ? totalSales / count : 0;
+
+  // Metode terpopuler = metode dengan transaksi terbanyak
+  const methodCounts = todayData.reduce<Record<string, number>>((acc, t) => {
+    acc[t.method] = (acc[t.method] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  let topMethod: Method | "—" = "—";
+  let topMethodCount = 0;
+  for (const [m, c] of Object.entries(methodCounts)) {
+    if (c > topMethodCount) {
+      topMethod = m as Method;
+      topMethodCount = c;
+    }
+  }
+  const topMethodPct = count > 0 ? Math.round((topMethodCount / count) * 100) : 0;
+
   const stats = [
     {
       label: "Penjualan Hari Ini",
-      value: fmt(todayData.reduce((a, b) => a + b.total, 0)),
-      sub: `${todayData.length} transaksi`,
+      value: fmt(totalSales),
+      sub: `${count} transaksi`,
       icon: Receipt,
     },
     {
       label: "Rata-rata Basket",
-      value: "Rp 226.000",
-      sub: "+8% vs minggu lalu",
+      value: fmt(avgBasket),
+      sub: count > 0 ? `dari ${count} transaksi` : "belum ada transaksi",
       icon: ArrowUpRight,
     },
     {
       label: "Metode Terpopuler",
-      value: "QRIS",
-      sub: "44% transaksi",
-      icon: QrCode,
+      value: topMethod,
+      sub: count > 0 ? `${topMethodPct}% transaksi` : "belum ada transaksi",
+      icon: topMethod !== "—" ? methodIconMap[topMethod] : QrCode,
     },
   ];
 
