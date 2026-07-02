@@ -45,7 +45,7 @@ export default function POSClient({ products }: { products: Product[] }) {
     grindOpt: grind[id] ?? "whole" as GrindOption,
   }));
 
-  const subtotal  = lines.reduce((s, l) => s + l.p.price * l.qty + (l.grindOpt === "ground" ? GRIND_FEE * l.qty : 0), 0);
+  const subtotal  = lines.reduce((s, l) => s + l.p.price * l.qty + (l.grindOpt === "ground" ? GRIND_FEE : 0), 0);
   const discAmt   = Math.round(subtotal * discPct / 100);
   const afterDisc = subtotal - discAmt;
   const tax       = Math.round(afterDisc * 0.11);
