@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth/session";
+import { logActivity } from "@/lib/activity-log";
 import {
   poStatusToDb,
   supplierIsActiveFromUi,
@@ -15,16 +17,10 @@ import type { Supplier, PO } from "../lib";
 const SUPPLIERS_PATH = "/suppliers";
 const INVENTORY_PATH = "/inventory";
 
-// TODO(auth): ganti dengan user id dari session asli.
+// Sekarang actor diambil dari sesi login yang sebenarnya.
 async function resolveActorId(): Promise<string> {
-  const owner = await prisma.user.findFirst({
-    where: { role: "OWNER", isActive: true },
-    select: { id: true },
-  });
-  if (owner) return owner.id;
-  const any = await prisma.user.findFirst({ select: { id: true } });
-  if (!any) throw new Error("Tidak ada user di database untuk dijadikan creator.");
-  return any.id;
+  const user = await requireUser();
+  return user.id;
 }
 
 const supplierSelect = {
@@ -75,6 +71,7 @@ export async function saveSupplierAction(
   };
 
   let supplierId: string;
+  const isUpdate = Boolean(data.id);
 
   if (data.id) {
     await prisma.supplier.update({ where: { id: data.id }, data: base });
@@ -152,10 +149,29 @@ export async function saveSupplierAction(
     }
 
     const existingLinkId = linkByProductId.get(productId);
+
+    // ------------------------------------------------------------------
+    // ATURAN BARU (poin 1): bean TIDAK boleh dinonaktifkan kalau stok > 0.
+    // Kalau user mencoba men-set bean.active = false padahal produk masih
+    // punya stok, kita tolak.
+    // ------------------------------------------------------------------
+    const wantActive = bean.active ?? true;
+    if (!wantActive) {
+      const prod = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { stockKg: true, name: true },
+      });
+      if (prod && prod.stockKg > 0) {
+        throw new Error(
+          `Biji kopi "${prod.name}" tidak bisa dinonaktifkan karena stok masih ${prod.stockKg} kg. Habiskan / rekonsiliasi stok ke 0 dulu.`
+        );
+      }
+    }
+
     if (existingLinkId) {
       await prisma.supplierProduct.update({
         where: { id: existingLinkId },
-        data: { buyPricePerKg: bean.price, isActive: bean.active ?? true },
+        data: { buyPricePerKg: bean.price, isActive: wantActive },
       });
     } else {
       await prisma.supplierProduct.create({
@@ -163,20 +179,36 @@ export async function saveSupplierAction(
           supplierId,
           productId,
           buyPricePerKg: bean.price,
-          isActive: bean.active ?? true,
+          isActive: wantActive,
         },
       });
     }
   }
 
-  // Bean yang dihapus dari form -> link-nya benar-benar dihapus.
-  const linkIdsToRemove = existingLinks
-    .filter((l) => !keptProductIds.has(l.productId))
-    .map((l) => l.id);
+  // ------------------------------------------------------------------
+  // Bean yang dihapus dari form -> link-nya dihapus.
+  // ATURAN BARU (poin 1): bean TIDAK boleh dihapus kalau stok > 0.
+  // ------------------------------------------------------------------
+  const linksToRemove = existingLinks.filter(
+    (l) => !keptProductIds.has(l.productId)
+  );
 
-  if (linkIdsToRemove.length > 0) {
+  if (linksToRemove.length > 0) {
+    const removeProductIds = linksToRemove.map((l) => l.productId);
+    const removeProducts = await prisma.product.findMany({
+      where: { id: { in: removeProductIds } },
+      select: { id: true, name: true, stockKg: true },
+    });
+    const blocked = removeProducts.filter((p) => p.stockKg > 0);
+    if (blocked.length > 0) {
+      const names = blocked.map((p) => `"${p.name}" (${p.stockKg} kg)`).join(", ");
+      throw new Error(
+        `Biji kopi berikut tidak bisa dihapus karena stok masih ada: ${names}.`
+      );
+    }
+
     await prisma.supplierProduct.deleteMany({
-      where: { id: { in: linkIdsToRemove } },
+      where: { id: { in: linksToRemove.map((l) => l.id) } },
     });
   }
 
@@ -185,56 +217,55 @@ export async function saveSupplierAction(
     select: supplierSelect,
   });
 
+  await logActivity({
+    actorId,
+    action: isUpdate ? "SUPPLIER_UPDATE" : "SUPPLIER_CREATE",
+    entityType: "Supplier",
+    entityId: supplierId,
+    payload: { name: data.name, status: data.status, beans: beanNames },
+  });
+
   revalidatePath(SUPPLIERS_PATH);
   revalidatePath(INVENTORY_PATH);
   return mapSupplier(row as DbSupplierRow);
 }
 
 // ============================================================================
-// SUPPLIER: delete (soft — set deletedAt, bukan isActive, biar beda dari
-// status manual Aktif/Non-aktif). Cascade: produk yang udah gak punya
-// supplier aktif lain ikut dinonaktifkan, hilang dari Inventory. Riwayat
-// PO/transaksi gak disentuh.
+// SUPPLIER: delete (soft — set deletedAt).
+// ATURAN BARU (poin 2): supplier TIDAK boleh dihapus kalau masih punya biji
+// kopi (link supplierProduct apa pun). User harus melepas semua bean dari
+// supplier ini dulu (dan bean hanya bisa dilepas kalau stoknya 0 — poin 1).
+// Untuk sekadar "berhenti pakai" supplier tanpa menghapus, gunakan nonaktif
+// (poin 3) — itu tetap diizinkan lewat saveSupplierAction.
 // ============================================================================
 export async function deleteSupplierAction(id: string): Promise<void> {
+  const actorId = await resolveActorId();
+
+  const links = await prisma.supplierProduct.findMany({
+    where: { supplierId: id },
+    select: { productId: true, product: { select: { name: true } } },
+  });
+
+  if (links.length > 0) {
+    const names = [...new Set(links.map((l) => l.product.name))]
+      .map((n) => `"${n}"`)
+      .join(", ");
+    throw new Error(
+      `Supplier tidak bisa dihapus karena masih memiliki biji kopi: ${names}. Lepaskan semua biji kopi dari supplier ini dulu, atau nonaktifkan supplier saja.`
+    );
+  }
+
   await prisma.supplier.update({
     where: { id },
     data: { deletedAt: new Date() },
   });
 
-  const links = await prisma.supplierProduct.findMany({
-    where: { supplierId: id },
-    select: { productId: true },
+  await logActivity({
+    actorId,
+    action: "SUPPLIER_DELETE",
+    entityType: "Supplier",
+    entityId: id,
   });
-  const productIds = [...new Set(links.map((l) => l.productId))];
-
-  if (productIds.length === 0) {
-    revalidatePath(SUPPLIERS_PATH);
-    revalidatePath(INVENTORY_PATH);
-    return;
-  }
-
-  const stillActiveLinks = await prisma.supplierProduct.findMany({
-    where: {
-      productId: { in: productIds },
-      supplierId: { not: id },
-      isActive: true,
-      supplier: { isActive: true, deletedAt: null },
-    },
-    select: { productId: true },
-  });
-  const stillSuppliedIds = new Set(stillActiveLinks.map((l) => l.productId));
-
-  const productIdsToDeactivate = productIds.filter(
-    (pid) => !stillSuppliedIds.has(pid)
-  );
-
-  if (productIdsToDeactivate.length > 0) {
-    await prisma.product.updateMany({
-      where: { id: { in: productIdsToDeactivate } },
-      data: { isActive: false },
-    });
-  }
 
   revalidatePath(SUPPLIERS_PATH);
   revalidatePath(INVENTORY_PATH);
@@ -310,6 +341,14 @@ export async function savePOAction(
     select: poDetailSelect,
   });
 
+  await logActivity({
+    actorId,
+    action: "PO_CREATE",
+    entityType: "PurchaseOrder",
+    entityId: created.id,
+    payload: { poNumber, supplierId: partial.supplierId, totalAmount },
+  });
+
   revalidatePath(SUPPLIERS_PATH);
   revalidatePath(INVENTORY_PATH);
   return mapPO(created as DbPORow);
@@ -341,6 +380,7 @@ export async function updatePOStatusAction(
   poNumber: string,
   newStatus: PO["status"]
 ): Promise<void> {
+  const actorId = await resolveActorId();
   const dbStatus = poStatusToDb(newStatus);
 
   const po = await prisma.purchaseOrder.findUnique({
@@ -398,6 +438,14 @@ export async function updatePOStatusAction(
     }
   });
 
+  await logActivity({
+    actorId,
+    action: becomingReceived ? "PO_RECEIVE" : "PO_STATUS_UPDATE",
+    entityType: "PurchaseOrder",
+    entityId: po.id,
+    payload: { poNumber, newStatus },
+  });
+
   revalidatePath(SUPPLIERS_PATH);
   revalidatePath(INVENTORY_PATH);
 }
@@ -419,14 +467,18 @@ export async function updatePOArrivalAction(
 
 // ============================================================================
 // SUPPLIER BEAN: toggle active
+// ATURAN BARU (poin 1): tidak boleh menonaktifkan bean yang stoknya > 0.
+// Mengaktifkan kembali selalu boleh.
 // ============================================================================
 export async function toggleBeanAction(
   supplierId: string,
   beanName: string
 ): Promise<void> {
+  const actorId = await resolveActorId();
+
   const product = await prisma.product.findFirst({
     where: { name: beanName },
-    select: { id: true },
+    select: { id: true, stockKg: true, name: true },
   });
   if (!product) return;
 
@@ -436,10 +488,28 @@ export async function toggleBeanAction(
   });
   if (!sp) return;
 
+  const nextActive = !sp.isActive;
+
+  // Kalau mau MENONAKTIFKAN tapi stok masih ada → tolak.
+  if (!nextActive && product.stockKg > 0) {
+    throw new Error(
+      `Biji kopi "${product.name}" tidak bisa dinonaktifkan karena stok masih ${product.stockKg} kg.`
+    );
+  }
+
   await prisma.supplierProduct.update({
     where: { id: sp.id },
-    data: { isActive: !sp.isActive },
+    data: { isActive: nextActive },
   });
+
+  await logActivity({
+    actorId,
+    action: nextActive ? "BEAN_ACTIVATE" : "BEAN_DEACTIVATE",
+    entityType: "Product",
+    entityId: product.id,
+    payload: { beanName, supplierId },
+  });
+
   revalidatePath(SUPPLIERS_PATH);
   revalidatePath(INVENTORY_PATH);
 }

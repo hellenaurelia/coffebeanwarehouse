@@ -23,16 +23,15 @@ function inferTag(name: string): string {
 }
 
 export async function getInventory(): Promise<InventoryItemDTO[]> {
+  // ATURAN BARU (poin 4): bean dengan stok 0 TETAP tampil di Inventory.
+  // Karena itu filter `stockKg: { gt: 0 }` DIHAPUS.
+  //
+  // Syarat "punya supplier aktif" juga dilonggarkan: kita tetap butuh produk
+  // aktif, tapi produk yang stoknya sudah 0 boleh muncul walau supplier link-nya
+  // sedang nonaktif — supaya kartu "Kritis / Habis" tidak hilang begitu saja.
   const products = await prisma.product.findMany({
     where: {
       isActive: true,
-      stockKg: { gt: 0 },
-      supplierProducts: {
-        some: {
-          isActive: true,
-          supplier: { isActive: true },
-        },
-      },
     },
     orderBy: { createdAt: "asc" },
     select: {
@@ -42,10 +41,6 @@ export async function getInventory(): Promise<InventoryItemDTO[]> {
       sellPrice: true,
       stockKg: true,
       supplierProducts: {
-        where: {
-          isActive: true,
-          supplier: { isActive: true },
-        },
         orderBy: { createdAt: "asc" },
         take: 1,
         select: {

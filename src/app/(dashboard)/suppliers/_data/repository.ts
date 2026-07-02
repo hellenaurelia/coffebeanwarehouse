@@ -67,16 +67,11 @@ export async function getPurchaseOrders(): Promise<PO[]> {
 }
 
 export async function getInventoryForSuppliers() {
+  // Bean stok 0 TETAP tampil (poin 4) — penting supaya bean habis bisa
+  // dipilih saat membuat PO (justru untuk menambah stoknya kembali).
   const products = await prisma.product.findMany({
     where: {
       isActive: true,
-      stockKg: { gt: 0 },
-      supplierProducts: {
-        some: {
-          isActive: true,
-          supplier: { isActive: true, deletedAt: null },
-        },
-      },
     },
     orderBy: { createdAt: "asc" },
     select: {
@@ -86,10 +81,6 @@ export async function getInventoryForSuppliers() {
       sellPrice: true,
       stockKg: true,
       supplierProducts: {
-        where: {
-          isActive: true,
-          supplier: { isActive: true, deletedAt: null },
-        },
         orderBy: { createdAt: "asc" },
         take: 1,
         select: {

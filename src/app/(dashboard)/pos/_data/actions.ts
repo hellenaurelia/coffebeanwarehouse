@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { PaymentMethod, BeanType } from "@prisma/client";
 import { requireUser } from "@/lib/auth/session";
 import { nextDocNumber } from "@/lib/docnumber";
+import { logActivity } from "@/lib/activity-log";
 
 async function resolveCashierId(): Promise<string> {
   const user = await requireUser();
@@ -21,7 +22,7 @@ export type CheckoutLine = {
   productId: string;
   qty: number;
   sellPrice: number;
-  grindOption: "whole" | "ground"; // ← TAMBAHAN
+  grindOption: "whole" | "ground";
 };
 
 export type CheckoutInput = {
@@ -36,7 +37,6 @@ export type CheckoutResult = {
   error?: string;
 };
 
-// Map UI grind option → Prisma BeanType enum
 const BEAN_TYPE_MAP: Record<"whole" | "ground", BeanType> = {
   whole: "WHOLE_BEAN",
   ground: "GROUND",
@@ -57,6 +57,7 @@ export async function checkoutAction(
   }
 
   try {
+    let trxId = "";
     const result: string = await prisma.$transaction(async (tx): Promise<string> => {
       const trxNumber = await nextDocNumber("TRX", async (datePrefix) => {
         const last = await tx.transaction.findFirst({
@@ -77,7 +78,7 @@ export async function checkoutAction(
         buyPricePerKg: number;
         subtotal: number;
         profit: number;
-        beanType: BeanType; // ← TAMBAHAN
+        beanType: BeanType;
       }[] = [];
 
       const stockMovements: {
@@ -92,6 +93,7 @@ export async function checkoutAction(
           where: { id: line.productId },
           select: {
             id: true,
+            name: true,
             stockKg: true,
             supplierProducts: {
               where: { isActive: true },
@@ -106,8 +108,14 @@ export async function checkoutAction(
           throw new Error("Produk dalam keranjang tidak ditemukan.");
         }
 
+        // ATURAN (poin 4): bean stok 0 / kurang TIDAK boleh di-checkout.
+        if (product.stockKg <= 0) {
+          throw new Error(`Biji kopi "${product.name}" habis. Tidak bisa dijual.`);
+        }
         if (product.stockKg < line.qty) {
-          throw new Error(`Stok tidak cukup (tersisa ${product.stockKg} kg).`);
+          throw new Error(
+            `Stok "${product.name}" tidak cukup (tersisa ${product.stockKg} kg).`
+          );
         }
 
         const buyPrice = product.supplierProducts[0]?.buyPricePerKg ?? 0;
@@ -124,7 +132,7 @@ export async function checkoutAction(
           buyPricePerKg: buyPrice,
           subtotal,
           profit,
-          beanType: BEAN_TYPE_MAP[line.grindOption], // ← TAMBAHAN
+          beanType: BEAN_TYPE_MAP[line.grindOption],
         });
 
         stockMovements.push({
@@ -148,6 +156,7 @@ export async function checkoutAction(
           items: { create: itemsData },
         },
       });
+      trxId = trx.id;
 
       for (const movement of stockMovements) {
         await tx.product.update({
@@ -171,6 +180,19 @@ export async function checkoutAction(
       }
 
       return trx.trxNumber;
+    });
+
+    await logActivity({
+      actorId: cashierId,
+      action: "CHECKOUT",
+      entityType: "Transaction",
+      entityId: trxId,
+      payload: {
+        trxNumber: result,
+        payMethod: input.payMethod,
+        total: input.total,
+        itemCount: input.lines.length,
+      },
     });
 
     revalidatePath("/pos");

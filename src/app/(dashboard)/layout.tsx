@@ -1,20 +1,35 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { getCurrentUser } from "@/lib/auth/session";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import "@/app/globals.css";
+import { Providers } from "@/app/providers";
 
-export default async function DashboardLayout({
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Arunika",
+  description: "Sistem Manajemen Kasir dan Gudang Arunika",
+};
+
+export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
-  const user = await getCurrentUser();
-
+}>) {
   return (
-    <SidebarProvider>
-      <AppSidebar user={user} />
-      <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto h-svh">
-        {children}
-      </main>
-    </SidebarProvider>
+    <html lang="id" suppressHydrationWarning>
+      <body
+        className={`${inter.className} min-h-screen bg-background text-foreground antialiased`}
+      >
+        <ThemeProvider>
+          <Providers>
+            {children}
+          </Providers>
+          {/* Toaster global untuk notifikasi (mis. "biji kopi habis") */}
+          <Toaster position="top-center" richColors />
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

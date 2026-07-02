@@ -41,15 +41,13 @@ function inferProfile(name: string, variety: string) {
   return VARIETY_FALLBACK[variety] ?? { process: "Washed", notes: ["Bold", "Aromatic"], rating: 4.5 };
 }
 
-// Visibility sama dengan Inventory: aktif, stok > 0, punya supplier aktif.
+// ATURAN BARU (poin 4): bean stok 0 TETAP tampil di katalog / item kasir.
+// Filter `stockKg: { gt: 0 }` DIHAPUS. Yang penting produk aktif & punya
+// link supplier (aktif/tidak) supaya origin bisa ditampilkan.
 export async function getBeansCatalog(): Promise<BeanCatalogItem[]> {
   const products = await prisma.product.findMany({
     where: {
       isActive: true,
-      stockKg: { gt: 0 },
-      supplierProducts: {
-        some: { isActive: true, supplier: { isActive: true, deletedAt: null } },
-      },
     },
     orderBy: { createdAt: "asc" },
     select: {
@@ -59,7 +57,6 @@ export async function getBeansCatalog(): Promise<BeanCatalogItem[]> {
       sellPrice: true,
       stockKg: true,
       supplierProducts: {
-        where: { isActive: true, supplier: { isActive: true, deletedAt: null } },
         orderBy: { createdAt: "asc" },
         take: 1,
         select: { supplier: { select: { region: true } } },

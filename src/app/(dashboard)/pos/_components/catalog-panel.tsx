@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Search } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cats, fmt } from "./data";
@@ -22,6 +23,17 @@ export function CatalogPanel({ cart, onAdd }: Props) {
     (activeCat === "Semua" || p.tag === activeCat) &&
     p.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Klik kartu: kalau stok habis → toast, JANGAN masuk keranjang (poin 4).
+  const handleCardClick = (p: Product) => {
+    if (p.stock <= 0) {
+      toast.error("Biji kopi habis", {
+        description: `${p.name} tidak memiliki stok. Tidak bisa ditambahkan ke keranjang.`,
+      });
+      return;
+    }
+    onAdd(p.id);
+  };
 
   return (
     <section className="p-4 md:p-6 space-y-4 overflow-y-auto">
@@ -44,28 +56,44 @@ export function CatalogPanel({ cart, onAdd }: Props) {
         <div className="text-center py-16 text-muted-foreground text-sm">Produk tidak ditemukan.</div>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((p: Product) => (
-          <button key={p.id} onClick={() => onAdd(p.id)}
-            className="group text-left rounded-2xl border border-border/60 bg-card p-4 hover:shadow-warm hover:border-accent/40 transition-all">
-            <div className="aspect-square rounded-xl gradient-bean mb-3 flex items-center justify-center relative overflow-hidden">
-              <img src={p.image} alt={p.tag} className="h-full w-full object-cover" />
-              <Badge className="absolute top-2 left-2 bg-primary-foreground/20 text-primary-foreground border-0 backdrop-blur text-[10px]">{p.tag}</Badge>
-              {cart[p.id] && (
-                <span className="absolute bottom-2 right-2 bg-primary-foreground/90 text-primary text-[10px] font-semibold rounded-full px-2 py-0.5">
-                  {cart[p.id]} kg
-                </span>
-              )}
-            </div>
-            <div className="font-medium">{p.name}</div>
-            <div className="text-xs text-muted-foreground">{p.supplier}</div>
-            <div className="mt-2 flex items-center justify-between">
-              <span className="font-display text-base font-semibold">{fmt(p.price)}/kg</span>
-              <span className="h-7 w-7 rounded-full gradient-crema flex items-center justify-center text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                <Plus className="h-4 w-4" />
-              </span>
-            </div>
-          </button>
-        ))}
+        {filtered.map((p: Product) => {
+          const habis = p.stock <= 0;
+          return (
+            <button key={p.id} onClick={() => handleCardClick(p)}
+              className={`group text-left rounded-2xl border border-border/60 bg-card p-4 transition-all ${
+                habis
+                  ? "opacity-60 hover:border-red-300"
+                  : "hover:shadow-warm hover:border-accent/40"
+              }`}>
+              <div className="aspect-square rounded-xl gradient-bean mb-3 flex items-center justify-center relative overflow-hidden">
+                <img src={p.image} alt={p.tag} className="h-full w-full object-cover" />
+                <Badge className="absolute top-2 left-2 bg-primary-foreground/20 text-primary-foreground border-0 backdrop-blur text-[10px]">{p.tag}</Badge>
+                {habis && (
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                    <span className="bg-red-600 text-white text-xs font-semibold rounded-full px-3 py-1">
+                      Habis
+                    </span>
+                  </span>
+                )}
+                {!habis && cart[p.id] && (
+                  <span className="absolute bottom-2 right-2 bg-primary-foreground/90 text-primary text-[10px] font-semibold rounded-full px-2 py-0.5">
+                    {cart[p.id]} kg
+                  </span>
+                )}
+              </div>
+              <div className="font-medium">{p.name}</div>
+              <div className="text-xs text-muted-foreground">{p.supplier}</div>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="font-display text-base font-semibold">{fmt(p.price)}/kg</span>
+                {!habis && (
+                  <span className="h-7 w-7 rounded-full gradient-crema flex items-center justify-center text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Plus className="h-4 w-4" />
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </section>
   );

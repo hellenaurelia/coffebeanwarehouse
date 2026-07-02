@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
+import { toast } from "sonner";
 import { Supplier, PO, InventoryItem } from "../lib";
 import {
   saveSupplierAction,
@@ -39,6 +40,12 @@ type SupplierContextValue = {
 
 const SupplierContext = createContext<SupplierContextValue | null>(null);
 
+// Ambil pesan error yang ramah dari server action.
+function errMsg(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}
+
 export function SupplierProvider({
   children,
   initialSuppliers,
@@ -65,16 +72,27 @@ export function SupplierProvider({
             ? p.map((s) => (s.id === saved.id ? saved : s))
             : [...p, saved]
         );
+        toast.success(data.id ? "Supplier diperbarui." : "Supplier ditambahkan.");
+        close();
       })
-      .catch((err) => console.error("Gagal menyimpan supplier:", err));
-    close();
+      .catch((err) => {
+        // Bisa berupa penolakan aturan (mis. bean masih ada stok).
+        toast.error("Gagal menyimpan supplier", { description: errMsg(err, "Terjadi kesalahan.") });
+      });
   };
 
   const handleDeleteSupplier = (id: string) => {
     deleteSupplierAction(id)
-      .then(() => setSuppliers((p) => p.filter((s) => s.id !== id)))
-      .catch((err) => console.error("Gagal menghapus supplier:", err));
-    close();
+      .then(() => {
+        setSuppliers((p) => p.filter((s) => s.id !== id));
+        toast.success("Supplier dihapus.");
+        close();
+      })
+      .catch((err) => {
+        // Penolakan poin 2: supplier masih punya biji kopi.
+        toast.error("Supplier tidak bisa dihapus", { description: errMsg(err, "Terjadi kesalahan.") });
+        close();
+      });
   };
 
   const handleSavePO = (partial: Omit<PO, "id">) => {
@@ -84,19 +102,25 @@ export function SupplierProvider({
         const relatedSupplier = suppliers.find((s) => s.id === partial.supplierId);
         setModal({ type: "po-success", po: newPO, supplier: relatedSupplier });
       })
-      .catch((err) => console.error("Gagal membuat PO:", err));
+      .catch((err) => {
+        toast.error("Gagal membuat PO", { description: errMsg(err, "Terjadi kesalahan.") });
+      });
   };
 
   const handleUpdatePOStatus = (poId: string, newStatus: PO["status"]) => {
+    const prev = pos;
     setPOs((p) => p.map((po) => (po.id === poId ? { ...po, status: newStatus } : po)));
-    updatePOStatusAction(poId, newStatus).catch((err) =>
-      console.error("Gagal memperbarui status PO:", err)
-    );
+    updatePOStatusAction(poId, newStatus).catch((err) => {
+      setPOs(prev); // rollback
+      toast.error("Gagal memperbarui status PO", { description: errMsg(err, "Terjadi kesalahan.") });
+    });
   };
 
   const handleToggleBean = (supplierId: string, beanName: string) => {
-    setSuppliers((prev) =>
-      prev.map((s) => {
+    const prev = suppliers;
+    // Optimistik
+    setSuppliers((cur) =>
+      cur.map((s) => {
         if (s.id !== supplierId) return s;
         return {
           ...s,
@@ -106,16 +130,19 @@ export function SupplierProvider({
         };
       })
     );
-    toggleBeanAction(supplierId, beanName).catch((err) =>
-      console.error("Gagal mengubah status bean:", err)
-    );
+    toggleBeanAction(supplierId, beanName).catch((err) => {
+      setSuppliers(prev); // rollback kalau ditolak (poin 1: stok masih ada)
+      toast.error("Gagal mengubah status biji kopi", { description: errMsg(err, "Terjadi kesalahan.") });
+    });
   };
 
   const handleUpdateArrival = (poId: string, date: string) => {
+    const prev = pos;
     setPOs((p) => p.map((po) => (po.id === poId ? { ...po, arrivalDate: date } : po)));
-    updatePOArrivalAction(poId, date).catch((err) =>
-      console.error("Gagal memperbarui tanggal kedatangan:", err)
-    );
+    updatePOArrivalAction(poId, date).catch((err) => {
+      setPOs(prev);
+      toast.error("Gagal memperbarui tanggal kedatangan", { description: errMsg(err, "Terjadi kesalahan.") });
+    });
   };
 
   return (

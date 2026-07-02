@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -25,6 +26,8 @@ export default function RootLayout({
           <Providers>
             {children}
           </Providers>
+          {/* Toaster global untuk notifikasi (mis. "biji kopi habis") */}
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>
     </html>

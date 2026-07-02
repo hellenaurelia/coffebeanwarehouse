@@ -8,6 +8,7 @@ export type POSProductDTO = {
   price: number;
   tag: string;
   image: string;
+  stock: number; // ← TAMBAHAN: dipakai kasir untuk deteksi "habis"
 };
 
 function inferTag(name: string): string {
@@ -19,6 +20,8 @@ function inferTag(name: string): string {
 }
 
 export async function getPOSProducts(): Promise<POSProductDTO[]> {
+  // Semua produk aktif tampil, TERMASUK yang stoknya 0 (poin 4).
+  // Blokir CO ditangani di client (klik → notif habis) + guard di checkoutAction.
   const products = await prisma.product.findMany({
     where: { isActive: true },
     orderBy: { createdAt: "asc" },
@@ -26,6 +29,7 @@ export async function getPOSProducts(): Promise<POSProductDTO[]> {
       id: true,
       name: true,
       sellPrice: true,
+      stockKg: true,
       supplierProducts: {
         where: { isActive: true },
         orderBy: { createdAt: "asc" },
@@ -44,6 +48,7 @@ export async function getPOSProducts(): Promise<POSProductDTO[]> {
       price: p.sellPrice,
       tag,
       image: getBeanImage(tag),
+      stock: p.stockKg, // ← TAMBAHAN
     };
   });
 }

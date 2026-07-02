@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
+import { logActivity } from "@/lib/activity-log";
 
 const INVENTORY_PATH = "/inventory";
 
@@ -12,26 +13,33 @@ async function resolveActorId(): Promise<string> {
 }
 
 // ============================================================================
-// PRODUCT: update sell price (the only persistent field the detail/edit modal
-// changes; SKU/supplier/type/stock/cost are read-only there).
-// NOTE: photo has no column in the schema, so it is not persisted.
+// PRODUCT: update sell price
 // ============================================================================
 export async function updateProductPriceAction(
   sku: string,
   sellPrice: number
 ): Promise<void> {
-  await prisma.product.update({
+  const actorId = await resolveActorId();
+
+  const updated = await prisma.product.update({
     where: { sku },
     data: { sellPrice },
+    select: { id: true },
   });
+
+  await logActivity({
+    actorId,
+    action: "PRODUCT_PRICE_UPDATE",
+    entityType: "Product",
+    entityId: updated.id,
+    payload: { sku, sellPrice },
+  });
+
   revalidatePath(INVENTORY_PATH);
 }
 
 // ============================================================================
-// STOCK RECONCILIATION: apply physical counts.
-// Receives only the lines that actually changed, each with the new physical
-// quantity and a reason. Per line we: update stock, write a StockReconciliation
-// record, and write a StockLog (type RECONCILIATION) — all in one transaction.
+// STOCK RECONCILIATION
 // ============================================================================
 export type ReconLine = {
   sku: string;
@@ -42,6 +50,8 @@ export type ReconLine = {
 export async function reconcileStockAction(lines: ReconLine[]): Promise<void> {
   if (lines.length === 0) return;
   const actorId = await resolveActorId();
+
+  const applied: { sku: string; before: number; after: number; difference: number }[] = [];
 
   await prisma.$transaction(async (tx) => {
     for (const line of lines) {
@@ -55,7 +65,6 @@ export async function reconcileStockAction(lines: ReconLine[]): Promise<void> {
       const after = line.physicalQty;
       const difference = after - before;
 
-      // No real change -> skip writing records.
       if (difference === 0) continue;
 
       await tx.product.update({
@@ -86,8 +95,19 @@ export async function reconcileStockAction(lines: ReconLine[]): Promise<void> {
           createdById: actorId,
         },
       });
+
+      applied.push({ sku: line.sku, before, after, difference });
     }
   });
+
+  if (applied.length > 0) {
+    await logActivity({
+      actorId,
+      action: "STOCK_RECONCILE",
+      entityType: "StockReconciliation",
+      payload: { lines: applied },
+    });
+  }
 
   revalidatePath(INVENTORY_PATH);
 }
