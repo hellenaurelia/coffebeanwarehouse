@@ -44,7 +44,7 @@ export function CartPanel({
   }));
 
   const subtotal  = lines.reduce((s, l) => {
-    const grindFee = l.grindOpt === "ground" ? GRIND_FEE * l.qty : 0;
+    const grindFee = l.grindOpt === "ground" ? GRIND_FEE : 0;
     return s + l.p.price * l.qty + grindFee;
   }, 0);
   const discAmt   = Math.round(subtotal * discPct / 100);
