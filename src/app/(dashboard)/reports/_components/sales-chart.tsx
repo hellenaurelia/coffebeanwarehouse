@@ -48,7 +48,7 @@ export function SalesChart({ data }: SalesChartProps) {
             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border/60" />
             <XAxis dataKey="day" tickLine={false} axisLine={false} className="text-xs" />
             <YAxis
-              tickFormatter={(v) => `${v / 1_000}k`}
+              tickFormatter={(v) => `${v / 1_000_000}Jt`}
               tickLine={false}
               axisLine={false}
               className="text-xs"
