@@ -6,9 +6,6 @@ import { setSessionCookie, clearSessionCookie } from "./session";
 
 export type LoginResult = { ok: boolean; error?: string };
 
-// Login identity is EMAIL (per data seed, e.g. arif@arunika.id). The login form
-// label still reads "Username" — we don't change the UI; the value typed there
-// is treated as an email.
 export async function loginAction(
   email: string,
   password: string

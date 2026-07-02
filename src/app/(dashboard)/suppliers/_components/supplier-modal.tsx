@@ -45,7 +45,6 @@ function BeanTypeSelect({ value, onChange }: { value: string; onChange: (v: stri
   );
 }
 
-// Phone helper functions
 function parsePhone(raw: string): string {
   let digits = raw.replace(/\D/g, "");
   if (digits.startsWith("0")) digits = digits.slice(1);

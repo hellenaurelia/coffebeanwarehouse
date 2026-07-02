@@ -1,4 +1,3 @@
-// Server component: fetches transactions from the DB and renders the UI unchanged.
 
 import { getTransactions } from "./_data/repository";
 import TransactionsClient from "./transactions-client";

@@ -1,5 +1,3 @@
-// Server component: fetches DB data and hands it to the client shell.
-// The visual page (page.tsx) and all modal components are unchanged.
 
 import { getSuppliers, getPurchaseOrders, getInventoryForSuppliers } from "./_data/repository";
 import { SuppliersShell } from "./suppliers-shell";

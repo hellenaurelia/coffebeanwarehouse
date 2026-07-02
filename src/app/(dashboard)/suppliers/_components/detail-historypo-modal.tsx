@@ -16,8 +16,7 @@ const poStatusTone = (s: string) =>
         ? "bg-red-500/10 text-red-700 border-red-500/20"
         : "bg-amber-500/10 text-amber-700 border-amber-500/20";
 
-// Status yang bisa dipilih dari status saat ini
-// Diterima & Cancelled adalah status final — tidak bisa diubah lagi
+
 const ALLOWED_TRANSITIONS: Record<PO["status"], PO["status"][]> = {
   Pending:    ["Dikirim", "Cancelled"],
   Dikirim:    ["Diterima", "Cancelled"],
@@ -109,7 +108,6 @@ export function PODetailModal({
           </button>
         </div>
 
-        {/* Body Modal */}
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-x-8 gap-y-5">
             <div>
@@ -256,7 +254,6 @@ export function PODetailModal({
               </div>
             )}
 
-            {/* Panel konfirmasi — muncul setelah status dipilih dari dropdown */}
             {pendingStatus && (
               <div
                 className={`rounded-xl border px-4 py-3 space-y-3 ${
@@ -300,7 +297,6 @@ export function PODetailModal({
               </div>
             )}
 
-            {/* Keterangan jika status sudah final */}
             {isFinal && (
               <p className="text-center text-xs text-muted-foreground">
                 Status ini sudah final dan tidak dapat diubah.

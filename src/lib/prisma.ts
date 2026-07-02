@@ -2,9 +2,6 @@ import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
-// PrismaPg menerima connection string langsung — tidak perlu `Pool` dari `pg`.
-// Mengimpor `pg` secara langsung bikin Turbopack mencoba mem-bundle modul Node
-// (dns/net/tls/fs) ke browser dan build gagal. Adapter ini menanganinya sendiri.
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });

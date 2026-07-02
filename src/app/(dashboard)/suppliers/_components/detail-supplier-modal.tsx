@@ -160,10 +160,9 @@ export function DetailModal({
   onOpenPODetail: (po: PO) => void;
   onToggleBean?: (supplierId: string, beanName: string) => void;
 }) {
-  // 1. Buat local state untuk menyimpan data supplier agar bisa di-update seketika
+
   const [localSupplier, setLocalSupplier] = useState<Supplier>(supplier);
 
-  // 2. Sinkronisasikan jika ada perubahan prop dari parent
   useEffect(() => {
     setLocalSupplier(supplier);
   }, [supplier]);
@@ -174,7 +173,6 @@ export function DetailModal({
 
   const activeBeanCount = localSupplier.beans.filter(b => b.active !== false).length;
 
-  // 3. Handler khusus untuk merespon klik toggle secara real-time
   const handleToggleBean = (beanName: string) => {
 
     onToggleBean?.(localSupplier.id, beanName);

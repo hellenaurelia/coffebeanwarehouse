@@ -3,13 +3,9 @@ import { cookies } from "next/headers";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 
-// IMPORTANT: cookie name matches the existing middleware (`arunika_session`)
-// and the sidebar's client-side logout, so neither needs to change.
 const SESSION_COOKIE = "arunika_session";
-const MAX_AGE_SECONDS = 60 * 60 * 24; // 24h — matches the old demo cookie
+const MAX_AGE_SECONDS = 60 * 60 * 24; 
 
-// Signing secret. Set AUTH_SECRET in your env in production. The fallback keeps
-// local dev working but is NOT secure — tokens would be forgeable.
 const SECRET =
   process.env.AUTH_SECRET ||
   process.env.NEXTAUTH_SECRET ||
@@ -23,8 +19,6 @@ export type SessionUser = {
   isActive: boolean;
 };
 
-// --- token format: base64url(payload).hexHmac -------------------------------
-// payload = `${userId}.${expiresAtMs}`
 function sign(payload: string): string {
   return crypto.createHmac("sha256", SECRET).update(payload).digest("hex");
 }
@@ -49,7 +43,6 @@ function verifySessionToken(token: string): string | null {
   }
 
   const expected = sign(payload);
-  // constant-time compare
   if (
     mac.length !== expected.length ||
     !crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(expected))
@@ -81,8 +74,6 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   return user;
 }
 
-// Replaces the old resolveActorId()/resolveCashierId() placeholders in the
-// feature actions. Throws when there is no valid session.
 export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) throw new Error("Tidak ada sesi aktif. Silakan login kembali.");

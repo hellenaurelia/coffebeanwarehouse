@@ -76,7 +76,7 @@ export function SupplierProvider({
         close();
       })
       .catch((err) => {
-        // Bisa berupa penolakan aturan (mis. bean masih ada stok).
+
         toast.error("Gagal menyimpan supplier", { description: errMsg(err, "Terjadi kesalahan.") });
       });
   };
@@ -89,7 +89,7 @@ export function SupplierProvider({
         close();
       })
       .catch((err) => {
-        // Penolakan poin 2: supplier masih punya biji kopi.
+
         toast.error("Supplier tidak bisa dihapus", { description: errMsg(err, "Terjadi kesalahan.") });
         close();
       });
@@ -131,7 +131,7 @@ export function SupplierProvider({
       })
     );
     toggleBeanAction(supplierId, beanName).catch((err) => {
-      setSuppliers(prev); // rollback kalau ditolak (poin 1: stok masih ada)
+      setSuppliers(prev); 
       toast.error("Gagal mengubah status biji kopi", { description: errMsg(err, "Terjadi kesalahan.") });
     });
   };

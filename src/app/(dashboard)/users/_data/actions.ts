@@ -27,9 +27,6 @@ const userSelect = {
   lastLoginAt: true,
 } as const;
 
-// ============================================================================
-// CREATE
-// ============================================================================
 export async function createUserAction(form: UserForm): Promise<User> {
   await requireUser(); // only authenticated users can manage users
 
@@ -66,9 +63,6 @@ export async function createUserAction(form: UserForm): Promise<User> {
   return mapUser(created as DbUserRow);
 }
 
-// ============================================================================
-// UPDATE (password optional — only changed when provided)
-// ============================================================================
 export async function updateUserAction(
   id: string,
   form: UserForm
@@ -126,8 +120,6 @@ export async function deleteUserAction(id: string): Promise<void> {
     throw new Error("Tidak bisa menghapus akun yang sedang login.");
   }
 
-  // If the user has no dependent records, a real delete is safe and keeps the
-  // list clean. Otherwise fall back to deactivation.
   const refs = await prisma.purchaseOrder.count({ where: { createdById: id } });
   const supRefs = await prisma.supplier.count({ where: { createdById: id } });
 
@@ -137,7 +129,6 @@ export async function deleteUserAction(id: string): Promise<void> {
       revalidatePath(USERS_PATH);
       return;
     } catch {
-      // Fall through to soft-delete if any other relation blocks it.
     }
   }
 

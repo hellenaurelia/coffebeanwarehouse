@@ -2,9 +2,6 @@ import type { Role, Status, Outlet, User } from "../_lib/types";
 import type { Role as PrismaRole } from "@prisma/client";
 import { initials } from "../_lib/constants";
 
-// DB enum Role (Prisma): OWNER, MANAJER, KASIR, GUDANG. UI memakai key lowercase.
-// Dua map di bawah menjembatani UI <-> enum DB. `UI_TO_DB_ROLE` diketik sebagai
-// PrismaRole agar hasil roleToDb() bisa langsung dipakai di prisma.user.create.
 const DB_TO_UI_ROLE: Record<string, Role> = {
   OWNER: "owner",
   MANAJER: "manajer",
@@ -35,13 +32,10 @@ export function statusToDbIsActive(status: Status): boolean {
   return status === "aktif";
 }
 
-// The UI's `outlet` is a constrained union ("Senopati"). DB stores a free string;
-// we coerce unknowns to the single known outlet so the Select stays valid.
 export function outletToUi(dbOutlet: string | null): Outlet {
   return dbOutlet === "Senopati" ? "Senopati" : "Senopati";
 }
 
-// "Login Terakhir" formatting. Indonesian, lightweight (no external dep).
 const ID_DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const ID_MONTHS = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -75,8 +69,6 @@ export function formatLastLogin(d: Date | null): string {
   return `${d.getDate()} ${ID_MONTHS[d.getMonth()]} ${d.getFullYear()}, ${time}`;
 }
 
-// A username is required by the UI but optional in the DB historically. Derive a
-// stable fallback from the email local-part when missing.
 export function deriveUsername(email: string, username: string | null): string {
   if (username && username.trim()) return username;
   return email.split("@")[0] ?? email;

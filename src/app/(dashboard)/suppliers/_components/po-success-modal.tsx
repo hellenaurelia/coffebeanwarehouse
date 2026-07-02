@@ -21,7 +21,6 @@ import { BTN_PRIMARY, BTN_OUTLINE, fmt, poTotal } from "./shared-components";
 import { BTN_HOVER_COKLAT } from "../lib";
 import { generatePOPdf, getPOPdfBlob } from "./po-pdf";
 
-/* ─── Tone status PO ─── */
 const statusTone = (s: PO["status"]) =>
   s === "Diterima"
     ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20"
@@ -29,7 +28,7 @@ const statusTone = (s: PO["status"]) =>
       ? "bg-blue-500/10 text-blue-700 border-blue-500/20"
       : "bg-amber-500/10 text-amber-700 border-amber-500/20";
 
-/* ─── Pesan WA default ─── */
+
 function buildWAMessage(po: PO): string {
   const lines = [
     `Halo, berikut Purchase Order dari kami:`,
@@ -51,7 +50,6 @@ function buildWAMessage(po: PO): string {
   return lines.filter((l) => l !== undefined).join("\n");
 }
 
-/* ─── Bersihkan nomor telp jadi format WA ─── */
 function toWANumber(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.startsWith("0")) return "62" + digits.slice(1);
@@ -59,7 +57,6 @@ function toWANumber(phone: string): string {
   return digits;
 }
 
-/* ─── Komponen utama ─── */
 export function POSuccessModal({
   po,
   supplier,
@@ -74,7 +71,6 @@ export function POSuccessModal({
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [shareStep, setShareStep] = useState<"idle" | "sharing">("idle");
 
-  /* Generate blob PDF saat modal muncul */
   useEffect(() => {
     let cancelled = false;
     getPOPdfBlob(po)
@@ -92,7 +88,6 @@ export function POSuccessModal({
     };
   }, [po]);
 
-  /* Download PDF */
   function handleDownload() {
     setDownloading(true);
     setTimeout(() => {
@@ -101,7 +96,6 @@ export function POSuccessModal({
     }, 300);
   }
 
-  /* Kirim via WA */
   function handleWA() {
     setShareStep("sharing");
     const msg = encodeURIComponent(buildWAMessage(po));
@@ -115,7 +109,6 @@ export function POSuccessModal({
     }, 400);
   }
 
-  /* Kirim via Email */
   function handleEmail() {
     setShareStep("sharing");
     const subject = encodeURIComponent(`Purchase Order ${po.id} – ${po.supplierName}`);
@@ -142,7 +135,6 @@ export function POSuccessModal({
         className="w-full max-w-lg bg-card border border-border/60 rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── Header sukses ── */}
         <div className="relative bg-gradient-to-br from-emerald-50 to-emerald-100/60 px-6 pt-8 pb-6 text-center border-b border-emerald-200/60">
           <button
             onClick={onClose}
@@ -151,7 +143,6 @@ export function POSuccessModal({
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
 
-          {/* Ikon animasi */}
           <div className="flex justify-center mb-4">
             <div className="relative">
               <div className="h-14 w-14 rounded-full bg-emerald-500/15 flex items-center justify-center animate-[ping_1s_ease-out_1]">
@@ -169,14 +160,12 @@ export function POSuccessModal({
             PO telah tersimpan dan siap dikirim ke supplier.
           </p>
 
-          {/* Badge no PO */}
           <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full bg-white/80 border border-emerald-20 text-xs font-mono font-medium text-emerald-700 ">
             <ClipboardList className="h-3 w-3" />
             {po.id}
           </div>
         </div>
 
-        {/* ── Ringkasan PO ── */}
         <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
           {/* Info baris */}
           <div className="grid grid-cols-2 gap-3">
@@ -192,7 +181,6 @@ export function POSuccessModal({
             />
           </div>
 
-          {/* Item list */}
           <div className="rounded-xl border border-border/60 overflow-hidden">
             <div className="bg-secondary/50 px-4 py-2 flex items-center gap-2 border-b border-border/40">
               <Package className="h-3.5 w-3.5 text-muted-foreground" />
@@ -214,7 +202,6 @@ export function POSuccessModal({
                 </div>
               ))}
             </div>
-            {/* Total */}
             <div className="flex items-center justify-between px-4 py-3 bg-primary/5 border-t border-primary/15">
               <span className="text-sm font-semibold text-muted-foreground">Total Nilai PO</span>
               <span className="font-display text-base font-bold text-primary tabular-nums">
@@ -223,7 +210,6 @@ export function POSuccessModal({
             </div>
           </div>
 
-          {/* Status badge */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Status</span>
             <Badge variant="outline" className={statusTone(po.status)}>
@@ -232,12 +218,10 @@ export function POSuccessModal({
           </div>
         </div>
 
-        {/* ── Aksi PDF + Footer (fixed di bawah) ── */}
         <div className="border-t border-border/40 px-6 pt-4 pb-5 space-y-3 bg-card shrink-0">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
             Unduh &amp; Kirim PO
           </p>
-          {/* Download PDF */}
           <Button
             className={`w-full h-11 ${BTN_PRIMARY} relative`}
             onClick={handleDownload}
@@ -256,9 +240,7 @@ export function POSuccessModal({
             )}
           </Button>
 
-          {/* Baris share */}
           <div className="grid grid-cols-2 gap-2">
-            {/* WA */}
             <Button
               variant="outline"
               className={`h-11 gap-2 rounded-xl border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 transition-colors text-sm font-medium ${shareStep === "sharing" ? "opacity-70 pointer-events-none" : ""}`}
@@ -277,7 +259,6 @@ export function POSuccessModal({
               )}
             </Button>
 
-            {/* Email */}
             <Button
               variant="outline"
               className={`h-11 gap-2 rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors text-sm font-medium ${shareStep === "sharing" ? "opacity-70 pointer-events-none" : ""}`}
@@ -308,7 +289,6 @@ export function POSuccessModal({
   );
 }
 
-/* ─── Info chip kecil ─── */
 function InfoChip({
   icon: Icon,
   label,

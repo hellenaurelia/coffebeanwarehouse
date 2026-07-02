@@ -1,6 +1,3 @@
-// DB (Prisma) -> UI type mappers for the Suppliers feature.
-// These keep the existing UI component shapes byte-for-byte identical,
-// so no visual/JSX changes are required anywhere.
 
 import type {
   Supplier as UISupplier,
@@ -10,12 +7,6 @@ import type {
   SupplierBean,
 } from "../lib";
 
-// ---- Status mapping (DB <-> UI) -------------------------------------------
-
-// Supplier UI status combines isActive + a "Pending" concept.
-// The DB only stores isActive (boolean). We treat isActive=false as "Non-aktif".
-// "Pending" is preserved when it comes from a notes/marker, but since the schema
-// has no pending column, active=false => "Non-aktif", active=true => "Aktif".
 export function supplierStatusFromDb(isActive: boolean): SupplierStatus {
   return isActive ? "Aktif" : "Non-aktif";
 }
@@ -24,7 +15,6 @@ export function supplierIsActiveFromUi(status: SupplierStatus): boolean {
   return status === "Aktif";
 }
 
-// PO status DB enum (PENDING/DIKIRIM/DITERIMA/CANCELLED) <-> UI strings.
 const PO_DB_TO_UI: Record<string, POStatus> = {
   PENDING: "Pending",
   DIKIRIM: "Dikirim",
@@ -44,8 +34,6 @@ export function poStatusFromDb(s: string): POStatus {
 export function poStatusToDb(s: POStatus) {
   return PO_UI_TO_DB[s] ?? "PENDING";
 }
-
-// ---- Date helpers ----------------------------------------------------------
 
 const ID_MONTHS_SHORT = [
   "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
@@ -68,10 +56,6 @@ export function relativeID(d: Date | null | undefined): string {
   if (days < 30) return `${Math.floor(days / 7)} minggu lalu`;
   return `${Math.floor(days / 30)} bulan lalu`;
 }
-
-// ---- Row shapes coming from Prisma queries (lihat juga repository.ts: tambahkan
-// `variety: true` di select product agar field ini ikut terbawa) ---------------------------------
-// (kept loose to avoid over-coupling; the repository selects these fields)
 
 export type DbSupplierRow = {
   id: string;
@@ -113,22 +97,15 @@ export type DbPORow = {
   }[];
 };
 
-// ---- Mappers ---------------------------------------------------------------
-
 export function mapSupplier(row: DbSupplierRow): UISupplier {
   const beans: SupplierBean[] = row.supplierProducts.map((sp) => ({
     name: sp.product.name,
     price: sp.buyPricePerKg,
-    // Tipe biji kopi (Arabica/Robusta/Liberica/Luwak/custom) sekarang
-    // dibaca langsung dari Product.variety di DB — bukan ditebak dari nama.
-    // Fallback "" kalau belum pernah di-set (row lama sebelum migration).
+
     type: sp.product.variety ?? "",
     active: sp.isActive,
   }));
 
-  // "Total pasokan" = STOK SAAT INI: jumlah stockKg semua produk yang
-  // masih terhubung aktif ke supplier ini. Ikut turun jadi 0 kalau stok habis.
-  // (Sebelumnya ini akumulasi qty PO Diterima sepanjang waktu.)
   const totalKg = row.supplierProducts
     .filter((sp) => sp.isActive)
     .reduce((acc, sp) => acc + (sp.product.stockKg ?? 0), 0);

@@ -36,7 +36,7 @@ export function Modal({
       <div
         className={`w-full ${wide ? "max-w-2xl" : "max-w-lg"} bg-card border border-border/60 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto`}
         onClick={e => e.stopPropagation()}
-        onKeyDown={onKeyDown} // ← teruskan ke inner div
+        onKeyDown={onKeyDown} 
       >
         {children}
       </div>

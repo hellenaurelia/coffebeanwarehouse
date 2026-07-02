@@ -122,7 +122,7 @@ export function generatePOPdf(po: PO) {
 
   doc.save(`${po.id}.pdf`);
 }
-/* ─── Fungsi untuk menghasilkan Blob PDF (digunakan oleh success modal) ─── */
+
 export async function getPOPdfBlob(po: PO): Promise<Blob> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
