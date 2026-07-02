@@ -115,8 +115,16 @@ export function AppSidebar({ user }: { user: SessionUser | null }) {
 
   // Display values fall back gracefully if there is no session.
   const displayName = user?.name ?? "Pengguna";
-  const displayRole = user ? ROLE_LABEL[user.role] ?? user.role : "—";
+  const displayRole = user ? (ROLE_LABEL[user.role] ?? user.role) : "—";
   const displayInitials = user ? toInitials(user.name) : "AR";
+  const role = user?.role;
+
+  const visibleMain =
+    role === "GUDANG" ? main.filter((i) => i.title === "Dashboard") : main;
+
+  const visibleWarehouse = role === "KASIR" ? [] : warehouse;
+
+  const visibleInsights = role === "GUDANG" || role === "KASIR" ? [] : insights;
 
   const isGroupActive = (path: string) => {
     if (path === "/") {
@@ -130,81 +138,84 @@ export function AppSidebar({ user }: { user: SessionUser | null }) {
     return pathname === path;
   };
 
-  const renderGroup = (label: string, items: NavItem[]) => (
-    <SidebarGroup>
-      <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-widest text-[10px]">
-        {label}
-      </SidebarGroupLabel>
+  const renderGroup = (label: string, items: NavItem[]) => {
+    if (items.length === 0) return null;
+    return (
+      <SidebarGroup>
+        <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase tracking-widest text-[10px]">
+          {label}
+        </SidebarGroupLabel>
 
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {items.map((item) => {
-            const sub = item.sub;
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {items.map((item) => {
+              const sub = item.sub;
 
-            if (sub) {
-              const groupActive = sub.some((s) => isMenuActive(s.url));
-              return (
-                <Collapsible
-                  key={item.title}
-                  defaultOpen={groupActive}
-                  className="group/collapsible"
-                >
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        className="data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
-                        data-active={groupActive}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {sub.map((s) => (
-                          <SidebarMenuSubItem key={s.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={isMenuActive(s.url)}
-                              className="data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
-                            >
-                              <Link
-                                href={s.url}
-                                className="flex items-center gap-3"
+              if (sub) {
+                const groupActive = sub.some((s) => isMenuActive(s.url));
+                return (
+                  <Collapsible
+                    key={item.title}
+                    defaultOpen={groupActive}
+                    className="group/collapsible"
+                  >
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton
+                          className="data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
+                          data-active={groupActive}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                          <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {sub.map((s) => (
+                            <SidebarMenuSubItem key={s.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={isMenuActive(s.url)}
+                                className="data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
                               >
-                                <s.icon className="h-4 w-4" />
-                                <span>{s.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              );
-            }
+                                <Link
+                                  href={s.url}
+                                  className="flex items-center gap-3"
+                                >
+                                  <s.icon className="h-4 w-4" />
+                                  <span>{s.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                );
+              }
 
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isMenuActive(item.url)}
-                  className="data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
-                >
-                  <Link href={item.url} className="flex items-center gap-3">
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isMenuActive(item.url)}
+                    className="data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
+                  >
+                    <Link href={item.url} className="flex items-center gap-3">
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -237,9 +248,9 @@ export function AppSidebar({ user }: { user: SessionUser | null }) {
       </SidebarHeader>
 
       <SidebarContent>
-        {renderGroup("Operasional", main)}
-        {renderGroup("Gudang", warehouse)}
-        {renderGroup("Lainnya", insights)}
+        {renderGroup("Operasional", visibleMain)}
+        {renderGroup("Gudang", visibleWarehouse)}
+        {renderGroup("Lainnya", visibleInsights)}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">

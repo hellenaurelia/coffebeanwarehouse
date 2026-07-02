@@ -1,6 +1,3 @@
-// Server-only read layer for the Dashboard home page.
-// Aggregates real data into the exact shapes the existing JSX consumes.
-
 import { prisma } from "@/lib/prisma";
 import type { Supplier } from "@/app/(dashboard)/suppliers/lib";
 
@@ -108,9 +105,6 @@ function beanStatus(stock: number, minStock: number): DashBean["status"] {
   return "Tersedia";
 }
 
-// Supplier untuk modal "Place Purchase Order" di Dashboard.
-// Filter deletedAt: null — supplier yang sudah dihapus gak boleh kepilih
-// jadi tujuan PO baru. Samakan dengan suppliers/_data/repository.ts.
 export async function getSuppliers(): Promise<Supplier[]> {
   const suppliers = await prisma.supplier.findMany({
     where: { deletedAt: null },
@@ -195,7 +189,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     { label: "Avg. Basket", value: rupiah(basketToday), ...basketD },
   ];
 
-  // Top 5 biji kopi paling sering dibeli (frekuensi transaksi, 30 hari).
   const since30 = startOfDay(new Date(now.getTime() - 30 * 86_400_000));
 
   const topFreq = await prisma.$queryRaw<

@@ -24,7 +24,6 @@ export function CatalogPanel({ cart, onAdd }: Props) {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Klik kartu: kalau stok habis → toast, JANGAN masuk keranjang (poin 4).
   const handleCardClick = (p: Product) => {
     if (p.stock <= 0) {
       toast.error("Biji kopi habis", {

@@ -30,7 +30,6 @@ export default function ReportsClient({ dataByRange }: { dataByRange: DataByRang
 
   const data = useMemo(() => {
     if (isCustomActive) {
-      // Custom ranges map to the nearest real preset (no synthetic data).
       const ms = customDateRange.to!.getTime() - customDateRange.from!.getTime();
       const totalDays = Math.max(1, Math.round(ms / 86_400_000) + 1);
       const key = totalDays <= 14 ? "7H" : totalDays <= 60 ? "30H" : "90H";
@@ -201,7 +200,6 @@ export default function ReportsClient({ dataByRange }: { dataByRange: DataByRang
   );
 }
 
-// ── Section Label helper ─────────────────────────────────────────────────────
 function SectionLabel({
   icon: Icon,
   title,

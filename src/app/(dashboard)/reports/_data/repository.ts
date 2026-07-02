@@ -1,7 +1,3 @@
-// Server-only analytics layer for Reports.
-// Aggregates real transactions + stock into the DashboardData shape the UI
-// already consumes, for the three preset ranges (7H / 30H / 90H).
-
 import { prisma } from "@/lib/prisma";
 import type { DashboardData, DataByRange, SalesData, StockStatus } from "../_components/types";
 
@@ -27,15 +23,12 @@ function stockStatus(stok: number, minStock: number): StockStatus {
   return "Aman";
 }
 
-// Build one range's DashboardData. `days` is the window length; `prevWindow`
-// is the equally-sized window immediately before it (for trend %).
 async function buildRange(label: string, days: number): Promise<DashboardData> {
   const now = new Date();
   const end = now;
   const start = startOfDay(new Date(now.getTime() - (days - 1) * 86_400_000));
   const prevStart = startOfDay(new Date(start.getTime() - days * 86_400_000));
 
-  // ── Transactions in current + previous window ──────────────────────────
   const [currentTrx, prevTrx] = await Promise.all([
     prisma.transaction.findMany({
       where: { status: "PAID", paidAt: { gte: start, lte: end } },
@@ -57,8 +50,6 @@ async function buildRange(label: string, days: number): Promise<DashboardData> {
     }),
   ]);
 
-  // ── Sales series ───────────────────────────────────────────────────────
-  // For 7H -> group by weekday label; for longer ranges -> group by date.
   const sales: SalesData[] = [];
   if (days <= 7) {
     const buckets = new Map<string, { penjualan: number; idx: number }>();
@@ -78,7 +69,6 @@ async function buildRange(label: string, days: number): Promise<DashboardData> {
       sales.push({ day, penjualan: b.penjualan, pengeluaran: 0 });
     }
   } else {
-    // Group into ~7 evenly spaced buckets for readability.
     const buckets = 7;
     const span = Math.ceil(days / buckets);
     for (let b = 0; b < buckets; b++) {
@@ -93,7 +83,6 @@ async function buildRange(label: string, days: number): Promise<DashboardData> {
     }
   }
 
-  // ── Top products (by omzet) ──────────────────────────────────────────────
   const prodMap = new Map<string, { name: string; sku: string; terjual: number; kg: number; omzet: number }>();
   for (const t of currentTrx) {
     for (const it of t.items) {
@@ -110,7 +99,6 @@ async function buildRange(label: string, days: number): Promise<DashboardData> {
     .slice(0, 5)
     .map((p, i) => ({ rank: i + 1, ...p, kg: Math.round(p.kg * 10) / 10 }));
 
-  // ── Stock monitoring ─────────────────────────────────────────────────────
   const products = await prisma.product.findMany({
     where: { isActive: true },
     select: { name: true, stockKg: true, minStockKg: true },
@@ -119,16 +107,12 @@ async function buildRange(label: string, days: number): Promise<DashboardData> {
   const stok = products.map((p) => ({
     name: p.name,
     stok: p.stockKg,
-    // No capacity column in schema -> use a sensible cap (4x min, min 200kg).
     kapasitas: Math.max(p.minStockKg * 8, 200),
     status: stockStatus(p.stockKg, p.minStockKg),
   }));
   const kritisCount = stok.filter((s) => s.status === "Kritis").length;
   const totalStokKg = products.reduce((a, p) => a + p.stockKg, 0);
 
-  // ── Expense breakdown ─────────────────────────────────────────────────────
-  // Only purchasing is backed by data (received POs in window). Other
-  // categories (operasional/gaji/logistik) have no source table -> 0.
   const receivedPOs = await prisma.purchaseOrder.findMany({
     where: { status: "DITERIMA", receivedAt: { gte: start, lte: end } },
     select: { totalAmount: true },
@@ -141,7 +125,6 @@ async function buildRange(label: string, days: number): Promise<DashboardData> {
     { kategori: "Logistik & Kirim", nominal: 0 },
   ];
 
-  // ── KPI trends ────────────────────────────────────────────────────────────
   const pendapatan = currentTrx.reduce((a, t) => a + t.totalAmount, 0);
   const prevPendapatan = prevTrx.reduce((a, t) => a + t.totalAmount, 0);
   const pengeluaran = pembelianBiji;

@@ -22,7 +22,7 @@ export function TunaiModal({
   onClose,
 }: {
   total: number;
-  lines: CartLineForReceipt[]; // ← TAMBAHAN
+  lines: CartLineForReceipt[];
   onSuccess: () => void;
   onClose: () => void;
 }) {

@@ -1,5 +1,3 @@
-// Server component: fetches the live product catalog and renders the POS UI.
-
 import { getPOSProducts } from "./_data/repository";
 import POSClient from "./pos-client";
 

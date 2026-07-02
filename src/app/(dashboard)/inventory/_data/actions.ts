@@ -12,9 +12,6 @@ async function resolveActorId(): Promise<string> {
   return user.id;
 }
 
-// ============================================================================
-// PRODUCT: update sell price
-// ============================================================================
 export async function updateProductPriceAction(
   sku: string,
   sellPrice: number
@@ -38,9 +35,6 @@ export async function updateProductPriceAction(
   revalidatePath(INVENTORY_PATH);
 }
 
-// ============================================================================
-// STOCK RECONCILIATION
-// ============================================================================
 export type ReconLine = {
   sku: string;
   physicalQty: number;

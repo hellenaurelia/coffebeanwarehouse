@@ -1,7 +1,3 @@
-// Server component: fetches inventory from the DB and renders the existing
-// client UI unchanged. The InventoryItem type is re-exported here because
-// child components import it from "../page".
-
 import { getInventory } from "./_data/repository";
 import InventoryClient from "./inventory-client";
 

@@ -51,7 +51,6 @@ export default function POSClient({ products }: { products: Product[] }) {
   const tax       = Math.round(afterDisc * 0.11);
   const total     = afterDisc + tax;
 
-  // Shape untuk TunaiModal (struk sukses)
   const receiptLines = lines.map(l => ({
     name: l.p.name,
     qty: l.qty,
@@ -64,7 +63,7 @@ export default function POSClient({ products }: { products: Product[] }) {
       productId: l.p.id,
       qty: l.qty,
       sellPrice: l.p.price,
-      grindOption: l.grindOpt, // ← TAMBAHAN
+      grindOption: l.grindOpt, 
     }));
     checkoutAction({ lines: checkoutLines, payMethod: payModal ?? payMethod ?? "cash", total })
       .then((res) => { if (!res.ok) console.error("Checkout gagal:", res.error); })

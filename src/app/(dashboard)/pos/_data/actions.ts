@@ -108,7 +108,6 @@ export async function checkoutAction(
           throw new Error("Produk dalam keranjang tidak ditemukan.");
         }
 
-        // ATURAN (poin 4): bean stok 0 / kurang TIDAK boleh di-checkout.
         if (product.stockKg <= 0) {
           throw new Error(`Biji kopi "${product.name}" habis. Tidak bisa dijual.`);
         }

@@ -41,12 +41,10 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       alert("Hanya file gambar yang diperbolehkan.");
       return;
     }
-    // Validate size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert("Ukuran file maksimal 2MB.");
       return;

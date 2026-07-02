@@ -1,6 +1,3 @@
-// Server component: aggregates real DB data into the dashboard ranges,
-// then renders the existing Reports UI unchanged.
-
 import { getReportsData } from "./_data/repository";
 import ReportsClient from "./reports-client";
 

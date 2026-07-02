@@ -1,7 +1,5 @@
 import { DataByRange } from "./types";
 
-// ─── Calendar Months & Days ───────────────────────────────────────────────
-
 export const MONTHS_ID = [
   "Januari",
   "Februari",
@@ -18,8 +16,6 @@ export const MONTHS_ID = [
 ];
 
 export const DAYS_ID = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-
-// ─── Dashboard Data ───────────────────────────────────────────────────────
 
 export const dataByRange = {
   "7H": {
@@ -305,8 +301,6 @@ export const dataByRange = {
     kritisCount: 2,
   },
 } as const satisfies DataByRange;
-
-// ─── Chart Config ───────────────────────────────────────────────────────
 
 export const chartConfig = {
   penjualan: {

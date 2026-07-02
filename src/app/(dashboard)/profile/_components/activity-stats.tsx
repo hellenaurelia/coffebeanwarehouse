@@ -61,7 +61,6 @@ const gudangStats = [
 export function ActivityStats() {
   const { user } = useUser();
 
-  // Owner dan manajer tidak menampilkan stats
   if (user.role === "owner" || user.role === "manajer") return null;
 
   const stats = user.role === "gudang" ? gudangStats : kasirStats;

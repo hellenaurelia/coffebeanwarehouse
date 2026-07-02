@@ -30,8 +30,6 @@ const TABS: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
   { id: "tampilan", label: "Tampilan", icon: Monitor },
 ];
 
-// ─── Sub-panels ─────────────────────────────────────────────────────────────
-
 function ProfilPanel() {
   const { user, setUser } = useUser();
   const [saved, setSaved] = useState(false);
@@ -314,8 +312,6 @@ function TampilanPanel() {
     </div>
   );
 }
-
-// ─── Main ────────────────────────────────────────────────────────────────────
 
 export function SettingsPanel() {
   const [active, setActive] = useState<SettingsTab>("profil");

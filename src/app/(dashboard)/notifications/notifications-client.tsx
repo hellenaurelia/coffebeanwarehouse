@@ -76,7 +76,6 @@ export default function NotificationsClient() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Load dari localStorage
   useEffect(() => {
     const storedRead = localStorage.getItem(STORAGE_KEY_READ);
     const storedDismissed = localStorage.getItem(STORAGE_KEY_DISMISSED);
@@ -132,7 +131,6 @@ export default function NotificationsClient() {
       localStorage.setItem(STORAGE_KEY_DISMISSED, JSON.stringify([...next]));
       return next;
     });
-    // Otomatis mark read juga
     markRead(id);
   };
 

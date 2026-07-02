@@ -18,7 +18,7 @@ interface RekonsiliasiModalProps {
 
 interface RekonEntry {
   sku: string;
-  fisik: string; // string for input, convert to number on save
+  fisik: string; 
   alasan: string;
 }
 
@@ -44,10 +44,8 @@ export function RekonsiliasiModal({ open, onClose, items, onSave }: Rekonsiliasi
     );
   };
 
-  // Items with a physical count entered
   const changed = entries.filter((e) => e.fisik !== "" && !isNaN(Number(e.fisik)));
 
-  // Selisih calculation
   const diffs = changed.map((e) => {
     const item = items.find((i) => i.sku === e.sku)!;
     const fisik = Number(e.fisik);

@@ -110,7 +110,6 @@ export function CalendarPicker({ value, onChange, onClose }: CalendarPickerProps
             const date = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), day);
             const isFrom = !!(tempRange.from && isSameDate(date, tempRange.from));
             const isTo = !!(tempRange.to && isSameDate(date, tempRange.to));
-            // inRange hanya aktif kalau KEDUA from dan to sudah dipilih, dan tanggal di antaranya
             const inRange =
               !!(tempRange.from && tempRange.to) &&
               isDateInRange(date, tempRange.from, tempRange.to) &&

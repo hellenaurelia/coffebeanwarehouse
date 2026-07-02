@@ -1,6 +1,3 @@
-// Server component: resolves the logged-in user and hands it to the client UI.
-// The visual component (profile-client.tsx) keeps the original JSX intact.
-
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";

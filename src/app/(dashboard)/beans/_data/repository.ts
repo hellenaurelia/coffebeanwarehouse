@@ -41,9 +41,6 @@ function inferProfile(name: string, variety: string) {
   return VARIETY_FALLBACK[variety] ?? { process: "Washed", notes: ["Bold", "Aromatic"], rating: 4.5 };
 }
 
-// ATURAN BARU (poin 4): bean stok 0 TETAP tampil di katalog / item kasir.
-// Filter `stockKg: { gt: 0 }` DIHAPUS. Yang penting produk aktif & punya
-// link supplier (aktif/tidak) supaya origin bisa ditampilkan.
 export async function getBeansCatalog(): Promise<BeanCatalogItem[]> {
   const products = await prisma.product.findMany({
     where: {

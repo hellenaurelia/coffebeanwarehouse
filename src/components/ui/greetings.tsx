@@ -12,5 +12,5 @@ export default function Greeting() {
     return "Selamat malam";
   }, []);
 
-  return <h2 className="font-display text-3xl md:text-4xl font-semibold text-balance">{greeting}, Arif.</h2>;
+  return <h2 className="font-display text-3xl md:text-4xl font-semibold text-balance">{greeting}</h2>;
 }

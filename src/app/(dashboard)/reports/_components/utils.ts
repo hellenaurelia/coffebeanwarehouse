@@ -3,16 +3,11 @@ import { dataByRange } from "./data";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// ─── Number Formatting ────────────────────────────────────────────────────
-
-/** Format ke Rupiah penuh: 4120000 → "Rp 4.120.000" */
 export function fmt(value: number): string {
   return `Rp ${Math.round(value).toLocaleString("id-ID")}`;
 }
 
 export const fmtK = fmt;
-
-// ─── Date Utilities ───────────────────────────────────────────────────────
 
 export function isDateInRange(date: Date, from: Date | null, to: Date | null): boolean {
   if (!from || !to) return true;
@@ -61,9 +56,6 @@ export function formatDateID(date: Date, format: "short" | "long" = "short"): st
   return `${day} ${month} ${year}`;
 }
 
-// ─── Trend Calculation ────────────────────────────────────────────────────
-
-/** Hitung persentase perubahan dari nilai lama ke nilai baru */
 export function calcTrend(current: number, previous: number): string {
   if (previous === 0) return "+0,0%";
   const pct = ((current - previous) / previous) * 100;
@@ -71,12 +63,6 @@ export function calcTrend(current: number, previous: number): string {
   return `${sign}${pct.toFixed(1).replace(".", ",")}%`;
 }
 
-// ─── Core Data Generator ──────────────────────────────────────────────────
-
-/**
- * Hitung total penjualan & pengeluaran untuk range tertentu,
- * di-scale dari dataset referensi terdekat.
- */
 function calcTotalsForRange(totalDays: number): { penjualan: number; pengeluaran: number } {
   let refKey: "7H" | "30H" | "90H";
   let refDays: number;
@@ -93,15 +79,10 @@ function calcTotalsForRange(totalDays: number): { penjualan: number; pengeluaran
   };
 }
 
-/**
- * Generate data dashboard untuk custom date range.
- * Trend dihitung dengan membandingkan vs periode sebelumnya (durasi sama).
- */
 export function generateDataForRange(from: Date, to: Date): DashboardData {
   const msPerDay = 1000 * 60 * 60 * 24;
   const totalDays = Math.max(1, Math.round((to.getTime() - from.getTime()) / msPerDay) + 1);
 
-  // Periode sebelumnya: durasi sama, langsung sebelum `from`
   const prevTo = new Date(from.getTime() - msPerDay);
   const prevFrom = new Date(prevTo.getTime() - (totalDays - 1) * msPerDay);
   const prevTotalDays = Math.max(1, Math.round((prevTo.getTime() - prevFrom.getTime()) / msPerDay) + 1);
@@ -112,7 +93,6 @@ export function generateDataForRange(from: Date, to: Date): DashboardData {
   const pendapatanTrend = calcTrend(current.penjualan, previous.penjualan);
   const pengeluaranTrend = calcTrend(current.pengeluaran, previous.pengeluaran);
 
-  // Pilih referensi dataset
   let refKey: "7H" | "30H" | "90H";
   let refDays: number;
   if (totalDays <= 14) { refKey = "7H"; refDays = 7; }
@@ -192,7 +172,6 @@ function generateSalesSegments(
     }));
   }
 
-  // Per bulan
   const months: Record<string, { penjualan: number; pengeluaran: number }> = {};
   const totalP = ref.sales.reduce((s, d) => s + d.penjualan, 0) * ratio;
   const totalE = ref.sales.reduce((s, d) => s + d.pengeluaran, 0) * ratio;
@@ -213,8 +192,6 @@ function generateSalesSegments(
   }));
 }
 
-// ─── Stock Status Styling ─────────────────────────────────────────────────
-
 export function statusTone(status: StockStatus): string {
   switch (status) {
     case "Aman":    return "border-green-500/30 bg-green-500/5 text-green-700 dark:text-green-400";
@@ -223,8 +200,6 @@ export function statusTone(status: StockStatus): string {
     default:        return "";
   }
 }
-
-// ─── PDF Export ───────────────────────────────────────────────────────────
 
 export interface PDFExportOptions {
   title: string;
