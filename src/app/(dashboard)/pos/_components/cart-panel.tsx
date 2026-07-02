@@ -159,7 +159,7 @@ export function CartPanel({
           {lines.some(l => l.grindOpt === "ground") && (
             <div className="flex justify-between text-muted-foreground">
               <span>Ground ({lines.filter(l => l.grindOpt === "ground").length} item)</span>
-              <span className="tabular-nums">+{fmt(lines.filter(l => l.grindOpt === "ground").reduce((s, l) => s + GRIND_FEE * l.qty, 0))}</span>
+              <span className="tabular-nums">+{fmt(lines.filter(l => l.grindOpt === "ground").reduce((s, l) => s + GRIND_FEE, 0))}</span>
             </div>
           )}
           <div className="flex justify-between text-muted-foreground">
