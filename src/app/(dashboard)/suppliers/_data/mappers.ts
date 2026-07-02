@@ -87,7 +87,7 @@ export type DbSupplierRow = {
   supplierProducts: {
     buyPricePerKg: number;
     isActive: boolean;
-    product: { name: string; variety: string | null };
+    product: { name: string; variety: string | null; stockKg: number };
   }[];
   purchaseOrders: {
     status: string;
@@ -126,10 +126,12 @@ export function mapSupplier(row: DbSupplierRow): UISupplier {
     active: sp.isActive,
   }));
 
-  // total supplied kg = sum of received PO item qty for this supplier
-  const totalKg = row.purchaseOrders
-    .filter((po) => po.status === "DITERIMA")
-    .reduce((acc, po) => acc + po.items.reduce((a, it) => a + it.qtyKg, 0), 0);
+  // "Total pasokan" = STOK SAAT INI: jumlah stockKg semua produk yang
+  // masih terhubung aktif ke supplier ini. Ikut turun jadi 0 kalau stok habis.
+  // (Sebelumnya ini akumulasi qty PO Diterima sepanjang waktu.)
+  const totalKg = row.supplierProducts
+    .filter((sp) => sp.isActive)
+    .reduce((acc, sp) => acc + (sp.product.stockKg ?? 0), 0);
 
   // last delivery = most recent receivedAt
   const lastReceived = row.purchaseOrders

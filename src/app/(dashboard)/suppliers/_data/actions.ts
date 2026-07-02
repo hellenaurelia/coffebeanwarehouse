@@ -38,7 +38,7 @@ const supplierSelect = {
     select: {
       buyPricePerKg: true,
       isActive: true,
-      product: { select: { name: true, variety: true } },
+      product: { select: { name: true, variety: true, stockKg: true } },
     },
   },
   purchaseOrders: {
