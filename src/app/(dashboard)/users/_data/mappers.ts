@@ -36,37 +36,49 @@ export function outletToUi(dbOutlet: string | null): Outlet {
   return dbOutlet === "Senopati" ? "Senopati" : "Senopati";
 }
 
-const ID_DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const ID_MONTHS = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ];
 
-function pad2(n: number): string {
-  return String(n).padStart(2, "0");
+function wibParts(d: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return {
+    year: Number(get("year")),
+    month: Number(get("month")) - 1,
+    day: Number(get("day")),
+    hour: get("hour"),
+    minute: get("minute"),
+  };
 }
 
 export function formatLastLogin(d: Date | null): string {
   if (!d) return "Belum pernah masuk";
 
   const now = new Date();
-  const sameDay =
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate();
+  const dp = wibParts(d);
+  const np = wibParts(now);
 
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday =
-    d.getFullYear() === yesterday.getFullYear() &&
-    d.getMonth() === yesterday.getMonth() &&
-    d.getDate() === yesterday.getDate();
+  const sameDay = dp.year === np.year && dp.month === np.month && dp.day === np.day;
 
-  const time = `${pad2(d.getHours())}.${pad2(d.getMinutes())}`;
+  const yesterday = new Date(now.getTime() - 86_400_000);
+  const yp = wibParts(yesterday);
+  const isYesterday = dp.year === yp.year && dp.month === yp.month && dp.day === yp.day;
+
+  const time = `${dp.hour}.${dp.minute}`;
 
   if (sameDay) return `Hari ini, ${time}`;
   if (isYesterday) return `Kemarin, ${time}`;
-  return `${d.getDate()} ${ID_MONTHS[d.getMonth()]} ${d.getFullYear()}, ${time}`;
+  return `${dp.day} ${ID_MONTHS[dp.month]} ${dp.year}, ${time}`;
 }
 
 export function deriveUsername(email: string, username: string | null): string {
