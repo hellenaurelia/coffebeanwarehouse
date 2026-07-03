@@ -15,7 +15,10 @@ function rupiahShortK(n: number): string {
 }
 
 function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+  }).format(d); 
+  return new Date(`${ymd}T00:00:00+07:00`);
 }
 
 function pctDelta(curr: number, prev: number): { delta: string; up: boolean } {
@@ -38,10 +41,23 @@ function timeAgo(d: Date): string {
 }
 
 function fmtTanggal(d: Date): string {
-  return `${d.getDate()} ${ID_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  const month = Number(get("month")) - 1;
+  return `${get("day")} ${ID_MONTHS_SHORT[month]} ${get("year")}`;
 }
 function fmtWaktu(d: Date): string {
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
 }
 
 const METHOD_MAP: Record<string, string> = {
