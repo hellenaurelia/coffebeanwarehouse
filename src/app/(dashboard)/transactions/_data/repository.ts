@@ -15,10 +15,24 @@ const METHOD_MAP: Record<string, Method> = {
 };
 
 function fmtTanggal(d: Date): string {
-  return `${d.getDate()} ${ID_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  const month = Number(get("month")) - 1;
+  return `${get("day")} ${ID_MONTHS_SHORT[month]} ${get("year")}`;
 }
+
 function fmtWaktu(d: Date): string {
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
 }
 
 export async function getTransactions(): Promise<Trx[]> {
